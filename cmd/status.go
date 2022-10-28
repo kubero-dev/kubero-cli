@@ -1,6 +1,5 @@
 /*
 Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
@@ -13,7 +12,7 @@ import (
 // statusCmd represents the status command
 var statusCmd = &cobra.Command{
 	Use:   "status",
-	Short: "A brief description of your command",
+	Short: "Show a status of your kubero instance",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 

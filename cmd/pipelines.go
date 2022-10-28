@@ -1,6 +1,5 @@
 /*
 Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
@@ -13,7 +12,7 @@ import (
 // pipelinesCmd represents the pipelines command
 var pipelinesCmd = &cobra.Command{
 	Use:   "pipelines",
-	Short: "A brief description of your command",
+	Short: "Manage your pipelines",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 

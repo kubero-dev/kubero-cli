@@ -1,6 +1,5 @@
 /*
 Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
@@ -13,7 +12,7 @@ import (
 // appsCmd represents the apps command
 var appsCmd = &cobra.Command{
 	Use:   "apps",
-	Short: "A brief description of your command",
+	Short: "Manage your apps",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 
