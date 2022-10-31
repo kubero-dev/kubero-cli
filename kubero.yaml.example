@@ -1,1 +1,2 @@
-example: true
+api:
+  url: https://kubero.example.com:8080

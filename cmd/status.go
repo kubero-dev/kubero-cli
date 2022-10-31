@@ -5,8 +5,10 @@ package cmd
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // statusCmd represents the status command
@@ -21,6 +23,18 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("status called")
+
+		url := viper.GetString("api.url")
+		fmt.Println(url)
+
+		user := viper.Get("api.user")
+		fmt.Println(user)
+
+		res, err := http.Get(url + "/api/config")
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println(res.Body)
 	},
 }
 
