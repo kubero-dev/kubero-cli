@@ -12,6 +12,15 @@ import (
 )
 
 func main() {
+
+	loadConfig()
+	cmd.InitClient()
+
+	cmd.Execute()
+}
+
+func loadConfig() {
+
 	viper.SetDefault("ContentDir", "content")
 	viper.SetDefault("LayoutDir", "layouts")
 	viper.SetConfigName("kubero") // name of config file (without extension)
@@ -20,16 +29,16 @@ func main() {
 	err := viper.ReadInConfig()
 
 	credentials := viper.New()
-	credentials.SetConfigName("credentials")   // name of config file (without extension)
-	credentials.SetConfigType("yaml")          // REQUIRED if the config file does not have the extension in the name
-	credentials.AddConfigPath("/etc/kubero/")  // path to look for the config file in
+	credentials.SetConfigName("credentials") // name of config file (without extension)
+	credentials.SetConfigType("yaml")        // REQUIRED if the config file does not have the extension in the name
+	//credentials.AddConfigPath("/etc/kubero/")  // path to look for the config file in
 	credentials.AddConfigPath("$HOME/.kubero") // call multiple times to add many search paths
-	viper.AddConfigPath(".")
-	credentials.ReadInConfig()
+	//credentials.AddConfigPath(".")
+	errCred := credentials.ReadInConfig()
 
 	viper.MergeConfigMap(credentials.AllSettings())
 
-	if err != nil {
+	if err != nil && errCred != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			fmt.Println("No config file found; using defaults")
 		} else {
@@ -38,5 +47,4 @@ func main() {
 			//panic(fmt.Errorf("fatal error config file: %w", err))
 		}
 	}
-	cmd.Execute()
 }
