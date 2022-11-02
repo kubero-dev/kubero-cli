@@ -4,12 +4,15 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
 	"os"
 
+	"github.com/go-resty/resty/v2"
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
 
-var cfgFile string
+var outputFormat string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -40,9 +43,18 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "$HOME/.kubero.yaml", "config file")
+	rootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "table", "output format [table, json]")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+
+}
+
+func printCLI(table *tablewriter.Table, r *resty.Response) {
+	if outputFormat == "json" {
+		fmt.Println(r)
+	} else {
+		table.Render()
+	}
 }
