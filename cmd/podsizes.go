@@ -24,7 +24,7 @@ var podsizesCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(podsizesCmd)
+	configCmd.AddCommand(podsizesCmd)
 }
 
 type PodsizeList []struct {

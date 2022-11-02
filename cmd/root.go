@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"bufio"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -19,10 +20,14 @@ import (
 
 var outputFormat string
 
+//go:embed VERSION
+var version string
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "kubero",
-	Short: "A brief description of your application",
+	Use:     "kubero",
+	Short:   "A brief description of your application",
+	Version: version,
 	Long: `
 	 ___ ___       __               _______
 	|   Y   .--.--|  |--.-----.----|   _   |
@@ -48,6 +53,7 @@ func Execute() {
 }
 
 func init() {
+	rootCmd.CompletionOptions.HiddenDefaultCmd = true
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
