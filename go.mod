@@ -7,7 +7,9 @@ require github.com/spf13/cobra v1.6.1
 require (
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/go-resty/resty/v2 v2.7.0 // indirect
+	github.com/gookit/color v1.3.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/i582/cfmt v1.4.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect

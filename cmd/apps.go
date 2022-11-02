@@ -32,6 +32,6 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	appsCmd.Flags().StringP("pipeline", "p", "", "List all apps in a Pipeline")
+	appsCmd.Flags().StringP("pipeline", "p", "", "Name of the pipeline")
 	appsCmd.MarkFlagRequired("pipeline")
 }

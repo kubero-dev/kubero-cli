@@ -19,7 +19,7 @@ var podsizesCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		resp, _ := client.Get("/api/cli/config/podsize")
-		print(resp)
+		printPodsizes(resp)
 	},
 }
 
@@ -45,7 +45,7 @@ type PodsizeList []struct {
 }
 
 // print the response as a table
-func print(r *resty.Response) {
+func printPodsizes(r *resty.Response) {
 
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"Name", "Description"})

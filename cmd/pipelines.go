@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
@@ -109,7 +110,7 @@ var pipeline string
 
 func init() {
 	rootCmd.AddCommand(pipelinesCmd)
-	pipelinesCmd.Flags().StringVarP(&pipeline, "pipeline", "p", "", "name of the pipeline")
+	pipelinesCmd.PersistentFlags().StringVarP(&pipeline, "pipeline", "p", "", "name of the pipeline")
 
 	// Here you will define your flags and configuration settings.
 
@@ -159,15 +160,15 @@ func printPipeline(r *resty.Response) {
 	var pipeline Pipeline
 	json.Unmarshal(r.Body(), &pipeline)
 
-	fmt.Printf("Name: %v \n", pipeline.Name)
-	fmt.Printf("Buildpack: %v, %v \n", pipeline.Buildpack.Name, pipeline.Buildpack.Language)
+	cfmt.Printf("{{Name:}}::lightWhite %v \n", pipeline.Name)
+	cfmt.Printf("{{Buildpack:}}::lightWhite %v, %v \n", pipeline.Buildpack.Name, pipeline.Buildpack.Language)
 	if pipeline.Dockerimage != "" {
-		fmt.Printf("Docker Image: %v \n", pipeline.Dockerimage)
+		fmt.Printf("{{Docker Image:}}::lightWhite %v \n", pipeline.Dockerimage)
 	}
-	fmt.Printf("Deployment Strategy: %v \n", pipeline.Deploymentstrategy)
-	fmt.Printf("Git: %v:%v \n", pipeline.Git.Repository.SSHURL, pipeline.Git.Repository.DefaultBranch)
-	fmt.Printf("Review Apps: %v \n", pipeline.Reviewapps)
-	fmt.Printf("Phases: \n")
+	cfmt.Printf("{{Deployment Strategy:}}::lightWhite %v \n", pipeline.Deploymentstrategy)
+	cfmt.Printf("{{Git:}}::lightWhite %v:%v \n", pipeline.Git.Repository.SSHURL, pipeline.Git.Repository.DefaultBranch)
+	cfmt.Printf("{{Review Apps:}}::lightWhite %v \n", pipeline.Reviewapps)
+	cfmt.Printf("{{Phases:}}::lightWhite \n")
 	for _, phase := range pipeline.Phases {
 		if phase.Enabled {
 			fmt.Printf(" - %v (%v) \n", phase.Name, phase.Context)
