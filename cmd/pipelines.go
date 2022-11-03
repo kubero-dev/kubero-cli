@@ -130,11 +130,16 @@ func printPipelinesList(r *resty.Response) {
 	table.SetHeader([]string{
 		"Name",
 		"Repository",
-		"Branch",
+		//"Branch",
 		"Buildpack",
-		"Docker Image",
-		"Deployment Strategy",
-		"Review Apps"})
+		"reviewapps",
+		"test",
+		"staging",
+		"production",
+		//"Docker Image",
+		//"Deployment Strategy",
+		//"Review Apps"
+	})
 	//table.SetBorder(false)
 
 	var pipelinesList PipelinesList
@@ -144,11 +149,16 @@ func printPipelinesList(r *resty.Response) {
 		table.Append([]string{
 			pipeline.Name,
 			pipeline.Git.Repository.SSHURL,
-			pipeline.Git.Repository.DefaultBranch,
+			//pipeline.Git.Repository.DefaultBranch,
 			pipeline.Buildpack.Name,
-			pipeline.Dockerimage,
-			pipeline.Deploymentstrategy,
-			fmt.Sprintf("%t", pipeline.Reviewapps)})
+			//pipeline.Dockerimage,
+			//pipeline.Deploymentstrategy,
+			//fmt.Sprintf("%t", pipeline.Reviewapps)
+			fmt.Sprintf("%t", pipeline.Phases[0].Enabled),
+			fmt.Sprintf("%t", pipeline.Phases[1].Enabled),
+			fmt.Sprintf("%t", pipeline.Phases[2].Enabled),
+			fmt.Sprintf("%t", pipeline.Phases[3].Enabled),
+		})
 	}
 
 	printCLI(table, r)
