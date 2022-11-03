@@ -9,14 +9,14 @@ So far implemented command tree
     kubero
     ├── apps
     │   ├── create (WIP)
+    │   ├── list (WIP)
     │   └── delete (WIP)
     ├── config
+    │   ├── addons (WIP)
     │   ├── buildpacks
     │   └── podsizes
     ├── help
-    ├── init
-    │   ├── app (WIP)
-    │   └── pipeline (WIP)
+    ├── init (WIP)
     └── pipelines
         ├── create
         ├── list (WIP)
