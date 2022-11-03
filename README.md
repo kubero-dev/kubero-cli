@@ -12,7 +12,7 @@ So far implemented command tree
     │   ├── list (WIP)
     │   └── delete (WIP)
     ├── config
-    │   ├── addons (WIP)
+    │   ├── addons
     │   ├── buildpacks
     │   └── podsizes
     ├── help
