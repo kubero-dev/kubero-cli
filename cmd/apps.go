@@ -18,6 +18,9 @@ var appsCmd = &cobra.Command{
 An App runs allways in a Pipeline.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("apps called")
+
+		fmt.Println(getGitRemote())
+
 	},
 }
 

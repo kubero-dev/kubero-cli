@@ -12,6 +12,10 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/go-git/go-billy/v5/osfs"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/cache"
+	"github.com/go-git/go-git/v5/storage/filesystem"
 	"github.com/go-resty/resty/v2"
 	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/olekukonko/tablewriter"
@@ -167,4 +171,42 @@ func loadContexts() {
 	for _, context := range contexts {
 		contextSimpleList = append(contextSimpleList, context.Name)
 	}
+}
+
+func getGitRemote() string {
+	gitdir := getGitdir()
+	fs := osfs.New(gitdir)
+	s := filesystem.NewStorageWithOptions(fs, cache.NewObjectLRUDefault(), filesystem.Options{KeepDescriptors: true})
+	r, err := git.Open(s, fs)
+	if err == nil {
+		remotes, _ := r.Remotes()
+		return remotes[0].Config().URLs[0]
+	}
+	return ""
+}
+
+func getGitdir() string {
+	wd, _ := os.Getwd()
+
+	path := strings.Split(wd, "/")
+	for i := len(path); i >= 0; i-- {
+
+		subpath := strings.Join(path[:i], "/")
+		fileInfo, err := os.Stat(subpath + "/.git")
+
+		if err != nil {
+			//fmt.Println(subpath + "/.git not a dir")
+			continue
+		} else {
+			if fileInfo.IsDir() {
+				//fmt.Println(subpath + "/.git is a dir")
+				return strings.Join(path[:i], "/") + "/.git"
+			} else {
+				//fmt.Println(subpath + "/.git not a dir")
+				continue
+			}
+		}
+
+	}
+	return ""
 }
