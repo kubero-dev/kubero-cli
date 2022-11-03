@@ -20,7 +20,6 @@ An App runs allways in a Pipeline.`,
 		fmt.Println("apps called")
 
 		fmt.Println(getGitRemote())
-
 	},
 }
 

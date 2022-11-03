@@ -78,52 +78,15 @@ func printCLI(table *tablewriter.Table, r *resty.Response) {
 	}
 }
 
-func promptLine(question string) string {
+func promptLine(question string, options string, def string) string {
 	reader := bufio.NewReader(os.Stdin)
-	cfmt.Printf("\n  {{%s}}::lightWhite : ", question)
+	cfmt.Printf("\n  {{%s}}::lightWhite %s: ", question, options)
 	text, _ := reader.ReadString('\n')
 	text = strings.Replace(text, "\n", "", -1)
-	return text
-}
-
-var buildPacksSimpleList []string
-
-type buildPacks []struct {
-	Name     string `json:"name"`
-	Language string `json:"language"`
-	Fetch    struct {
-		Repository string `json:"repository"`
-		Tag        string `json:"tag"`
-	} `json:"fetch"`
-	Build struct {
-		Repository string `json:"repository"`
-		Tag        string `json:"tag"`
-		Command    string `json:"command"`
-	} `json:"build"`
-	Run struct {
-		Repository         string `json:"repository"`
-		Tag                string `json:"tag"`
-		ReadOnlyAppStorage bool   `json:"readOnlyAppStorage"`
-		SecurityContext    *struct {
-			AllowPrivilegeEscalation *bool `json:"allowPrivilegeEscalation"`
-			ReadOnlyRootFilesystem   *bool `json:"readOnlyRootFilesystem"`
-		} `json:"securityContext"`
-		Command string `json:"command"`
-	} `json:"run,omitempty"`
-}
-
-func loadBuildpacks() {
-
-	b, _ := client.Get("/api/cli/config/buildpacks")
-
-	var buildPacks buildPacks
-	json.Unmarshal(b.Body(), &buildPacks)
-
-	for _, buildPack := range buildPacks {
-		buildPacksSimpleList = append(buildPacksSimpleList, buildPack.Name)
+	if text == "" {
+		text = def
 	}
-
-	//buildPacks = []string{"java", "node", "python", "ruby", "php"}
+	return text
 }
 
 type Repositories struct {

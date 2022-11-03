@@ -63,27 +63,27 @@ func pipelinesForm() CreatePipeline {
 	cp.Deploymentstrategy = "git"
 
 	if pipeline == "" {
-		cp.PipelineName = promptLine("Pipeline Name")
+		cp.PipelineName = promptLine("Pipeline Name", pipeline, pipeline)
 	} else {
 		cp.PipelineName = pipeline
 	}
 
-	cp.RepoProvider = promptLine("Repository Provider " + fmt.Sprint(repoSimpleList))
+	cp.RepoProvider = promptLine("Repository Provider", fmt.Sprint(repoSimpleList), "Github")
 	//cp.RepoProvider = "Github"
 
-	cp.RepositoryURL = promptLine("Repository URL")
+	cp.RepositoryURL = promptLine("Repository URL", "["+getGitRemote()+"]", getGitRemote())
 	//cp.RepositoryURL = "git@github.com:kubero-dev/template-nodeapp.git"
 
-	cp.Buildpack = promptLine("Buildpack " + fmt.Sprint(buildPacksSimpleList))
-	//cp.Buildpack = "NodeJS"
+	cp.Buildpack = promptLine("Buildpack ", fmt.Sprint(buildPacksSimpleList), buildPacksSimpleList[0])
+	cp.Buildpack = "NodeJS"
 
-	phaseReview := promptLine("enable reviewapps [y,n]")
+	phaseReview := promptLine("enable reviewapps", "[y,{{n}}::green]", "n")
 	if phaseReview == "y" {
 		cp.Reviewapps = true
 		cp.Phases = append(cp.Phases, Phase{
 			Name:    "review",
 			Enabled: true,
-			Context: promptLine("Context for reviewapps " + fmt.Sprint(contextSimpleList)),
+			Context: promptLine("Context for reviewapps", fmt.Sprint(contextSimpleList), contextSimpleList[0]),
 		})
 	} else {
 		cp.Reviewapps = false
@@ -94,12 +94,12 @@ func pipelinesForm() CreatePipeline {
 		})
 	}
 
-	phaseTest := promptLine("enable test [y,n]")
+	phaseTest := promptLine("enable test", "[y,{{n}}::green]", "n")
 	if phaseTest == "y" {
 		cp.Phases = append(cp.Phases, Phase{
 			Name:    "test",
 			Enabled: true,
-			Context: promptLine("Context for test " + fmt.Sprint(contextSimpleList)),
+			Context: promptLine("Context for test", fmt.Sprint(contextSimpleList), contextSimpleList[0]),
 		})
 	} else {
 		cp.Phases = append(cp.Phases, Phase{
@@ -109,12 +109,12 @@ func pipelinesForm() CreatePipeline {
 		})
 	}
 
-	phaseStage := promptLine("enable stage [y,n]")
+	phaseStage := promptLine("enable stage", "[y,{{n}}::green]", "n")
 	if phaseStage == "y" {
 		cp.Phases = append(cp.Phases, Phase{
 			Name:    "stage",
 			Enabled: true,
-			Context: promptLine("Context for stage " + fmt.Sprint(contextSimpleList)),
+			Context: promptLine("Context for stage", fmt.Sprint(contextSimpleList), contextSimpleList[0]),
 		})
 	} else {
 		cp.Phases = append(cp.Phases, Phase{
@@ -124,13 +124,13 @@ func pipelinesForm() CreatePipeline {
 		})
 	}
 
-	phaseProduction := promptLine("enable production [y,n]")
+	phaseProduction := promptLine("enable production", "[{{y}}::green,n]", "y")
 	//var phaseProductionContext string = ""
 	if phaseProduction != "n" {
 		cp.Phases = append(cp.Phases, Phase{
 			Name:    "production",
 			Enabled: true,
-			Context: promptLine("Context for production " + fmt.Sprint(contextSimpleList)),
+			Context: promptLine("Context for production ", fmt.Sprint(contextSimpleList), contextSimpleList[0]),
 		})
 	} else {
 		cp.Phases = append(cp.Phases, Phase{
