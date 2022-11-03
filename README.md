@@ -1,7 +1,7 @@
 # kubero-cli
 A CLI for kubero (WIP).
 
-The CLI is a very early stage:
+The CLI is in a very early stage:
 
 So far implemented command tree
 
