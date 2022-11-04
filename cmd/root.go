@@ -33,6 +33,17 @@ var rootCmd = &cobra.Command{
 	Short:   "A brief description of your application",
 	Version: version,
 	Long: `
+
+	,--. ,--.        ,--.
+	|  .'   /,--.,--.|  |-.  ,---. ,--.--. ,---.
+	|  .   ' |  ||  || .-. '| .-. :|  .--'| .-. |
+	|  |\   \'  ''  '| '-' |\   --.|  |   ' '-' '
+	'--' '--' '----'  '---'  '----''--'    '---'
+
+`,
+
+	/* not sure, which one is better
+	Long: `
 	 ___ ___       __               _______
 	|   Y   .--.--|  |--.-----.----|   _   |
 	|.  1  /|  |  |  _  |  -__|   _|.  |   |
@@ -42,6 +53,8 @@ var rootCmd = &cobra.Command{
 	'--- ---'                      '-------'
 
 	`,
+	*/
+
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
