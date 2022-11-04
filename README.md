@@ -16,7 +16,7 @@ So far implemented command tree
     │   ├── buildpacks
     │   └── podsizes
     ├── help
-    ├── init (WIP)
+    ├── init
     └── pipelines
         ├── create
         ├── list (WIP)
