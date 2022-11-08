@@ -25,12 +25,12 @@ An App runs allways in a Pipeline. A Pipeline is a collection of Apps.`,
 
 		if pipeline != "" {
 			// get a single pipeline
-			pipeline, _ := client.Get("/api/cli/pipelines/" + pipeline)
-			printPipeline(pipeline)
+			pipelineResp, _ := client.Get("/api/cli/pipelines/" + pipeline)
+			printPipeline(pipelineResp)
 		} else {
 			// get the pipelines
-			resp, _ := client.Get("/api/cli/pipelines")
-			printPipelinesList(resp)
+			pipelineListResp, _ := client.Get("/api/cli/pipelines")
+			printPipelinesList(pipelineListResp)
 		}
 	},
 }
@@ -99,6 +99,7 @@ type Pipeline struct {
 		Context string `json:"context"`
 		Enabled bool   `json:"enabled"`
 		Name    string `json:"name"`
+		Apps    []App  `json:"apps"`
 	} `json:"phases"`
 	Reviewapps bool `json:"reviewapps"`
 }
