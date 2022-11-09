@@ -9,7 +9,7 @@ So far implemented command tree
     kubero
     ├── apps
     │   ├── create (WIP)
-    │   ├── list (WIP)
+    │   ├── list
     │   └── delete (WIP)
     ├── config
     │   ├── addons
@@ -19,6 +19,6 @@ So far implemented command tree
     ├── init
     └── pipelines
         ├── create
-        ├── list (WIP)
+        ├── list
         └── delete
 ```

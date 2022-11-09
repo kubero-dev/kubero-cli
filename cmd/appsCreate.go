@@ -16,19 +16,34 @@ var createCmd = &cobra.Command{
 	Long:  `Create a new app in a Pipeline`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("create called")
+
+		appPipeline := appsForm()
+		fmt.Println(appPipeline)
 	},
 }
 
 func init() {
 	appsCmd.AddCommand(createCmd)
+}
 
-	// Here you will define your flags and configuration settings.
+type CreateApp struct {
+	PipelineName  string `json:"pipelineName"`
+	RepoProvider  string `json:"repoprovider"`
+	RepositoryURL string `json:"repositoryURL"`
+	Phases        []struct {
+		Name    string `json:"name"`
+		Enabled bool   `json:"enabled"`
+		Context string `json:"context"`
+	} `json:"phases"`
+	Reviewapps         bool   `json:"reviewapps"`
+	Dockerimage        string `json:"dockerimage"`
+	Deploymentstrategy string `json:"deploymentstrategy"`
+	Buildpack          string `json:"buildpack"`
+}
 
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// createCmd.PersistentFlags().String("foo", "", "A help for foo")
+func appsForm() CreateApp {
 
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// createCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	var ca CreateApp
+
+	return ca
 }
