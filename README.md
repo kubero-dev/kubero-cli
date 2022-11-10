@@ -10,7 +10,7 @@ So far implemented command tree
     ├── apps
     │   ├── create (WIP)
     │   ├── list
-    │   └── delete (WIP)
+    │   └── delete
     ├── config
     │   ├── addons
     │   ├── buildpacks

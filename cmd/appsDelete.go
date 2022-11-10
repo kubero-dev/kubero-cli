@@ -21,19 +21,27 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("delete called")
+
+		appInstance, _ := client.Delete("/api/cli/pipelines/" + pipeline + "/" + stage + "/" + app)
+
+		fmt.Println(appInstance)
+
+		fmt.Println(appInstance.StatusCode())
 	},
 }
 
+var stage string
+var app string
+
 func init() {
+	deleteCmd.Flags().StringVarP(&pipeline, "pipeline", "p", "", "* Name of the pipeline")
+	deleteCmd.MarkFlagRequired("pipeline")
+
+	deleteCmd.Flags().StringVarP(&stage, "stage", "s", "", "* Name of the phase")
+	deleteCmd.MarkFlagRequired("stage")
+
+	deleteCmd.Flags().StringVarP(&app, "app", "a", "", "* Name of the app")
+	deleteCmd.MarkFlagRequired("app")
+
 	appsCmd.AddCommand(deleteCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// deleteCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// deleteCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

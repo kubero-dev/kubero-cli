@@ -52,6 +52,8 @@ func printAppsList(r *resty.Response) {
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetHeader([]string{
 			"Name",
+			"Phase",
+			"Pipeline",
 			"Repository",
 			"Domain",
 		})
@@ -60,6 +62,8 @@ func printAppsList(r *resty.Response) {
 		for _, app := range phase.Apps {
 			table.Append([]string{
 				app.Name,
+				app.Phase,
+				app.Pipeline,
 				app.Gitrepo.CloneURL + ":" +
 					app.Gitrepo.DefaultBranch,
 				app.Domain,
