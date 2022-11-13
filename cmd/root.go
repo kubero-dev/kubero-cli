@@ -91,6 +91,7 @@ func printCLI(table *tablewriter.Table, r *resty.Response) {
 	}
 }
 
+// question, options/example, default
 func promptLine(question string, options string, def string) string {
 	reader := bufio.NewReader(os.Stdin)
 	cfmt.Printf("\n  {{%s}}::lightWhite %s: ", question, options)
