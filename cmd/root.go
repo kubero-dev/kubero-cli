@@ -24,6 +24,7 @@ import (
 )
 
 var outputFormat string
+var force bool
 
 //go:embed VERSION
 var version string
@@ -97,6 +98,10 @@ func printCLI(table *tablewriter.Table, r *resty.Response) {
 
 // question, options/example, default
 func promptLine(question string, options string, def string) string {
+	if def != "" && force {
+		cfmt.Printf("\n  {{%s}}::lightWhite %s : {{%s}}::green\n", question, options, def)
+		return def
+	}
 	reader := bufio.NewReader(os.Stdin)
 	cfmt.Printf("\n  {{%s}}::lightWhite %s {{%s}}::green : ", question, options, def)
 	text, _ := reader.ReadString('\n')

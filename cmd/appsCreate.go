@@ -40,6 +40,7 @@ var createCmd = &cobra.Command{
 
 func init() {
 	appsCmd.AddCommand(createCmd)
+	appsCmd.PersistentFlags().BoolVarP(&force, "force", "f", false, "Skip asking for confirmation")
 }
 
 type CreateApp struct {
