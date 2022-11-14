@@ -20,12 +20,15 @@ import (
 	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var outputFormat string
 
 //go:embed VERSION
 var version string
+
+var pipelineConfig *viper.Viper
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -63,6 +66,7 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
+	loadConfigs()
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
@@ -94,7 +98,7 @@ func printCLI(table *tablewriter.Table, r *resty.Response) {
 // question, options/example, default
 func promptLine(question string, options string, def string) string {
 	reader := bufio.NewReader(os.Stdin)
-	cfmt.Printf("\n  {{%s}}::lightWhite %s: ", question, options)
+	cfmt.Printf("\n  {{%s}}::lightWhite %s {{%s}}::green : ", question, options, def)
 	text, _ := reader.ReadString('\n')
 	text = strings.Replace(text, "\n", "", -1)
 	if text == "" {
@@ -186,4 +190,16 @@ func getGitdir() string {
 
 	}
 	return ""
+}
+
+func loadConfigs() {
+
+	pipelineConfig = viper.New()
+	pipelineConfig.SetConfigName("pipeline") // name of config file (without extension)
+	pipelineConfig.SetConfigType("yaml")     // REQUIRED if the config file does not have the extension in the name
+	pipelineConfig.AddConfigPath(".")        // path to look for the config file in
+	pipelineConfig.ReadInConfig()
+
+	//fmt.Println("Using config file:", viper.ConfigFileUsed())
+	//fmt.Println("Using config file:", pipelineConfig.ConfigFileUsed())
 }

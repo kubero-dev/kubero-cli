@@ -19,6 +19,8 @@ func main() {
 	cmd.Execute()
 }
 
+// var configPath = os.Getenv("HOME") + "/.config/kubero-cli"
+
 func loadConfig() {
 
 	viper.SetDefault("api.url", "http://localhost:2000")

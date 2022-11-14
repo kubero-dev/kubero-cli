@@ -5,9 +5,12 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
 	"strconv"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
 )
 
 // createCmd represents the create command
@@ -18,8 +21,20 @@ var createCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("create called")
 
-		appPipeline := appsForm()
-		fmt.Println(appPipeline)
+		createApp := appsForm()
+		writeAppYaml(createApp)
+		/*
+			client.SetBody(createApp.Spec)
+			_, appErr := client.Post("/api/cli/apps")
+
+			if appErr != nil {
+				fmt.Println(appErr)
+			} else {
+				cfmt.Println("{{App created successfully}}::green")
+				//json.Unmarshal(app.Body(), &createApp.Spec)
+				writeAppYaml(createApp)
+			}
+		*/
 	},
 }
 
@@ -142,37 +157,94 @@ type CreateApp struct {
 	} `json:"spec"`
 }
 
+func writeAppYaml(app CreateApp) {
+	// write pipeline.yaml
+	yamlData, err := yaml.Marshal(&app)
+
+	if err != nil {
+		fmt.Printf("Error while Marshaling. %v", err)
+	}
+	//fmt.Println(string(yamlData))
+
+	fileName := "app." + app.Spec.Phase + ".yaml"
+	err = ioutil.WriteFile(fileName, yamlData, 0644)
+	if err != nil {
+		panic("Unable to write data into the file")
+	}
+}
+
 func appsForm() CreateApp {
 
 	var ca CreateApp
 
-	ca.Spec.Pipeline = promptLine("Pipeline", "", "")
+	ca.APIVersion = "application.kubero.dev/v1alpha1"
+	ca.Kind = "KuberoApp"
 
-	ca.Spec.Name = promptLine("Name", "", "")
+	ca.Spec.Pipeline = promptLine("Pipeline", "", pipelineConfig.GetString("spec.name"))
 
-	ca.Spec.Domain = promptLine("Domain", "", "")
+	availablePhases := getPipelinePases()
+	ca.Spec.Phase = promptLine("Phase", fmt.Sprint(availablePhases), "")
 
-	ca.Spec.Gitrepo.SSHURL = promptLine("Git SSH URL", "", "")
+	appconfig := loadAppConfig(ca.Spec.Phase)
 
-	ca.Spec.Branch = promptLine("Branch", "main", "main")
+	ca.Spec.Name = promptLine("Name", "", appconfig.GetString("spec.name"))
 
-	autodeploy := promptLine("Audtodeploy", "Y,n", "Y")
+	ca.Spec.Domain = promptLine("Domain", "", appconfig.GetString("spec.domain"))
+
+	gitURL := pipelineConfig.GetString("spec.git.repository.sshurl")
+	ca.Spec.Gitrepo.SSHURL = promptLine("Git SSH URL", "["+getGitRemote()+"]", gitURL)
+
+	ca.Spec.Branch = promptLine("Branch", "main", appconfig.GetString("spec.branch"))
+
+	autodeployDefault := "n"
+	if !appconfig.GetBool("spec.autodeploy") {
+		autodeployDefault = "y"
+	}
+	autodeploy := promptLine("Autodeploy", "[y,n]", autodeployDefault)
 	if autodeploy == "Y" {
 		ca.Spec.Autodeploy = true
 	} else {
 		ca.Spec.Autodeploy = false
 	}
 
-	envCount, _ := strconv.Atoi(promptLine("Env Vars", "number", "0"))
+	envCount, _ := strconv.Atoi(promptLine("Number of Env Vars", "", "0"))
 	for i := 0; i < envCount; i++ {
 		ca.Spec.EnvVars = append(ca.Spec.EnvVars, promptLine("Env Var", "", ""))
 	}
 
-	ca.Spec.Image.ContainerPort, _ = strconv.Atoi(promptLine("Container Port", "8080", "8080"))
+	ca.Spec.Image.ContainerPort, _ = strconv.Atoi(promptLine("Container Port", "8080", appconfig.GetString("spec.image.containerport")))
 
-	ca.Spec.Web.ReplicaCount, _ = strconv.Atoi(promptLine("Web Pods", "1", "1"))
+	ca.Spec.Web.ReplicaCount, _ = strconv.Atoi(promptLine("Web Pods", "1", appconfig.GetString("spec.web.replicacount")))
 
-	ca.Spec.Worker.ReplicaCount, _ = strconv.Atoi(promptLine("Worker Pods", "0", "0"))
+	ca.Spec.Worker.ReplicaCount, _ = strconv.Atoi(promptLine("Worker Pods", "0", appconfig.GetString("spec.worker.replicacount")))
 
 	return ca
+}
+
+func getPipelinePases() []string {
+	var phases []string
+	phasesList := pipelineConfig.GetStringSlice("spec.phases")
+
+	for p := range phasesList {
+		enabled := pipelineConfig.GetBool("spec.phases." + strconv.Itoa(p) + ".enabled")
+		if enabled {
+			phases = append(phases, pipelineConfig.GetString("spec.phases."+strconv.Itoa(p)+".name"))
+		}
+	}
+	return phases
+}
+
+func loadAppConfig(phase string) *viper.Viper {
+
+	appConfig := viper.New()
+	appConfig.SetConfigName("app." + phase) // name of config file (without extension)
+	appConfig.SetConfigType("yaml")         // REQUIRED if the config file does not have the extension in the name
+	appConfig.AddConfigPath(".")            // path to look for the config file in
+	appConfig.ReadInConfig()
+
+	//fmt.Println("Using config file:", viper.ConfigFileUsed())
+	//fmt.Println("Using config file:", pipelineConfig.ConfigFileUsed())
+
+	return appConfig
+
 }

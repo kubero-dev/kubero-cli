@@ -4,9 +4,14 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"time"
 
+	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
 
 // createCmd represents the create command
@@ -22,9 +27,16 @@ var PipelineCreateCmd = &cobra.Command{
 		loadBuildpacks()
 		createPipeline := pipelinesForm()
 
-		client.SetBody(createPipeline)
-		pipeline, _ := client.Post("/api/cli/pipelines/")
-		fmt.Println(pipeline)
+		client.SetBody(createPipeline.Spec)
+		pipeline, pipelineErr := client.Post("/api/cli/pipelines/")
+
+		if pipelineErr != nil {
+			fmt.Println(pipelineErr)
+		} else {
+			cfmt.Println("{{Pipeline created successfully}}::green")
+			json.Unmarshal(pipeline.Body(), &createPipeline.Spec)
+			writePipelineYaml(createPipeline)
+		}
 
 	},
 }
@@ -34,18 +46,83 @@ func init() {
 }
 
 type CreatePipeline struct {
-	PipelineName  string `json:"pipelineName"`
-	RepoProvider  string `json:"repoprovider"`
-	RepositoryURL string `json:"repositoryURL"`
-	Phases        []struct {
-		Name    string `json:"name"`
-		Enabled bool   `json:"enabled"`
-		Context string `json:"context"`
-	} `json:"phases"`
-	Reviewapps         bool   `json:"reviewapps"`
-	Dockerimage        string `json:"dockerimage"`
-	Deploymentstrategy string `json:"deploymentstrategy"`
-	Buildpack          string `json:"buildpack"`
+	APIVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+	Spec       struct {
+		Buildpack struct {
+			Build struct {
+				Command    string `json:"command"`
+				Repository string `json:"repository"`
+				Tag        string `json:"tag"`
+			} `json:"build"`
+			Fetch struct {
+				Repository string `json:"repository"`
+				Tag        string `json:"tag"`
+			} `json:"fetch"`
+			Language string `json:"language"`
+			Name     string `json:"name"`
+			Run      struct {
+				Command    string `json:"command"`
+				Repository string `json:"repository"`
+				Tag        string `json:"tag"`
+			} `json:"run"`
+		} `json:"buildpack"`
+		Deploymentstrategy string `json:"deploymentstrategy"`
+		Dockerimage        string `json:"dockerimage"`
+		Git                struct {
+			Keys struct {
+				CreatedAt time.Time `json:"created_at"`
+				ID        int       `json:"id"`
+				//Priv      string    `json:"priv"`
+				//Pub       string    `json:"pub"`
+				ReadOnly bool   `json:"read_only"`
+				Title    string `json:"title"`
+				URL      string `json:"url"`
+				Verified bool   `json:"verified"`
+			} `json:"keys"`
+			Repository struct {
+				Provider      string `json:"provider"`
+				Admin         bool   `json:"admin"`
+				CloneURL      string `json:"clone_url"`
+				DefaultBranch string `json:"default_branch"`
+				Description   string `json:"description"`
+				Homepage      string `json:"homepage"`
+				ID            int    `json:"id"`
+				Language      string `json:"language"`
+				Name          string `json:"name"`
+				NodeID        string `json:"node_id"`
+				Owner         string `json:"owner"`
+				Private       bool   `json:"private"`
+				Push          bool   `json:"push"`
+				SSHURL        string `json:"ssh_url"`
+				Visibility    string `json:"visibility"`
+			} `json:"repository"`
+			Webhook struct {
+				Active    bool      `json:"active"`
+				CreatedAt time.Time `json:"created_at"`
+				Events    []string  `json:"events"`
+				ID        int       `json:"id"`
+				Insecure  string    `json:"insecure"`
+				URL       string    `json:"url"`
+			} `json:"webhook"`
+			Webhooks struct {
+			} `json:"webhooks"`
+		} `json:"git"`
+		Name       string  `json:"pipelineName"`
+		Phases     []Phase `json:"phases"`
+		Reviewapps bool    `json:"reviewapps"`
+	} `json:"spec"`
+}
+
+type CreatePipelines struct {
+	PipelineName       string  `json:"pipelineName"`
+	RepoProvider       string  `json:"repoprovider"`
+	RepositoryURL      string  `json:"repositoryURL"`
+	Phases             []Phase `json:"phases"`
+	Reviewapps         bool    `json:"reviewapps"`
+	Dockerimage        string  `json:"dockerimage"`
+	Deploymentstrategy string  `json:"deploymentstrategy"`
+	Buildpack          string  `json:"buildpack"`
 }
 
 type Phase struct {
@@ -54,86 +131,111 @@ type Phase struct {
 	Context string `json:"context"`
 }
 
+func writePipelineYaml(pipeline CreatePipeline) {
+	// write pipeline.yaml
+	yamlData, err := yaml.Marshal(&pipeline)
+
+	if err != nil {
+		fmt.Printf("Error while Marshaling. %v", err)
+	}
+	//fmt.Println(string(yamlData))
+
+	fileName := "pipeline.yaml"
+	err = ioutil.WriteFile(fileName, yamlData, 0644)
+	if err != nil {
+		panic("Unable to write data into the file")
+	}
+}
+
 func pipelinesForm() CreatePipeline {
 
 	var cp CreatePipeline
 
+	cp.APIVersion = "application.kubero.dev/v1alpha1"
+	cp.Kind = "KuberoPipeline"
+
 	// those fields are deprecated and may be removed in the future
-	cp.Dockerimage = ""
-	cp.Deploymentstrategy = "git"
+	cp.Spec.Dockerimage = ""
+	cp.Spec.Deploymentstrategy = "git"
 
 	if pipeline == "" {
-		cp.PipelineName = promptLine("Pipeline Name", pipeline, pipeline)
+		pipeline = pipelineConfig.GetString("spec.name")
+		cp.Spec.Name = promptLine("Pipeline Name", "", pipeline)
 	} else {
-		cp.PipelineName = pipeline
+		cp.Spec.Name = pipeline
 	}
 
-	cp.RepoProvider = promptLine("Repository Provider", fmt.Sprint(repoSimpleList), "Github")
-	//cp.RepoProvider = "Github"
+	gitPrivider := pipelineConfig.GetString("spec.git.repository.provider")
+	cp.Spec.Git.Repository.Provider = promptLine("Repository Provider", fmt.Sprint(repoSimpleList), gitPrivider)
 
-	cp.RepositoryURL = promptLine("Repository URL", "["+getGitRemote()+"]", getGitRemote())
+	gitURL := pipelineConfig.GetString("spec.git.repository.sshurl")
+	cp.Spec.Git.Repository.SSHURL = promptLine("Repository URL", "["+getGitRemote()+"]", gitURL)
 	//cp.RepositoryURL = "git@github.com:kubero-dev/template-nodeapp.git"
 
-	cp.Buildpack = promptLine("Buildpack ", fmt.Sprint(buildPacksSimpleList), buildPacksSimpleList[0])
-	cp.Buildpack = "NodeJS"
+	selectedBuildpack := pipelineConfig.GetString("spec.buildpack.name")
+	cp.Spec.Buildpack.Name = promptLine("Buildpack ", fmt.Sprint(buildPacksSimpleList), selectedBuildpack)
 
-	phaseReview := promptLine("enable reviewapps", "[y,{{n}}::green]", "n")
+	phaseReview := promptLine("enable reviewapps", "[y,n]", "n")
 	if phaseReview == "y" {
-		cp.Reviewapps = true
-		cp.Phases = append(cp.Phases, Phase{
+		cp.Spec.Reviewapps = true
+		contextDefault := pipelineConfig.GetString("spec.phases.0.context")
+		cp.Spec.Phases = append(cp.Spec.Phases, Phase{
 			Name:    "review",
 			Enabled: true,
-			Context: promptLine("Context for reviewapps", fmt.Sprint(contextSimpleList), contextSimpleList[0]),
+			Context: promptLine("Context for reviewapps", fmt.Sprint(contextSimpleList), contextDefault),
 		})
 	} else {
-		cp.Reviewapps = false
-		cp.Phases = append(cp.Phases, Phase{
+		cp.Spec.Reviewapps = false
+		cp.Spec.Phases = append(cp.Spec.Phases, Phase{
 			Name:    "review",
 			Enabled: false,
 			Context: "",
 		})
 	}
 
-	phaseTest := promptLine("enable test", "[y,{{n}}::green]", "n")
+	phaseTest := promptLine("enable test", "[y,n]", "n")
 	if phaseTest == "y" {
-		cp.Phases = append(cp.Phases, Phase{
+		contextDefault := pipelineConfig.GetString("spec.phases.1.context")
+		cp.Spec.Phases = append(cp.Spec.Phases, Phase{
 			Name:    "test",
 			Enabled: true,
-			Context: promptLine("Context for test", fmt.Sprint(contextSimpleList), contextSimpleList[0]),
+			Context: promptLine("Context for test", fmt.Sprint(contextSimpleList), contextDefault),
 		})
 	} else {
-		cp.Phases = append(cp.Phases, Phase{
+		cp.Spec.Phases = append(cp.Spec.Phases, Phase{
 			Name:    "test",
 			Enabled: false,
 			Context: "",
 		})
 	}
 
-	phaseStage := promptLine("enable stage", "[y,{{n}}::green]", "n")
+	phaseStage := promptLine("enable stage", "[y,n]", "n")
 	if phaseStage == "y" {
-		cp.Phases = append(cp.Phases, Phase{
+		contextDefault := pipelineConfig.GetString("spec.phases.2.context")
+		cp.Spec.Phases = append(cp.Spec.Phases, Phase{
 			Name:    "stage",
 			Enabled: true,
-			Context: promptLine("Context for stage", fmt.Sprint(contextSimpleList), contextSimpleList[0]),
+			Context: promptLine("Context for stage", fmt.Sprint(contextSimpleList), contextDefault),
 		})
 	} else {
-		cp.Phases = append(cp.Phases, Phase{
+		cp.Spec.Phases = append(cp.Spec.Phases, Phase{
 			Name:    "stage",
 			Enabled: false,
 			Context: "",
 		})
 	}
 
-	phaseProduction := promptLine("enable production", "[{{y}}::green,n]", "y")
+	phaseProduction := promptLine("enable production", "[y,n]", "y")
 	//var phaseProductionContext string = ""
 	if phaseProduction != "n" {
-		cp.Phases = append(cp.Phases, Phase{
+		contextDefault := pipelineConfig.GetString("spec.phases.3.context")
+		cp.Spec.Phases = append(cp.Spec.Phases, Phase{
 			Name:    "production",
 			Enabled: true,
-			Context: promptLine("Context for production ", fmt.Sprint(contextSimpleList), contextSimpleList[0]),
+			Context: promptLine("Context for production ", fmt.Sprint(contextSimpleList), contextDefault),
 		})
 	} else {
-		cp.Phases = append(cp.Phases, Phase{
+		cp.Spec.Phases = append(cp.Spec.Phases, Phase{
 			Name:    "production",
 			Enabled: false,
 			Context: "",
@@ -142,5 +244,3 @@ func pipelinesForm() CreatePipeline {
 
 	return cp
 }
-
-//{"pipelineName":"aaaa","gitrepo":"git@github.com:kubero-dev/template-nodeapp.git","phases":[{"name":"review","enabled":false,"context":""},{"name":"test","enabled":false,"context":""},{"name":"stage","enabled":true,"context":"inClusterContext"},{"name":"production","enabled":true,"context":"inClusterContext"}],"reviewapps":true,"git":{"keys":{"id":73211402,"title":"bot@kubero","verified":true,"created_at":"2022-11-02T16:09:54Z","url":"https://api.github.com/repos/kubero-dev/template-nodeapp/keys/73211402","read_only":true,"pub":"c3NoLWVkMjU1MTkgQUFBQUMzTnphQzFsWkRJMU5URTVBQUFBSUdueHBQT0tXV3J2S0x6TGNoa2h6L3AreE54ZlhWbHlWektyaGFnUzJzeDIgKHVubmFtZWQp","priv":"LS0tLS1CRUdJTiBPUEVOU1NIIFBSSVZBVEUgS0VZLS0tLS0KYjNCbGJuTnphQzFyWlhrdGRqRUFBQUFBQkc1dmJtVUFBQUFFYm05dVpRQUFBQUFBQUFBQkFBQUFNd0FBQUF0emMyZ3RaVwpReU5UVXhPUUFBQUNCcDhhVHppbGxxN3lpOHkzSVpJYy82ZnNUY1gxMVpjbGN5cTRXb0V0ck1kZ0FBQUpES2xEZTV5cFEzCnVRQUFBQXR6YzJndFpXUXlOVFV4T1FBQUFDQnA4YVR6aWxscTd5aTh5M0laSWMvNmZzVGNYMTFaY2xjeXE0V29FdHJNZGcKQUFBRUJ2K0krTkp1alVwcmZ4QlBtdFBDWjhKak5teWtidnVWbXA3Ym84Wko3eU9HbnhwUE9LV1dydktMekxjaGtoei9wKwp4TnhmWFZseVZ6S3JoYWdTMnN4MkFBQUFDU2gxYm01aGJXVmtLUUVDQXdRPQotLS0tLUVORCBPUEVOU1NIIFBSSVZBVEUgS0VZLS0tLS0K"},"repository":{"id":501665730,"node_id":"R_kgDOHebPwg","name":"template-nodeapp","description":"Simple example Node app","owner":"kubero-dev","private":false,"ssh_url":"git@github.com:kubero-dev/template-nodeapp.git","clone_url":"https://github.com/kubero-dev/template-nodeapp.git","language":"JavaScript","homepage":"","admin":true,"push":true,"visibility":"public","default_branch":"main"},"webhooks":{},"webhook":{"id":386238670,"active":true,"created_at":"2022-10-30T20:26:50Z","url":"https://kubero6d304b3d55d72.loca.lt/api/repo/webhooks/github","insecure":"0","events":["pull_request","push"]}},"dockerimage":"","deploymentstrategy":"git","buildpack":{"name":"NodeJS","language":"JavaScript","fetch":{"repository":"ghcr.io/kubero-dev/buildpacks/fetch","tag":"main"},"build":{"repository":"node","tag":"latest","command":"npm install"},"run":{"repository":"node","tag":"latest","command":"node index.js"}}}
