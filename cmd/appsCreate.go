@@ -5,7 +5,7 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strconv"
 
 	"github.com/spf13/cobra"
@@ -168,7 +168,7 @@ func writeAppYaml(app CreateApp) {
 	//fmt.Println(string(yamlData))
 
 	fileName := "app." + app.Spec.Phase + ".yaml"
-	err = ioutil.WriteFile(fileName, yamlData, 0644)
+	err = os.WriteFile(fileName, yamlData, 0644)
 	if err != nil {
 		panic("Unable to write data into the file")
 	}

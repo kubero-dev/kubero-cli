@@ -6,7 +6,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"time"
 
 	"github.com/i582/cfmt/cmd/cfmt"
@@ -141,7 +141,7 @@ func writePipelineYaml(pipeline CreatePipeline) {
 	//fmt.Println(string(yamlData))
 
 	fileName := "pipeline.yaml"
-	err = ioutil.WriteFile(fileName, yamlData, 0644)
+	err = os.WriteFile(fileName, yamlData, 0644)
 	if err != nil {
 		panic("Unable to write data into the file")
 	}
