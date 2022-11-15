@@ -8,7 +8,7 @@ So far implemented command tree
 ```
     kubero
     ├── apps
-    │   ├── create (WIP)
+    │   ├── create
     │   ├── fetch (WIP)
     │   ├── list
     │   └── delete
@@ -18,6 +18,7 @@ So far implemented command tree
     │   └── podsizes
     ├── help
     ├── init
+    ├── install (WIP)
     └── pipelines
         ├── create
         ├── fetch (WIP)
