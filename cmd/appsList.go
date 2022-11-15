@@ -25,6 +25,15 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
+
+		if pipeline == "" {
+			pipeline = pipelineConfig.GetString("spec.name")
+			if pipeline == "" {
+				cfmt.Println("{{  Pipeline not found in config file}}::red")
+				os.Exit(1)
+			}
+		}
+
 		pipelineResp, _ := client.Get("/api/cli/pipelines/" + pipeline + "/apps")
 		printAppsList(pipelineResp)
 	},
@@ -32,17 +41,17 @@ to quickly create a Cobra application.`,
 
 func init() {
 	appsListCmd.Flags().StringVarP(&pipeline, "pipeline", "p", "", "Name of the Pipeline")
-	appsListCmd.MarkFlagRequired("pipeline")
+	//appsListCmd.MarkFlagRequired("pipeline")
 	appsCmd.AddCommand(appsListCmd)
 }
 
 func printAppsList(r *resty.Response) {
 	//fmt.Println(r)
 
-	var pipeline Pipeline
-	json.Unmarshal(r.Body(), &pipeline)
+	var pl Pipeline
+	json.Unmarshal(r.Body(), &pl)
 
-	for _, phase := range pipeline.Phases {
+	for _, phase := range pl.Phases {
 		if !phase.Enabled {
 			continue
 		}

@@ -199,8 +199,11 @@ func appsForm() CreateApp {
 	gitURL := pipelineConfig.GetString("spec.git.repository.sshurl")
 	//ca.Spec.Gitrepo.SSHURL = promptLine("Git SSH URL", "["+getGitRemote()+"]", gitURL)
 
-	ca.Spec.Gitrepo.SSHURL = gitURL
+	//ca.Spec.Gitrepo.SSHURL = pipelineConfig.GetString("spec.git.repository")
+	pipelineConfig.UnmarshalKey("spec.git.repository", &ca.Spec.Gitrepo)
 	ca.Spec.Branch = promptLine("Branch", gitURL+":", appconfig.GetString("spec.branch"))
+
+	ca.Spec.Buildpack = pipelineConfig.GetString("spec.buildpack.name")
 
 	autodeployDefault := "n"
 	if !appconfig.GetBool("spec.autodeploy") {
