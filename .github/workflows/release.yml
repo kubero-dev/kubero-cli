@@ -1,13 +1,13 @@
 name: goreleaser
 
 on:
-  #push:
+  push:
     #branches:
     #  - master
 
     # Publish `v1.2.3` tags as releases.
-  #  tags:
-  #    - v*
+    tags:
+      - v*
   workflow_dispatch:
 
 env:
