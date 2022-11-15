@@ -6,7 +6,7 @@ before:
     - go mod tidy
 builds:
   -
-    main: pkg/main.go
+    main: pkg/kubero.go
     binary: kubero
     env:
       - CGO_ENABLED=0
