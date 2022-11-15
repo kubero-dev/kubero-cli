@@ -37,7 +37,7 @@ func init() {
 	deleteCmd.Flags().StringVarP(&pipeline, "pipeline", "p", "", "* Name of the pipeline")
 	deleteCmd.MarkFlagRequired("pipeline")
 
-	deleteCmd.Flags().StringVarP(&stage, "stage", "s", "", "* Name of the phase")
+	deleteCmd.Flags().StringVarP(&stage, "stage", "s", "", "* Name of the stage")
 	deleteCmd.MarkFlagRequired("stage")
 
 	deleteCmd.Flags().StringVarP(&app, "app", "a", "", "* Name of the app")

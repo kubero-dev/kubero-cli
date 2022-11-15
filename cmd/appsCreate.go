@@ -4,10 +4,12 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
 
+	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
@@ -23,24 +25,26 @@ var createCmd = &cobra.Command{
 
 		createApp := appsForm()
 		writeAppYaml(createApp)
-		/*
-			client.SetBody(createApp.Spec)
-			_, appErr := client.Post("/api/cli/apps")
 
-			if appErr != nil {
-				fmt.Println(appErr)
-			} else {
-				cfmt.Println("{{App created successfully}}::green")
-				//json.Unmarshal(app.Body(), &createApp.Spec)
-				writeAppYaml(createApp)
-			}
-		*/
+		client.SetBody(createApp.Spec)
+		app, appErr := client.Post("/api/cli/apps")
+
+		if appErr != nil {
+			fmt.Println(appErr)
+		} else {
+			fmt.Println(app)
+			cfmt.Println("{{App created successfully}}::green")
+			json.Unmarshal(app.Body(), &createApp.Spec)
+			writeAppYaml(createApp)
+		}
+
 	},
 }
 
 func init() {
+	createCmd.PersistentFlags().BoolVarP(&force, "force", "f", false, "Skip asking for confirmation")
+	createCmd.Flags().StringVarP(&stage, "stage", "s", "", "Name of the stage")
 	appsCmd.AddCommand(createCmd)
-	appsCmd.PersistentFlags().BoolVarP(&force, "force", "f", false, "Skip asking for confirmation")
 }
 
 type CreateApp struct {
@@ -183,8 +187,8 @@ func appsForm() CreateApp {
 
 	ca.Spec.Pipeline = promptLine("Pipeline", "", pipelineConfig.GetString("spec.name"))
 
-	availablePhases := getPipelinePases()
-	ca.Spec.Phase = promptLine("Phase", fmt.Sprint(availablePhases), "")
+	availablePhases := getPipelinePhases()
+	ca.Spec.Phase = promptLine("Phase", fmt.Sprint(availablePhases), stage)
 
 	appconfig := loadAppConfig(ca.Spec.Phase)
 
@@ -193,9 +197,10 @@ func appsForm() CreateApp {
 	ca.Spec.Domain = promptLine("Domain", "", appconfig.GetString("spec.domain"))
 
 	gitURL := pipelineConfig.GetString("spec.git.repository.sshurl")
-	ca.Spec.Gitrepo.SSHURL = promptLine("Git SSH URL", "["+getGitRemote()+"]", gitURL)
+	//ca.Spec.Gitrepo.SSHURL = promptLine("Git SSH URL", "["+getGitRemote()+"]", gitURL)
 
-	ca.Spec.Branch = promptLine("Branch", "main", appconfig.GetString("spec.branch"))
+	ca.Spec.Gitrepo.SSHURL = gitURL
+	ca.Spec.Branch = promptLine("Branch", gitURL+":", appconfig.GetString("spec.branch"))
 
 	autodeployDefault := "n"
 	if !appconfig.GetBool("spec.autodeploy") {
@@ -222,7 +227,7 @@ func appsForm() CreateApp {
 	return ca
 }
 
-func getPipelinePases() []string {
+func getPipelinePhases() []string {
 	var phases []string
 	phasesList := pipelineConfig.GetStringSlice("spec.phases")
 

@@ -170,7 +170,6 @@ func pipelinesForm() CreatePipeline {
 
 	gitURL := pipelineConfig.GetString("spec.git.repository.sshurl")
 	cp.Spec.Git.Repository.SSHURL = promptLine("Repository URL", "["+getGitRemote()+"]", gitURL)
-	//cp.RepositoryURL = "git@github.com:kubero-dev/template-nodeapp.git"
 
 	selectedBuildpack := pipelineConfig.GetString("spec.buildpack.name")
 	cp.Spec.Buildpack.Name = promptLine("Buildpack ", fmt.Sprint(buildPacksSimpleList), selectedBuildpack)
