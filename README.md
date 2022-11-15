@@ -9,7 +9,7 @@ So far implemented command tree
     kubero
     ├── apps
     │   ├── create
-    │   ├── fetch (WIP)
+    │   ├── fetch
     │   ├── list
     │   └── delete
     ├── config
@@ -21,7 +21,7 @@ So far implemented command tree
     ├── install (WIP)
     └── pipelines
         ├── create
-        ├── fetch (WIP)
+        ├── fetch
         ├── list
         └── delete
 ```

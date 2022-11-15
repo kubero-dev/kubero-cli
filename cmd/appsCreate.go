@@ -16,7 +16,7 @@ import (
 )
 
 // createCmd represents the create command
-var createCmd = &cobra.Command{
+var appsCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new app in a Pipeline",
 	Long: `Create a new app in a Pipeline.
@@ -44,9 +44,9 @@ If called without arguments, it will ask for all the required information`,
 }
 
 func init() {
-	createCmd.PersistentFlags().BoolVarP(&force, "force", "f", false, "Skip asking for confirmation")
-	createCmd.Flags().StringVarP(&stage, "stage", "s", "", "Name of the stage")
-	appsCmd.AddCommand(createCmd)
+	appsCreateCmd.PersistentFlags().BoolVarP(&force, "force", "f", false, "Skip asking for confirmation")
+	appsCreateCmd.Flags().StringVarP(&stage, "stage", "s", "", "Name of the stage")
+	appsCmd.AddCommand(appsCreateCmd)
 }
 
 type CreateApp struct {

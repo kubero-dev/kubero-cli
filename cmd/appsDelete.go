@@ -10,7 +10,7 @@ import (
 )
 
 // deleteCmd represents the delete command
-var deleteCmd = &cobra.Command{
+var appsDeleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete a existing app in a pipeline",
 	Long:  `Delete a existing app in a pipeline`,
@@ -29,14 +29,14 @@ var stage string
 var app string
 
 func init() {
-	deleteCmd.Flags().StringVarP(&pipeline, "pipeline", "p", "", "* Name of the pipeline")
-	deleteCmd.MarkFlagRequired("pipeline")
+	appsDeleteCmd.Flags().StringVarP(&pipeline, "pipeline", "p", "", "* Name of the pipeline")
+	appsDeleteCmd.MarkFlagRequired("pipeline")
 
-	deleteCmd.Flags().StringVarP(&stage, "stage", "s", "", "* Name of the stage")
-	deleteCmd.MarkFlagRequired("stage")
+	appsDeleteCmd.Flags().StringVarP(&stage, "stage", "s", "", "* Name of the stage")
+	appsDeleteCmd.MarkFlagRequired("stage")
 
-	deleteCmd.Flags().StringVarP(&app, "app", "a", "", "* Name of the app")
-	deleteCmd.MarkFlagRequired("app")
+	appsDeleteCmd.Flags().StringVarP(&app, "app", "a", "", "* Name of the app")
+	appsDeleteCmd.MarkFlagRequired("app")
 
-	appsCmd.AddCommand(deleteCmd)
+	appsCmd.AddCommand(appsDeleteCmd)
 }

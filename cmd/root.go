@@ -44,6 +44,9 @@ var rootCmd = &cobra.Command{
 	|  |\   \'  ''  '| '-' |\   --.|  |   ' '-' '
 	'--' '--' '----'  '---'  '----''--'    '---'
 
+
+Documentation:
+  https://github.com/kubero-dev/kubero/wiki
 `,
 
 	/* not sure, which one is better
