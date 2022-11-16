@@ -9,6 +9,7 @@ import (
 	"os/exec"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/leaanthony/spinner"
 	"github.com/spf13/cobra"
 )
@@ -24,7 +25,10 @@ required binaries:
  - operator-sdk
  - kind (optional)`,
 	Run: func(cmd *cobra.Command, args []string) {
-		kind := promptLine("Install a local kubernetes kind cluster", "[y,n]", "n")
+
+		checkAllBinaries()
+
+		kind := promptLine("Start a local kubernetes kind cluster", "[y,n]", "n")
 		if kind == "y" {
 			installKind()
 		}
@@ -56,7 +60,36 @@ func init() {
 	rootCmd.AddCommand(installCmd)
 }
 
+func checkAllBinaries() {
+	if !checkBinary("kubectl") {
+		cfmt.Println("{{✗ kubectl is not installed}}::red")
+	} else {
+		cfmt.Println("{{✓ kubectl is installed}}::green")
+	}
+
+	if !checkBinary("operator-sdk") {
+		cfmt.Println("{{✗ operator-sdk is not installed}}::red")
+	} else {
+		cfmt.Println("{{✓ operator-sdk is installed}}::green")
+	}
+
+	if !checkBinary("kind") {
+		cfmt.Println("{{⚠ kind is not installed}}::yellow (only required if you want to install a local kind cluster)")
+	} else {
+		cfmt.Println("{{✓ kind is installed}}::green")
+	}
+}
+
+func checkBinary(binary string) bool {
+	_, err := exec.LookPath(binary)
+	return err == nil
+}
+
 func installKind() {
+
+	if !checkBinary("kindooo") {
+		log.Fatal("kind is not installed")
+	}
 
 	installer := resty.New()
 	// TODO : installing the binaries needs to respect the OS and architecture
@@ -66,7 +99,7 @@ func installKind() {
 	installer.SetBaseURL("https://raw.githubusercontent.com")
 	kindConfig, _ := installer.R().Get("/kubero-dev/kubero/main/kind.yaml")
 
-	fmt.Println("kind.yaml ------------------------------")
+	fmt.Println("-------------- kind.yaml ---------------")
 	fmt.Println(kindConfig.String())
 	fmt.Println("----------------------------------------")
 	/*
