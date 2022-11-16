@@ -11,6 +11,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"strconv"
 	"time"
 
 	"encoding/json"
@@ -19,6 +20,7 @@ import (
 	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/leaanthony/spinner"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
 
 // installCmd represents the install command
@@ -32,6 +34,7 @@ required binaries:
  - kind (optional)`,
 	Run: func(cmd *cobra.Command, args []string) {
 
+		rand.Seed(time.Now().UnixNano())
 		checkAllBinaries()
 		installKind()
 		checkCluster()
@@ -73,7 +76,7 @@ func installKind() {
 	}
 
 	if !checkBinary("kind") {
-		log.Fatal("kind is not installed")
+		log.Fatal("kind binary is not installed")
 	}
 
 	installer := resty.New()
@@ -82,18 +85,26 @@ func installKind() {
 	//	installer.R().Get("/dl/v0.17.0/kind-linux-amd64")
 
 	installer.SetBaseURL("https://raw.githubusercontent.com")
-	kindConfig, _ := installer.R().Get("/kubero-dev/kubero/main/kind.yaml")
+	kf, _ := installer.R().Get("/kubero-dev/kubero/main/kind.yaml")
 
+	var kindConfig KindConfig
+	yaml.Unmarshal(kf.Body(), &kindConfig)
+
+	kindConfig.Name = promptLine("Kind Cluster Name", "", "kubero-"+strconv.Itoa(rand.Intn(1000)))
+	kindConfig.Nodes[0].Image = "kindest/node:v1.25.3"
+	kindConfig.Nodes[0].ExtraPortMappings[0].HostPort, _ = strconv.Atoi(promptLine("Local HTTP Port", "", "80"))
+	kindConfig.Nodes[0].ExtraPortMappings[1].HostPort, _ = strconv.Atoi(promptLine("Local HTTPS Port", "", "443"))
+
+	kindConfigYaml, _ := yaml.Marshal(kindConfig)
 	fmt.Println("-------------- kind.yaml ---------------")
-	fmt.Println(kindConfig.String())
+	fmt.Println(string(kindConfigYaml))
 	fmt.Println("----------------------------------------")
-	/* SKIPED for development
-	kindConfigErr := os.WriteFile("kind.yaml", kindConfig.Body(), 0644)
+
+	kindConfigErr := os.WriteFile("kind.yaml", kindConfigYaml, 0644)
 	if kindConfigErr != nil {
 		fmt.Println(kindConfigErr)
 		return
 	}
-	*/
 
 	kindSpinner := spinner.New("Spin up a local Kind cluster")
 	kindSpinner.Start("run command : kind create cluster --config kind.yaml")
@@ -200,7 +211,7 @@ func installOLM() {
 
 func installIngress() {
 
-	ingressInstalled, _ := exec.Command("kubectl", "api-resources", "--api-group=networking.k8s.io", "--namespaced=false", "--no-headers=true").Output()
+	ingressInstalled, _ := exec.Command("kubectl", "get", "ns", "ingress-nginx").Output()
 	if len(ingressInstalled) > 0 {
 		cfmt.Println("{{✓ Ingress is allredy installed}}::lightGreen")
 		return
@@ -210,9 +221,10 @@ func installIngress() {
 	if ingressInstall != "y" {
 		log.Fatal("Ingress is required to install Kubero")
 	} else {
+		ingressProvider := promptLine("Provider", "[kind,aws,baremetal,cloud(Azure,Google,Oracle),do(digital ocean),exoscale,scw(scaleway)]", "kind")
 		ingressSpinner := spinner.New("Install Ingress")
-		ingressSpinner.Start("run command : kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.41.2/deploy/static/provider/cloud/deploy.yaml")
-		_, ingressErr := exec.Command("kubectl", "apply", "-f", "https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.41.2/deploy/static/provider/cloud/deploy.yaml").Output()
+		ingressSpinner.Start("run command : kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/" + ingressProvider + "/deploy.yaml")
+		_, ingressErr := exec.Command("kubectl", "apply", "-f", "https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/"+ingressProvider+"/deploy.yaml").Output()
 		if ingressErr != nil {
 			ingressSpinner.Error("Failed to run command. Try runnig it manually")
 			log.Fatal(ingressErr)
@@ -333,7 +345,6 @@ func installKuberoUi() {
 
 func generatePassword(length int) string {
 	var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!$?.-%")
-	rand.Seed(time.Now().UnixNano())
 	b := make([]rune, length)
 	for i := range b {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
@@ -348,4 +359,24 @@ type User struct {
 	Password string `json:"password"`
 	Insecure bool   `json:"insecure"`
 	Apitoken string `json:"apitoken,omitempty"`
+}
+
+type KindConfig struct {
+	Kind       string `yaml:"kind"`
+	APIVersion string `yaml:"apiVersion"`
+	Name       string `yaml:"name"`
+	Networking struct {
+		IPFamily         string `yaml:"ipFamily"`
+		APIServerAddress string `yaml:"apiServerAddress"`
+	} `yaml:"networking"`
+	Nodes []struct {
+		Role                 string   `yaml:"role"`
+		Image                string   `yaml:"image,omitempty"`
+		KubeadmConfigPatches []string `yaml:"kubeadmConfigPatches"`
+		ExtraPortMappings    []struct {
+			ContainerPort int    `yaml:"containerPort"`
+			HostPort      int    `yaml:"hostPort"`
+			Protocol      string `yaml:"protocol"`
+		} `yaml:"extraPortMappings"`
+	} `yaml:"nodes"`
 }
