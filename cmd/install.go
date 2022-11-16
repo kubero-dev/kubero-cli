@@ -5,10 +5,15 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"os/exec"
+	"time"
+
+	"encoding/json"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/i582/cfmt/cmd/cfmt"
@@ -28,28 +33,12 @@ required binaries:
 	Run: func(cmd *cobra.Command, args []string) {
 
 		checkAllBinaries()
-
 		installKind()
 		checkCluster()
 		installOLM()
 		installIngress()
-		/*
-
-			ingress := promptLine("Install ingress-nginx", "[y,n]", "y")
-			if ingress == "y" {
-				installIngressNginx()
-			}
-
-			kuberoOperator := promptLine("Install kubero-operator", "[y,n]", "y")
-			if kuberoOperator == "y" {
-				installKuberoOperator()
-			}
-
-			kuberoUi := promptLine("Install kubero-ui", "[y,n]", "y")
-			if kuberoUi == "y" {
-				installKuberoUi()
-			}
-		*/
+		installKuberoOperator()
+		installKuberoUi()
 	},
 }
 
@@ -58,16 +47,17 @@ func init() {
 }
 
 func checkAllBinaries() {
+	cfmt.Println("{{\n  Check for required binaries}}::lightWhite")
 	if !checkBinary("kubectl") {
 		cfmt.Println("{{✗ kubectl is not installed}}::red")
 	} else {
-		cfmt.Println("{{✓ kubectl is installed}}::green")
+		cfmt.Println("{{✓ kubectl is installed}}::lightGreen")
 	}
 
 	if !checkBinary("kind") {
 		cfmt.Println("{{⚠ kind is not installed}}::yellow (only required if you want to install a local kind cluster)")
 	} else {
-		cfmt.Println("{{✓ kind is installed}}::green")
+		cfmt.Println("{{✓ kind is installed}}::lightGreen")
 	}
 }
 
@@ -144,7 +134,7 @@ func installOLM() {
 
 	openshiftInstalled, _ := exec.Command("kubectl", "get", "deployment", "olm-operator", "-n", "openshift-operator-lifecycle-manager").Output()
 	if len(openshiftInstalled) > 0 {
-		cfmt.Println("{{✓ OLM is allredy installed}}::green")
+		cfmt.Println("{{✓ OLM is allredy installed}}::lightGreen")
 		return
 	}
 
@@ -152,7 +142,7 @@ func installOLM() {
 	namespace := "olm"
 	olmInstalled, _ := exec.Command("kubectl", "get", "deployment", "olm-operator", "-n", namespace).Output()
 	if len(olmInstalled) > 0 {
-		cfmt.Println("{{✓ OLM is allredy installed}}::green")
+		cfmt.Println("{{✓ OLM is allredy installed}}::lightGreen")
 		return
 	}
 
@@ -166,15 +156,15 @@ func installOLM() {
 
 	olmCRDInstalled, _ := exec.Command("kubectl", "get", "crd", "subscriptions.operators.coreos.com").Output()
 	if len(olmCRDInstalled) > 0 {
-		cfmt.Println("{{✓ OLM CRD's allredy installed}}::green")
+		cfmt.Println("{{✓ OLM CRD's allredy installed}}::lightGreen")
 	} else {
-		fmt.Println("run command : kubectl create -f " + olmURL + "/crds.yaml")
+		//fmt.Println("  run command : kubectl create -f " + olmURL + "/crds.yaml")
 		_, olmCRDErr := exec.Command("kubectl", "create", "-f", olmURL+"/crds.yaml").Output()
 		if olmCRDErr != nil {
 			cfmt.Println("{{✗ OLM CRD installation failed }}::red")
 			log.Fatal(olmCRDErr)
 		} else {
-			cfmt.Println("{{✓ OLM CRDs installed}}::green")
+			cfmt.Println("{{✓ OLM CRDs installed}}::lightGreen")
 		}
 	}
 
@@ -212,7 +202,7 @@ func installIngress() {
 
 	ingressInstalled, _ := exec.Command("kubectl", "api-resources", "--api-group=networking.k8s.io", "--namespaced=false", "--no-headers=true").Output()
 	if len(ingressInstalled) > 0 {
-		cfmt.Println("{{✓ Ingress is allredy installed}}::green")
+		cfmt.Println("{{✓ Ingress is allredy installed}}::lightGreen")
 		return
 	}
 
@@ -232,12 +222,130 @@ func installIngress() {
 
 }
 
-/*
 func installKuberoOperator() {
-	fmt.Println("install kubero-operator")
+
+	kuberoInstalled, _ := exec.Command("kubectl", "get", "operator", "kubero-operator.operators").Output()
+	if len(kuberoInstalled) > 0 {
+		cfmt.Println("{{✓ Kubero Operator is allredy installed}}::lightGreen")
+		return
+	}
+
+	kuberoSpinner := spinner.New("Install Kubero Operator")
+	kuberoSpinner.Start("run command : kubectl apply -f https://operatorhub.io/install/kubero-operator.yaml")
+	_, kuberoErr := exec.Command("kubectl", "apply", "-f", "https://operatorhub.io/install/kubero-operator.yaml").Output()
+	if kuberoErr != nil {
+		fmt.Println("")
+		kuberoSpinner.Error("Failed to run command to install the Operator. Try runnig it manually and then rerun the installation")
+		log.Fatal(kuberoErr)
+	}
+	kuberoSpinner.Success("Kubero Operator installed sucessfully")
+
 }
 
 func installKuberoUi() {
-	fmt.Println("install kubero-ui")
+
+	ingressInstall := promptLine("Install Kubero UI", "[y,n]", "y")
+	if ingressInstall != "y" {
+		return
+	}
+
+	kuberoNSinstalled, _ := exec.Command("kubectl", "get", "ns", "kubero").Output()
+	if len(kuberoNSinstalled) > 0 {
+		cfmt.Println("{{✓ Kubero Namespace exists}}::lightGreen")
+	} else {
+		_, kuberoNSErr := exec.Command("kubectl", "create", "namespace", "kubero").Output()
+		if kuberoNSErr != nil {
+			fmt.Println("Failed to run command to create the namespace. Try runnig it manually")
+			log.Fatal(kuberoNSErr)
+		} else {
+			cfmt.Println("{{✓ Kubero Namespace created}}::lightGreen")
+		}
+	}
+
+	kuberoSecretInstalled, _ := exec.Command("kubectl", "get", "secret", "kubero-secrets", "-n", "kubero").Output()
+	if len(kuberoSecretInstalled) > 0 {
+		cfmt.Println("{{✓ Kubero Secret exists}}::lightGreen")
+	} else {
+
+		webhookSecret := promptLine("Random string for your webhook secret", "", generatePassword(20))
+
+		sessionKey := promptLine("Random string for your session key", "", generatePassword(20))
+
+		githubPersonalAccessToken := promptLine("Github personal access token (empty=disabled)", "", "")
+
+		giteaPersonalAccessToken := promptLine("Gitea personal access token (empty=disabled)", "", "")
+
+		adminUser := promptLine("Admin User", "", "admin")
+
+		adminPass := promptLine("Admin Password", "", generatePassword(12))
+
+		adminToken := promptLine("Random string for admin API token", "", generatePassword(20))
+
+		var userDB []User
+		userDB = append(userDB, User{Username: adminUser, Password: adminPass, Insecure: true, Apitoken: adminToken})
+		userDBjson, _ := json.Marshal(userDB)
+		userDBencoded := base64.StdEncoding.EncodeToString(userDBjson)
+
+		_, kuberoErr := exec.Command("kubectl", "create", "secret", "generic", "kubero-secrets",
+			"--from-literal=KUBERO_WEBHOOK_SECRET="+webhookSecret,
+			"--from-literal=KUBERO_SESSION_KEY="+sessionKey,
+			"--from-literal=KUBERO_GITHUB_PERSONAL_ACCESS_TOKEN="+githubPersonalAccessToken,
+			"--from-literal=KUBERO_GITEA_PERSONAL_ACCESS_TOKEN="+giteaPersonalAccessToken,
+			"--from-literal=KUBERO_USERS="+userDBencoded,
+			"-n", "kubero",
+		).Output()
+
+		if kuberoErr != nil {
+			cfmt.Println("{{✗ Failed to run command to create the secret. Try runnig it manually}}::red")
+			log.Fatal(kuberoErr)
+		} else {
+			cfmt.Println("{{✓ Kubero Secret created}}::lightGreen")
+		}
+	}
+
+	kuberoUIInstalled, _ := exec.Command("kubectl", "get", "kuberoes.application.kubero.dev", "-n", "kubero").Output()
+	if len(kuberoUIInstalled) > 0 {
+		cfmt.Println("{{✓ Kubero UI allready installed}}::lightGreen")
+	} else {
+
+		_, kuberoErr := exec.Command("kubectl", "apply", "-f", "https://raw.githubusercontent.com/kubero-dev/kubero-operator/main/config/samples/application_v1alpha1_kubero.yaml", "-n", "kubero").Output()
+
+		if kuberoErr != nil {
+			cfmt.Println("{{✗ Failed to run command to install Kubero UI. Try runnig it manually}}::red")
+			return
+		} else {
+			cfmt.Println("{{✓ Kubero UI installed}}::lightGreen")
+		}
+
+		time.Sleep(1 * time.Second)
+		kuberoUISpinner := spinner.New("Wait for Kubero UI to be ready")
+		kuberoUISpinner.Start("run command : kubectl wait --for=condition=available deployment/kubero-sample -n kubero --timeout=60s")
+		_, olmWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/kubero-sample", "-n", "kubero", "--timeout=60s").Output()
+		if olmWaitErr != nil {
+			fmt.Println("") // keeps the spinner from overwriting the last line
+			kuberoUISpinner.Error("Failed to run command. Try runnig it manually")
+			log.Fatal(olmWaitErr)
+		}
+		kuberoUISpinner.Success("Kubero UI is ready")
+	}
+
 }
-*/
+
+func generatePassword(length int) string {
+	var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!$?.-%")
+	rand.Seed(time.Now().UnixNano())
+	b := make([]rune, length)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
+}
+
+type User struct {
+	ID       int    `json:"id"`
+	Method   string `json:"method"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Insecure bool   `json:"insecure"`
+	Apitoken string `json:"apitoken,omitempty"`
+}
