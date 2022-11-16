@@ -1,2 +1,3 @@
 api:
-  url: https://kubero.example.com:8080
+  token: XXXXXXXXXXXXXXXXX
+  url: http://kubero.lacolhost.com:80
