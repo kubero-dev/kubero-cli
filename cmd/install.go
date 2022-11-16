@@ -47,7 +47,20 @@ required binaries:
 	},
 }
 
+var arg_adminPassword string
+var arg_adminUser string
+var arg_domain string
+var arg_apiToken string
+var arg_port string
+var arg_portSecure string
+
 func init() {
+	installCmd.Flags().StringVarP(&arg_adminUser, "user", "u", "", "Admin username for the kubero UI")
+	installCmd.Flags().StringVarP(&arg_adminPassword, "user-password", "U", "", "Password for the admin user")
+	installCmd.Flags().StringVarP(&arg_apiToken, "apitoken", "a", "", "API token for the admin user")
+	installCmd.Flags().StringVarP(&arg_port, "port", "p", "", "Kubero UI HTTP port")
+	installCmd.Flags().StringVarP(&arg_portSecure, "secureport", "P", "", "Kubero UI HTTPS port")
+	installCmd.Flags().StringVarP(&arg_domain, "domain", "d", "", "Domain name for the kubero UI")
 	rootCmd.AddCommand(installCmd)
 }
 
@@ -94,8 +107,18 @@ func installKind() {
 
 	kindConfig.Name = promptLine("Kind Cluster Name", "", "kubero-"+strconv.Itoa(rand.Intn(1000)))
 	kindConfig.Nodes[0].Image = "kindest/node:v1.25.3"
-	kindConfig.Nodes[0].ExtraPortMappings[0].HostPort, _ = strconv.Atoi(promptLine("Local HTTP Port", "", "80"))
-	kindConfig.Nodes[0].ExtraPortMappings[1].HostPort, _ = strconv.Atoi(promptLine("Local HTTPS Port", "", "443"))
+
+	if arg_port == "" {
+		kindConfig.Nodes[0].ExtraPortMappings[0].HostPort, _ = strconv.Atoi(promptLine("Local HTTP Port", "", "80"))
+	} else {
+		kindConfig.Nodes[0].ExtraPortMappings[0].HostPort, _ = strconv.Atoi(arg_port)
+	}
+
+	if arg_portSecure == "" {
+		kindConfig.Nodes[0].ExtraPortMappings[1].HostPort, _ = strconv.Atoi(promptLine("Local HTTPS Port", "", "443"))
+	} else {
+		kindConfig.Nodes[0].ExtraPortMappings[1].HostPort, _ = strconv.Atoi(arg_portSecure)
+	}
 
 	kindConfigYaml, _ := yaml.Marshal(kindConfig)
 	fmt.Println("-------------- kind.yaml ---------------")
@@ -171,7 +194,6 @@ func installOLM() {
 	if len(olmCRDInstalled) > 0 {
 		cfmt.Println("{{✓ OLM CRD's allredy installed}}::lightGreen")
 	} else {
-		//fmt.Println("  run command : kubectl create -f " + olmURL + "/crds.yaml")
 		_, olmCRDErr := exec.Command("kubectl", "create", "-f", olmURL+"/crds.yaml").Output()
 		if olmCRDErr != nil {
 			cfmt.Println("{{✗ OLM CRD installation failed }}::red")
@@ -300,25 +322,39 @@ func installKuberoUi() {
 
 		giteaPersonalAccessToken := promptLine("Gitea personal access token (empty=disabled)", "", "")
 
-		adminUser := promptLine("Admin User", "", "admin")
+		if arg_adminUser == "" {
+			arg_adminUser = promptLine("Admin User", "", "admin")
+		}
 
-		adminPass := promptLine("Admin Password", "", generatePassword(12))
+		if arg_adminPassword == "" {
+			arg_adminPassword = promptLine("Admin Password", "", generatePassword(12))
+		}
 
-		adminToken := promptLine("Random string for admin API token", "", generatePassword(20))
+		if arg_apiToken == "" {
+			arg_apiToken = promptLine("Random string for admin API token", "", generatePassword(20))
+		}
 
 		var userDB []User
-		userDB = append(userDB, User{Username: adminUser, Password: adminPass, Insecure: true, Apitoken: adminToken})
+		userDB = append(userDB, User{Username: arg_adminUser, Password: arg_adminPassword, Insecure: true, Apitoken: arg_apiToken})
 		userDBjson, _ := json.Marshal(userDB)
 		userDBencoded := base64.StdEncoding.EncodeToString(userDBjson)
 
-		_, kuberoErr := exec.Command("kubectl", "create", "secret", "generic", "kubero-secrets",
+		createSecretCommand := exec.Command("kubectl", "create", "secret", "generic", "kubero-secrets",
 			"--from-literal=KUBERO_WEBHOOK_SECRET="+webhookSecret,
 			"--from-literal=KUBERO_SESSION_KEY="+sessionKey,
-			"--from-literal=KUBERO_GITHUB_PERSONAL_ACCESS_TOKEN="+githubPersonalAccessToken,
-			"--from-literal=KUBERO_GITEA_PERSONAL_ACCESS_TOKEN="+giteaPersonalAccessToken,
 			"--from-literal=KUBERO_USERS="+userDBencoded,
-			"-n", "kubero",
-		).Output()
+		)
+
+		if githubPersonalAccessToken != "" {
+			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=KUBERO_GITHUB_PERSONAL_ACCESS_TOKEN="+githubPersonalAccessToken)
+		}
+		if giteaPersonalAccessToken != "" {
+			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=KUBERO_GITEA_PERSONAL_ACCESS_TOKEN="+giteaPersonalAccessToken)
+		}
+
+		createSecretCommand.Args = append(createSecretCommand.Args, "-n", "kubero")
+
+		_, kuberoErr := createSecretCommand.Output()
 
 		if kuberoErr != nil {
 			cfmt.Println("{{✗ Failed to run command to create the secret. Try runnig it manually}}::red")
@@ -334,7 +370,28 @@ func installKuberoUi() {
 	} else {
 		var outb, errb bytes.Buffer
 
-		kuberoUI := exec.Command("kubectl", "apply", "-f", "https://raw.githubusercontent.com/kubero-dev/kubero-operator/main/config/samples/application_v1alpha1_kubero.yaml", "-n", "kubero")
+		installer := resty.New()
+
+		installer.SetBaseURL("https://raw.githubusercontent.com")
+		kf, _ := installer.R().Get("kubero-dev/kubero-operator/main/config/samples/application_v1alpha1_kubero.yaml")
+
+		var kuberiUIConfig KuberoUIConfig
+		yaml.Unmarshal(kf.Body(), &kuberiUIConfig)
+
+		if arg_domain == "" {
+			kuberiUIConfig.Spec.Ingress.Hosts[0].Host = promptLine("Kuberi UI Domain", "", "kubero.lacolhost.com")
+		} else {
+			kuberiUIConfig.Spec.Ingress.Hosts[0].Host = arg_domain
+		}
+
+		kuberiUIYaml, _ := yaml.Marshal(kuberiUIConfig)
+		kuberiUIErr := os.WriteFile("kuberoUI.yaml", kuberiUIYaml, 0644)
+		if kuberiUIErr != nil {
+			fmt.Println(kuberiUIErr)
+			return
+		}
+
+		kuberoUI := exec.Command("kubectl", "apply", "-f", "kuberoUI.yaml", "-n", "kubero")
 		kuberoUI.Stdout = &outb
 		kuberoUI.Stderr = &errb
 		err := kuberoUI.Run()
@@ -344,6 +401,10 @@ func installKuberoUi() {
 			cfmt.Println("{{✗ Failed to run command to install Kubero UI. Try runnig it manually}}::red")
 			log.Fatal()
 		} else {
+			e := os.Remove("kuberoUI.yaml")
+			if e != nil {
+				log.Fatal(e)
+			}
 			cfmt.Println("{{✓ Kubero UI installed}}::lightGreen")
 		}
 
@@ -372,8 +433,10 @@ func finalMessage() {
 	|  |\   \'  ''  '| '-' |\   --.|  |   ' '-' '
 	'--' '--' '----'  '---'  '----''--'    '---'
 
-Your Kubero UI :
-  {{http://kubero.lacolhost.com:80}}::blue
+Your Kubero UI :{{
+  URL : ` + arg_domain + `:` + arg_port + `
+  User: ` + arg_adminUser + `
+  Pass: ` + arg_adminPassword + `}}::lightBlue
 
 Documentation:
   https://github.com/kubero-dev/kubero/wiki
@@ -416,4 +479,130 @@ type KindConfig struct {
 			Protocol      string `yaml:"protocol"`
 		} `yaml:"extraPortMappings"`
 	} `yaml:"nodes"`
+}
+
+type KuberoUIConfig struct {
+	APIVersion string `yaml:"apiVersion"`
+	Kind       string `yaml:"kind"`
+	Metadata   struct {
+		Name string `yaml:"name"`
+	} `yaml:"metadata"`
+	Spec struct {
+		Affinity struct {
+		} `yaml:"affinity"`
+		FullnameOverride string `yaml:"fullnameOverride"`
+		Image            struct {
+			PullPolicy string `yaml:"pullPolicy"`
+			Repository string `yaml:"repository"`
+			Tag        string `yaml:"tag"`
+		} `yaml:"image"`
+		ImagePullSecrets []interface{} `yaml:"imagePullSecrets"`
+		Ingress          struct {
+			Annotations struct {
+			} `yaml:"annotations"`
+			ClassName string `yaml:"className"`
+			Enabled   bool   `yaml:"enabled"`
+			Hosts     []struct {
+				Host  string `yaml:"host"`
+				Paths []struct {
+					Path     string `yaml:"path"`
+					PathType string `yaml:"pathType"`
+				} `yaml:"paths"`
+			} `yaml:"hosts"`
+			TLS []interface{} `yaml:"tls"`
+		} `yaml:"ingress"`
+		NameOverride string `yaml:"nameOverride"`
+		NodeSelector struct {
+		} `yaml:"nodeSelector"`
+		PodAnnotations struct {
+		} `yaml:"podAnnotations"`
+		PodSecurityContext struct {
+		} `yaml:"podSecurityContext"`
+		ReplicaCount int `yaml:"replicaCount"`
+		Resources    struct {
+		} `yaml:"resources"`
+		SecurityContext struct {
+		} `yaml:"securityContext"`
+		Service struct {
+			Port int    `yaml:"port"`
+			Type string `yaml:"type"`
+		} `yaml:"service"`
+		ServiceAccount struct {
+			Annotations struct {
+			} `yaml:"annotations"`
+			Create bool   `yaml:"create"`
+			Name   string `yaml:"name"`
+		} `yaml:"serviceAccount"`
+		Tolerations []interface{} `yaml:"tolerations"`
+		Kubero      struct {
+			Debug      string `yaml:"debug"`
+			Namespace  string `yaml:"namespace"`
+			Context    string `yaml:"context"`
+			WebhookURL string `yaml:"webhook_url"`
+			SessionKey string `yaml:"sessionKey"`
+			Auth       struct {
+				Github struct {
+					Enabled     bool   `yaml:"enabled"`
+					ID          string `yaml:"id"`
+					Secret      string `yaml:"secret"`
+					CallbackURL string `yaml:"callbackUrl"`
+					Org         string `yaml:"org"`
+				} `yaml:"github"`
+				Oauth2 struct {
+					Enabled     bool   `yaml:"enabled"`
+					Name        string `yaml:"name"`
+					ID          string `yaml:"id"`
+					AuthURL     string `yaml:"authUrl"`
+					TokenURL    string `yaml:"tokenUrl"`
+					Secret      string `yaml:"secret"`
+					CallbackURL string `yaml:"callbackUrl"`
+				} `yaml:"oauth2"`
+				Config string `yaml:"config"`
+				Kubero struct {
+					Context   string `yaml:"context"`
+					Namespace string `yaml:"namespace"`
+					Port      int    `yaml:"port"`
+				} `yaml:"kubero"`
+				Buildpacks []struct {
+					Name     string `yaml:"name"`
+					Language string `yaml:"language"`
+					Fetch    struct {
+						Repository string `yaml:"repository"`
+						Tag        string `yaml:"tag"`
+					} `yaml:"fetch"`
+					Build struct {
+						Repository string `yaml:"repository"`
+						Tag        string `yaml:"tag"`
+						Command    string `yaml:"command"`
+					} `yaml:"build"`
+					Run struct {
+						Repository         string `yaml:"repository"`
+						Tag                string `yaml:"tag"`
+						ReadOnlyAppStorage bool   `yaml:"readOnlyAppStorage"`
+						SecurityContext    struct {
+							AllowPrivilegeEscalation bool `yaml:"allowPrivilegeEscalation"`
+							ReadOnlyRootFilesystem   bool `yaml:"readOnlyRootFilesystem"`
+						} `yaml:"securityContext"`
+						Command string `yaml:"command"`
+					} `yaml:"run,omitempty"`
+				} `yaml:"buildpacks"`
+				PodSizeList []struct {
+					Name        string `yaml:"name"`
+					Description string `yaml:"description"`
+					Default     bool   `yaml:"default,omitempty"`
+					Resources   struct {
+						Requests struct {
+							Memory string `yaml:"memory"`
+							CPU    string `yaml:"cpu"`
+						} `yaml:"requests"`
+						Limits struct {
+							Memory string `yaml:"memory"`
+							CPU    string `yaml:"cpu"`
+						} `yaml:"limits"`
+					} `yaml:"resources,omitempty"`
+					Active bool `yaml:"active,omitempty"`
+				} `yaml:"podSizeList"`
+			} `yaml:"auth"`
+		} `yaml:"kubero"`
+	} `yaml:"spec"`
 }
