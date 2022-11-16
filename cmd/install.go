@@ -9,7 +9,7 @@ import (
 	"os/exec"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/i582/cfmt/cmd/cfmt"
+	"github.com/leaanthony/spinner"
 	"github.com/spf13/cobra"
 )
 
@@ -57,17 +57,17 @@ func init() {
 }
 
 func installKind() {
-	fmt.Println("install kind")
 
 	installer := resty.New()
+	// TODO : installing the binaries needs to respect the OS and architecture
 	//	installer.SetBaseURL("https://kind.sigs.k8s.io")
 	//	installer.R().Get("/dl/v0.17.0/kind-linux-amd64")
 
 	installer.SetBaseURL("https://raw.githubusercontent.com")
 	kindConfig, _ := installer.R().Get("/kubero-dev/kubero/main/kind.yaml")
 
-	fmt.Println("----------------------------------------")
-	fmt.Println("kindConfig:", kindConfig.String())
+	fmt.Println("kind.yaml ------------------------------")
+	fmt.Println(kindConfig.String())
 	fmt.Println("----------------------------------------")
 	/*
 		kindConfigErr := os.WriteFile("kind.yaml", kindConfig.Body(), 0644)
@@ -76,12 +76,15 @@ func installKind() {
 			return
 		}
 	*/
+
+	kindSpinner := spinner.New("Spin up a local Kind cluster")
+	kindSpinner.Start("run command : kind create cluster --config kind.yaml")
 	out, err := exec.Command("kind", "create", "cluster", "--config", "kind.yaml").Output()
-	cfmt.Println("{{  run command : }}::lightWhite kind create cluster --config kind.yaml")
 	if err != nil {
-		cfmt.Println("{{  error : }}::red failed to run command. Try runnig it manually and skip this step")
+		kindSpinner.Error("Failed to run command. Try runnig it manually and skip this step")
 		log.Fatal(err)
 	}
+	kindSpinner.Success("Kind cluster started sucessfully")
 
 	fmt.Println(string(out))
 
