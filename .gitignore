@@ -21,3 +21,4 @@ credentials.yaml
 notes.txt
 pipeline.yaml
 app.*.yaml
+kind.yaml

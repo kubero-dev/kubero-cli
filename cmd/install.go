@@ -5,7 +5,11 @@ package cmd
 
 import (
 	"fmt"
+	"log"
+	"os/exec"
 
+	"github.com/go-resty/resty/v2"
+	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/spf13/cobra"
 )
 
@@ -24,26 +28,27 @@ required binaries:
 		if kind == "y" {
 			installKind()
 		}
+		/*
+			olm := promptLine("Install OLM", "[y,n]", "y")
+			if olm == "y" {
+				installOLM()
+			}
 
-		olm := promptLine("Install OLM", "[y,n]", "y")
-		if olm == "y" {
-			installOLM()
-		}
+			ingress := promptLine("Install ingress-nginx", "[y,n]", "y")
+			if ingress == "y" {
+				installIngressNginx()
+			}
 
-		ingress := promptLine("Install ingress-nginx", "[y,n]", "y")
-		if ingress == "y" {
-			installIngressNginx()
-		}
+			kuberoOperator := promptLine("Install kubero-operator", "[y,n]", "y")
+			if kuberoOperator == "y" {
+				installKuberoOperator()
+			}
 
-		kuberoOperator := promptLine("Install kubero-operator", "[y,n]", "y")
-		if kuberoOperator == "y" {
-			installKuberoOperator()
-		}
-
-		kuberoUi := promptLine("Install kubero-ui", "[y,n]", "y")
-		if kuberoUi == "y" {
-			installKuberoUi()
-		}
+			kuberoUi := promptLine("Install kubero-ui", "[y,n]", "y")
+			if kuberoUi == "y" {
+				installKuberoUi()
+			}
+		*/
 	},
 }
 
@@ -53,8 +58,36 @@ func init() {
 
 func installKind() {
 	fmt.Println("install kind")
+
+	installer := resty.New()
+	//	installer.SetBaseURL("https://kind.sigs.k8s.io")
+	//	installer.R().Get("/dl/v0.17.0/kind-linux-amd64")
+
+	installer.SetBaseURL("https://raw.githubusercontent.com")
+	kindConfig, _ := installer.R().Get("/kubero-dev/kubero/main/kind.yaml")
+
+	fmt.Println("----------------------------------------")
+	fmt.Println("kindConfig:", kindConfig.String())
+	fmt.Println("----------------------------------------")
+	/*
+		kindConfigErr := os.WriteFile("kind.yaml", kindConfig.Body(), 0644)
+		if kindConfigErr != nil {
+			fmt.Println(kindConfigErr)
+			return
+		}
+	*/
+	out, err := exec.Command("kind", "create", "cluster", "--config", "kind.yaml").Output()
+	cfmt.Println("{{  run command : }}::lightWhite kind create cluster --config kind.yaml")
+	if err != nil {
+		cfmt.Println("{{  error : }}::red failed to run command. Try runnig it manually and skip this step")
+		log.Fatal(err)
+	}
+
+	fmt.Println(string(out))
+
 }
 
+/*
 func installOLM() {
 	fmt.Println("install OLM")
 }
@@ -70,3 +103,4 @@ func installKuberoOperator() {
 func installKuberoUi() {
 	fmt.Println("install kubero-ui")
 }
+*/
