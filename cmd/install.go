@@ -27,7 +27,8 @@ import (
 var installCmd = &cobra.Command{
 	Use:   "install",
 	Short: "Install all required components for kubero",
-	Long: `This command will try to install all required components for kubero.
+	Long: `This command will try to install all required components for kubero on a kubernetes cluster.
+It is allso possible to install a local kind cluster.
 
 required binaries:
  - kubectl
@@ -42,6 +43,7 @@ required binaries:
 		installIngress()
 		installKuberoOperator()
 		installKuberoUi()
+		finalMessage()
 	},
 }
 
@@ -236,6 +238,8 @@ func installIngress() {
 
 func installKuberoOperator() {
 
+	cfmt.Println("{{\n  Install Kubero Operator}}::lightWhite")
+
 	kuberoInstalled, _ := exec.Command("kubectl", "get", "operator", "kubero-operator.operators").Output()
 	if len(kuberoInstalled) > 0 {
 		cfmt.Println("{{✓ Kubero Operator is allredy installed}}::lightGreen")
@@ -250,6 +254,15 @@ func installKuberoOperator() {
 		kuberoSpinner.Error("Failed to run command to install the Operator. Try runnig it manually and then rerun the installation")
 		log.Fatal(kuberoErr)
 	}
+
+	kuberoSpinner.UpdateMessage("Wait for Kubero Operator to be ready")
+	var kuberoWait []byte
+	for len(kuberoWait) == 0 {
+		// kubectl api-resources --api-group=application.kubero.dev --no-headers=true
+		kuberoWait, _ = exec.Command("kubectl", "api-resources", "--api-group=application.kubero.dev", "--no-headers=true").Output()
+		time.Sleep(1 * time.Second)
+	}
+
 	kuberoSpinner.Success("Kubero Operator installed sucessfully")
 
 }
@@ -319,12 +332,17 @@ func installKuberoUi() {
 	if len(kuberoUIInstalled) > 0 {
 		cfmt.Println("{{✓ Kubero UI allready installed}}::lightGreen")
 	} else {
+		var outb, errb bytes.Buffer
 
-		_, kuberoErr := exec.Command("kubectl", "apply", "-f", "https://raw.githubusercontent.com/kubero-dev/kubero-operator/main/config/samples/application_v1alpha1_kubero.yaml", "-n", "kubero").Output()
-
-		if kuberoErr != nil {
+		kuberoUI := exec.Command("kubectl", "apply", "-f", "https://raw.githubusercontent.com/kubero-dev/kubero-operator/main/config/samples/application_v1alpha1_kubero.yaml", "-n", "kubero")
+		kuberoUI.Stdout = &outb
+		kuberoUI.Stderr = &errb
+		err := kuberoUI.Run()
+		if err != nil {
+			fmt.Println(errb.String())
+			fmt.Println(outb.String())
 			cfmt.Println("{{✗ Failed to run command to install Kubero UI. Try runnig it manually}}::red")
-			return
+			log.Fatal()
 		} else {
 			cfmt.Println("{{✓ Kubero UI installed}}::lightGreen")
 		}
@@ -341,6 +359,25 @@ func installKuberoUi() {
 		kuberoUISpinner.Success("Kubero UI is ready")
 	}
 
+}
+
+func finalMessage() {
+	cfmt.Println(`
+
+{{⚠ make sure your DNS is pointing to your Kubernetes cluster}}::yellow
+
+	,--. ,--.        ,--.
+	|  .'   /,--.,--.|  |-.  ,---. ,--.--. ,---.
+	|  .   ' |  ||  || .-. '| .-. :|  .--'| .-. |
+	|  |\   \'  ''  '| '-' |\   --.|  |   ' '-' '
+	'--' '--' '----'  '---'  '----''--'    '---'
+
+Your Kubero UI :
+  {{http://kubero.lacolhost.com:80}}::blue
+
+Documentation:
+  https://github.com/kubero-dev/kubero/wiki
+`)
 }
 
 func generatePassword(length int) string {

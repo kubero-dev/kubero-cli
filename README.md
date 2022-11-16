@@ -18,7 +18,7 @@ So far implemented command tree
     │   └── podsizes
     ├── help
     ├── init
-    ├── install (WIP)
+    ├── install
     └── pipelines
         ├── create
         ├── fetch
