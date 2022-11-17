@@ -20,6 +20,7 @@ import (
 	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/leaanthony/spinner"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 )
 
@@ -43,6 +44,7 @@ required binaries:
 		installIngress()
 		installKuberoOperator()
 		installKuberoUi()
+		writeCLIconffig()
 		finalMessage()
 	},
 }
@@ -95,9 +97,6 @@ func installKind() {
 	}
 
 	installer := resty.New()
-	// TODO : installing the binaries needs to respect the OS and architecture
-	//	installer.SetBaseURL("https://kind.sigs.k8s.io")
-	//	installer.R().Get("/dl/v0.17.0/kind-linux-amd64")
 
 	installer.SetBaseURL("https://raw.githubusercontent.com")
 	kf, _ := installer.R().Get("/kubero-dev/kubero/main/kind.yaml")
@@ -109,21 +108,19 @@ func installKind() {
 	kindConfig.Nodes[0].Image = "kindest/node:v1.25.3"
 
 	if arg_port == "" {
-		kindConfig.Nodes[0].ExtraPortMappings[0].HostPort, _ = strconv.Atoi(promptLine("Local HTTP Port", "", "80"))
-	} else {
-		kindConfig.Nodes[0].ExtraPortMappings[0].HostPort, _ = strconv.Atoi(arg_port)
+		arg_port = promptLine("Local HTTP Port", "", "80")
 	}
+	kindConfig.Nodes[0].ExtraPortMappings[0].HostPort, _ = strconv.Atoi(arg_port)
 
 	if arg_portSecure == "" {
-		kindConfig.Nodes[0].ExtraPortMappings[1].HostPort, _ = strconv.Atoi(promptLine("Local HTTPS Port", "", "443"))
-	} else {
-		kindConfig.Nodes[0].ExtraPortMappings[1].HostPort, _ = strconv.Atoi(arg_portSecure)
+		arg_portSecure = promptLine("Local HTTPS Port", "", "443")
 	}
+	kindConfig.Nodes[0].ExtraPortMappings[1].HostPort, _ = strconv.Atoi(arg_portSecure)
 
 	kindConfigYaml, _ := yaml.Marshal(kindConfig)
-	fmt.Println("-------------- kind.yaml ---------------")
-	fmt.Println(string(kindConfigYaml))
-	fmt.Println("----------------------------------------")
+	//fmt.Println("-------------- kind.yaml ---------------")
+	//fmt.Println(string(kindConfigYaml))
+	//fmt.Println("----------------------------------------")
 
 	kindConfigErr := os.WriteFile("kind.yaml", kindConfigYaml, 0644)
 	if kindConfigErr != nil {
@@ -379,10 +376,9 @@ func installKuberoUi() {
 		yaml.Unmarshal(kf.Body(), &kuberiUIConfig)
 
 		if arg_domain == "" {
-			kuberiUIConfig.Spec.Ingress.Hosts[0].Host = promptLine("Kuberi UI Domain", "", "kubero.lacolhost.com")
-		} else {
-			kuberiUIConfig.Spec.Ingress.Hosts[0].Host = arg_domain
+			arg_domain = promptLine("Kuberi UI Domain", "", "kubero.lacolhost.com")
 		}
+		kuberiUIConfig.Spec.Ingress.Hosts[0].Host = arg_domain
 
 		kuberiUIYaml, _ := yaml.Marshal(kuberiUIConfig)
 		kuberiUIErr := os.WriteFile("kuberoUI.yaml", kuberiUIYaml, 0644)
@@ -420,6 +416,30 @@ func installKuberoUi() {
 		kuberoUISpinner.Success("Kubero UI is ready")
 	}
 
+}
+
+func writeCLIconffig() {
+
+	ingressInstall := promptLine("Generate CLI config", "[y,n]", "y")
+	if ingressInstall != "y" {
+		return
+	}
+
+	//TODO consider using SSL here.
+	url := promptLine("Kubero Host adress", "", "http://"+arg_domain+":"+arg_port)
+	viper.Set("api.url", url)
+
+	token := promptLine("Kubero Token", "", arg_apiToken)
+	viper.Set("api.token", token)
+
+	var config Config
+	if err := viper.Unmarshal(&config); err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Printf("%+v\n", config)
+
+	viper.WriteConfig()
 }
 
 func finalMessage() {

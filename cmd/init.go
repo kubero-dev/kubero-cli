@@ -31,7 +31,7 @@ var initCmd = &cobra.Command{
 	*/
 	Run: func(cmd *cobra.Command, args []string) {
 
-		fmt.Println("Initiliazing kubero-cli")
+		fmt.Println("Initializing kubero-cli")
 		url := promptLine("Kubero Host adress", viper.GetString("api.url"), viper.GetString("api.url"))
 		viper.Set("api.url", url)
 
@@ -43,7 +43,6 @@ var initCmd = &cobra.Command{
 			fmt.Println(err)
 			return
 		}
-		fmt.Printf("%+v\n", config)
 
 		viper.WriteConfig()
 	},
