@@ -86,6 +86,16 @@ func checkBinary(binary string) bool {
 	return err == nil
 }
 
+func installGKE() {
+	// TODO
+	// variables:
+	// - cluster name
+	// - cluster region
+	// gcloud config list
+	// gcloud config get project
+	// gcloud container clusters get-credentials kubero-cluster-4 --region=us-central1-c
+}
+
 func installKind() {
 	kindInstall := promptLine("Start a local kubernetes kind cluster", "[y,n]", "n")
 	if kindInstall != "y" {
