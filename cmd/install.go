@@ -96,6 +96,11 @@ func installGKE() {
 	// gcloud container clusters get-credentials kubero-cluster-4 --region=us-central1-c
 }
 
+func installDigitalOcean() {
+	// TODO
+	// https://docs.digitalocean.com/reference/api/api-reference/#operation/kubernetes_create_cluster
+}
+
 func installKind() {
 	kindInstall := promptLine("Start a local kubernetes kind cluster", "[y,n]", "n")
 	if kindInstall != "y" {
