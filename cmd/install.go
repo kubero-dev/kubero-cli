@@ -115,9 +115,54 @@ func installGKE() {
 	// gcloud container clusters get-credentials kubero-cluster-4 --region=us-central1-c
 }
 
+type DigitalOceanClusterConfig struct {
+	Name      string `json:"name"`
+	Region    string `json:"region"`
+	Version   string `json:"version"`
+	NodePools []struct {
+		Size  string `json:"size"`
+		Count int    `json:"count"`
+		Name  string `json:"name"`
+	} `json:"node_pools"`
+}
+
 func installDigitalOcean() {
 	// TODO
 	// https://docs.digitalocean.com/reference/api/api-reference/#operation/kubernetes_create_cluster
+
+	token := os.Getenv("DIGITALOCEAN_TOKEN")
+
+	var digitalOceanClusterConfig DigitalOceanClusterConfig
+	digitalOceanClusterConfig.Name = "kubero-cluster"
+	digitalOceanClusterConfig.Region = "nyc1"
+	digitalOceanClusterConfig.Version = "1.21.2-do.2"
+	digitalOceanClusterConfig.NodePools = []struct {
+		Size  string `json:"size"`
+		Count int    `json:"count"`
+		Name  string `json:"name"`
+	}{
+		{
+			Size:  "s-1vcpu-2gb",
+			Count: 1,
+			Name:  "worker-pool",
+		},
+	}
+
+	installer := resty.New().
+		SetBaseURL("https://api.digitalocean.com")
+
+	kf, _ := installer.R().
+		SetBody(digitalOceanClusterConfig).
+		SetAuthScheme("Bearer").
+		SetAuthToken(token).
+		SetHeader("Accept", "application/json").
+		SetHeader("Content-Type", "application/json").
+		SetHeader("User-Agent", "kubero-cli/0.0.1").
+		Post("/v2/kubernetes/clusters")
+
+	var kuberiUIConfig KuberoUIConfig
+	yaml.Unmarshal(kf.Body(), &kuberiUIConfig)
+
 }
 
 func installKind() {
