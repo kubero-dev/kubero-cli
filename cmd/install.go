@@ -38,7 +38,7 @@ required binaries:
 
 		rand.Seed(time.Now().UnixNano())
 		checkAllBinaries()
-		installKind()
+		installSwitch()
 		checkCluster()
 		installOLM()
 		installIngress()
@@ -86,6 +86,25 @@ func checkBinary(binary string) bool {
 	return err == nil
 }
 
+func installSwitch() {
+	kubernetesInstall := promptLine("Start a kubernetes Cluster", "[y,n]", "n")
+	if kubernetesInstall != "y" {
+		return
+	}
+
+	clusterType := promptLine("Select a cluster type", "[gke,digitalocean,kind]", "kind")
+	if clusterType == "kind" {
+		installKind()
+	}
+	if clusterType == "gke" {
+		installGKE()
+	}
+	if clusterType == "digitalocean" {
+		installDigitalOcean()
+	}
+
+}
+
 func installGKE() {
 	// TODO
 	// variables:
@@ -102,10 +121,6 @@ func installDigitalOcean() {
 }
 
 func installKind() {
-	kindInstall := promptLine("Start a local kubernetes kind cluster", "[y,n]", "n")
-	if kindInstall != "y" {
-		return
-	}
 
 	if !checkBinary("kind") {
 		log.Fatal("kind binary is not installed")
