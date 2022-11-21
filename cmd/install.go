@@ -87,12 +87,12 @@ func checkBinary(binary string) bool {
 }
 
 func installSwitch() {
-	kubernetesInstall := promptLine("Start a kubernetes Cluster", "[y,n]", "n")
+	kubernetesInstall := promptLine("Start a kubernetes Cluster", "[y,n]", "y")
 	if kubernetesInstall != "y" {
 		return
 	}
 
-	clusterType := promptLine("Select a cluster type", "[gke,digitalocean,kind]", "kind")
+	clusterType := promptLine("Select a cluster type", "[gke,digitalocean,kind]", "digitalocean")
 	if clusterType == "kind" {
 		installKind()
 	}
@@ -115,7 +115,7 @@ func installGKE() {
 	// gcloud container clusters get-credentials kubero-cluster-4 --region=us-central1-c
 }
 
-type DigitalOceanClusterConfig struct {
+type DigitalOceanKubernetesConfig struct {
 	Name      string `json:"name"`
 	Region    string `json:"region"`
 	Version   string `json:"version"`
@@ -126,17 +126,79 @@ type DigitalOceanClusterConfig struct {
 	} `json:"node_pools"`
 }
 
+type DigitalOcean struct {
+	KubernetesCluster struct {
+		ID            string   `json:"id"`
+		Name          string   `json:"name"`
+		Region        string   `json:"region"`
+		Version       string   `json:"version"`
+		ClusterSubnet string   `json:"cluster_subnet"`
+		ServiceSubnet string   `json:"service_subnet"`
+		VpcUUID       string   `json:"vpc_uuid"`
+		Ipv4          string   `json:"ipv4"`
+		Endpoint      string   `json:"endpoint"`
+		Tags          []string `json:"tags"`
+		NodePools     []struct {
+			ID        string        `json:"id"`
+			Name      string        `json:"name"`
+			Size      string        `json:"size"`
+			Count     int           `json:"count"`
+			Tags      []string      `json:"tags"`
+			Labels    interface{}   `json:"labels"`
+			Taints    []interface{} `json:"taints"`
+			AutoScale bool          `json:"auto_scale"`
+			MinNodes  int           `json:"min_nodes"`
+			MaxNodes  int           `json:"max_nodes"`
+			Nodes     []struct {
+				ID     string `json:"id"`
+				Name   string `json:"name"`
+				Status struct {
+					State string `json:"state"`
+				} `json:"status"`
+				DropletID string    `json:"droplet_id"`
+				CreatedAt time.Time `json:"created_at"`
+				UpdatedAt time.Time `json:"updated_at"`
+			} `json:"nodes"`
+		} `json:"node_pools"`
+		MaintenancePolicy struct {
+			StartTime string `json:"start_time"`
+			Duration  string `json:"duration"`
+			Day       string `json:"day"`
+		} `json:"maintenance_policy"`
+		AutoUpgrade bool `json:"auto_upgrade"`
+		Status      struct {
+			State   string `json:"state"`
+			Message string `json:"message"`
+		} `json:"status"`
+		CreatedAt         time.Time `json:"created_at"`
+		UpdatedAt         time.Time `json:"updated_at"`
+		SurgeUpgrade      bool      `json:"surge_upgrade"`
+		RegistryEnabled   bool      `json:"registry_enabled"`
+		Ha                bool      `json:"ha"`
+		SupportedFeatures []string  `json:"supported_features"`
+	} `json:"kubernetes_cluster"`
+}
+
 func installDigitalOcean() {
 	// TODO
 	// https://docs.digitalocean.com/reference/api/api-reference/#operation/kubernetes_create_cluster
 
-	token := os.Getenv("DIGITALOCEAN_TOKEN")
+	token := os.Getenv("DIGITALOCEAN_ACCESS_TOKEN")
+	if token == "" {
+		cfmt.Println("{{✗ DIGITALOCEAN_ACCESS_TOKEN is not set}}::red")
+		log.Fatal("missing DIGITALOCEAN_ACCESS_TOKEN")
+	}
 
-	var digitalOceanClusterConfig DigitalOceanClusterConfig
-	digitalOceanClusterConfig.Name = "kubero-cluster"
-	digitalOceanClusterConfig.Region = "nyc1"
-	digitalOceanClusterConfig.Version = "1.21.2-do.2"
-	digitalOceanClusterConfig.NodePools = []struct {
+	doApi := resty.New().
+		SetAuthScheme("Bearer").
+		SetAuthToken(token).
+		SetHeader("Accept", "application/json").
+		SetHeader("Content-Type", "application/json").
+		SetHeader("User-Agent", "kubero-cli/0.0.1").
+		SetBaseURL("https://api.digitalocean.com")
+
+	var doConfig DigitalOceanKubernetesConfig
+	doConfig.NodePools = []struct {
 		Size  string `json:"size"`
 		Count int    `json:"count"`
 		Name  string `json:"name"`
@@ -148,20 +210,78 @@ func installDigitalOcean() {
 		},
 	}
 
-	installer := resty.New().
-		SetBaseURL("https://api.digitalocean.com")
+	doConfig.Name = promptLine("Kubernetes Cluster Name", "", "kubero-"+strconv.Itoa(rand.Intn(1000)))
+	doConfig.Region = promptLine("Cluster Region", "[nyc1,sgp1,lon1,ams3,fra1,...]", "nyc1")
+	doConfig.Version = promptLine("Cluster Version", "[1.24.4-do.0,1.17.11-do.0,1.16.14-do.0]", "1.24.4-do.0")
 
-	kf, _ := installer.R().
-		SetBody(digitalOceanClusterConfig).
-		SetAuthScheme("Bearer").
-		SetAuthToken(token).
-		SetHeader("Accept", "application/json").
-		SetHeader("Content-Type", "application/json").
-		SetHeader("User-Agent", "kubero-cli/0.0.1").
+	doConfig.NodePools[0].Size = promptLine("Cluster Node Size", "[s-1vcpu-2gb,s-2vcpu-4gb,s-4vcpu-8gb,s-8vcpu-16gb,s-16vcpu-32gb,s-32vcpu-64gb,s-48vcpu-96gb,s-64vcpu-128gb]", "s-1vcpu-2gb")
+	doConfig.NodePools[0].Count, _ = strconv.Atoi(promptLine("Cluster Node Count", "", "1"))
+
+	kf, _ := doApi.R().
+		SetBody(doConfig).
 		Post("/v2/kubernetes/clusters")
 
-	var kuberiUIConfig KuberoUIConfig
-	yaml.Unmarshal(kf.Body(), &kuberiUIConfig)
+	if kf.StatusCode() > 299 {
+		fmt.Println(kf.String())
+		cfmt.Println("{{✗ failed to create digital ocean cluster}}::red")
+		os.Exit(1)
+	} else {
+		cfmt.Println("{{✓ digital ocean cluster created}}::lightGreen")
+	}
+
+	var doCluster DigitalOcean
+	json.Unmarshal(kf.Body(), &doCluster)
+
+	doSpinner := spinner.New("Starting a kubernetes cluster on digital ocean")
+	doSpinner.Start("Waiting for digital ocean cluster to be ready. This may take a few minutes. Time enough to get a coffee ☕")
+	clusterID := doCluster.KubernetesCluster.ID
+
+	for {
+		time.Sleep(2 * time.Second)
+		doWait, _ := doApi.R().
+			Get("/v2/kubernetes/clusters/" + clusterID)
+
+		if doWait.StatusCode() > 299 {
+			fmt.Println(doWait.String())
+			doSpinner.Error("Failed to create digital ocean cluster")
+			continue
+		} else {
+			var doCluster DigitalOcean
+			json.Unmarshal(doWait.Body(), &doCluster)
+			if doCluster.KubernetesCluster.Status.State == "running" {
+				doSpinner.Success("digital ocean cluster created")
+				break
+			}
+		}
+	}
+
+	kubectl, _ := doApi.R().
+		Get("v2/kubernetes/clusters/" + clusterID + "/kubeconfig")
+
+	home, _ := os.UserHomeDir()
+
+	var werror error
+	if _, err := os.Stat(home + "/.kube/config"); os.IsNotExist(err) {
+		werror = os.WriteFile(home+"/.kube/config", kubectl.Body(), 0644)
+	} else {
+		werror = os.WriteFile(home+"/.kube/config.d/kubeconfig-kubero-"+doConfig.Name, kubectl.Body(), 0644)
+	}
+	if werror != nil {
+		cfmt.Println("{{✗ failed to write kubeconfig}}::red")
+		fmt.Println(kubectl.String())
+	}
+	/*
+		switch runtime.GOOS {
+		case "linux":
+			home, _ := os.UserHomeDir()
+		case "darwin":
+		case "linux":
+			os.WriteFile("kubeconfig-kubero-"+doConfig.Name, kubectl.Body(), 0644)
+		default:
+			fmt.Println(kubectl.String())
+			fmt.Printf("%s.\n", runtime.GOOS)
+		}
+	*/
 
 }
 
