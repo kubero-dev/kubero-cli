@@ -1,6 +1,3 @@
-/*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
@@ -22,6 +19,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 // installCmd represents the install command
@@ -38,7 +36,7 @@ required binaries:
 
 		rand.Seed(time.Now().UnixNano())
 		checkAllBinaries()
-		installKind()
+		installSwitch()
 		checkCluster()
 		installOLM()
 		installIngress()
@@ -86,11 +84,148 @@ func checkBinary(binary string) bool {
 	return err == nil
 }
 
-func installKind() {
-	kindInstall := promptLine("Start a local kubernetes kind cluster", "[y,n]", "n")
-	if kindInstall != "y" {
+func installSwitch() {
+	kubernetesInstall := promptLine("Start a kubernetes Cluster", "[y,n]", "y")
+	if kubernetesInstall != "y" {
 		return
 	}
+
+	clusterType := promptLine("Select a cluster type", "[digitalocean,kind]", "digitalocean")
+	if clusterType == "kind" {
+		installKind()
+	}
+	if clusterType == "gke" {
+		installGKE()
+	}
+	if clusterType == "digitalocean" {
+		installDigitalOcean()
+	}
+
+}
+
+func installGKE() {
+	// TODO
+	// variables:
+	// - cluster name
+	// - cluster region
+	// gcloud config list
+	// gcloud config get project
+	// gcloud container clusters get-credentials kubero-cluster-4 --region=us-central1-c
+
+	// https://cloud.google.com/kubernetes-engine/docs/reference/libraries#client-libraries-install-go
+	// https://github.com/googleapis/google-cloud-go
+}
+
+func installDigitalOcean() {
+	// https://docs.digitalocean.com/reference/api/api-reference/#operation/kubernetes_create_cluster
+
+	cfmt.Println("{{⚠ Installing Kubernetes on Digital Ocean is currently beta state in kubero-cli}}::yellow")
+	cfmt.Println("{{  Please report if you run into errors}}::yellow")
+
+	token := os.Getenv("DIGITALOCEAN_ACCESS_TOKEN")
+	if token == "" {
+		cfmt.Println("{{✗ DIGITALOCEAN_ACCESS_TOKEN is not set}}::red")
+		log.Fatal("missing DIGITALOCEAN_ACCESS_TOKEN")
+	}
+
+	doApi := resty.New().
+		SetAuthScheme("Bearer").
+		SetAuthToken(token).
+		SetHeader("Accept", "application/json").
+		SetHeader("Content-Type", "application/json").
+		SetHeader("User-Agent", "kubero-cli/0.0.1").
+		SetBaseURL("https://api.digitalocean.com")
+
+	var doConfig DigitalOceanKubernetesConfig
+	doConfig.NodePools = []struct {
+		Size  string `json:"size"`
+		Count int    `json:"count"`
+		Name  string `json:"name"`
+	}{
+		{
+			Size:  "s-1vcpu-2gb",
+			Count: 1,
+			Name:  "worker-pool",
+		},
+	}
+
+	doConfig.Name = promptLine("Kubernetes Cluster Name", "", "kubero-"+strconv.Itoa(rand.Intn(1000)))
+	doConfig.Region = promptLine("Cluster Region", "[nyc1,sgp1,lon1,ams3,fra1,...]", "nyc1")
+	doConfig.Version = promptLine("Cluster Version", "[1.24.4-do.0,1.17.11-do.0,1.16.14-do.0]", "1.24.4-do.0")
+
+	doConfig.NodePools[0].Size = promptLine("Cluster Node Size", "[s-1vcpu-2gb,s-2vcpu-4gb,s-4vcpu-8gb,s-8vcpu-16gb,s-16vcpu-32gb,s-32vcpu-64gb,s-48vcpu-96gb,s-64vcpu-128gb]", "s-1vcpu-2gb")
+	doConfig.NodePools[0].Count, _ = strconv.Atoi(promptLine("Cluster Node Count", "", "1"))
+
+	kf, _ := doApi.R().
+		SetBody(doConfig).
+		Post("/v2/kubernetes/clusters")
+
+	if kf.StatusCode() > 299 {
+		fmt.Println(kf.String())
+		cfmt.Println("{{✗ failed to create digital ocean cluster}}::red")
+		os.Exit(1)
+	} else {
+		cfmt.Println("{{✓ digital ocean cluster created}}::lightGreen")
+	}
+
+	var doCluster DigitalOcean
+	json.Unmarshal(kf.Body(), &doCluster)
+
+	doSpinner := spinner.New("Starting a kubernetes cluster on digital ocean")
+	doSpinner.Start("Waiting for digital ocean cluster to be ready. This may take a few minutes. Time enough to get a coffee ☕")
+	clusterID := doCluster.KubernetesCluster.ID
+
+	for {
+		time.Sleep(2 * time.Second)
+		doWait, _ := doApi.R().
+			Get("/v2/kubernetes/clusters/" + clusterID)
+
+		if doWait.StatusCode() > 299 {
+			fmt.Println(doWait.String())
+			doSpinner.Error("Failed to create digital ocean cluster")
+			continue
+		} else {
+			var doCluster DigitalOcean
+			json.Unmarshal(doWait.Body(), &doCluster)
+			if doCluster.KubernetesCluster.Status.State == "running" {
+				doSpinner.Success("digital ocean cluster created")
+				break
+			}
+		}
+	}
+
+	kubectl, _ := doApi.R().
+		Get("v2/kubernetes/clusters/" + clusterID + "/kubeconfig")
+	mergeKubeconfig(kubectl.Body())
+
+}
+
+func mergeKubeconfig(kubeconfig []byte) error {
+
+	new := clientcmd.NewDefaultPathOptions()
+	config1, _ := new.GetStartingConfig()
+	config2, err := clientcmd.Load(kubeconfig)
+	if err != nil {
+		return err
+	}
+	// append the second config to the first
+	for k, v := range config2.Clusters {
+		config1.Clusters[k] = v
+	}
+	for k, v := range config2.AuthInfos {
+		config1.AuthInfos[k] = v
+	}
+	for k, v := range config2.Contexts {
+		config1.Contexts[k] = v
+	}
+
+	config1.CurrentContext = config2.CurrentContext
+
+	clientcmd.ModifyConfig(clientcmd.DefaultClientConfig.ConfigAccess(), *config1, true)
+	return nil
+}
+
+func installKind() {
 
 	if !checkBinary("kind") {
 		log.Fatal("kind binary is not installed")
@@ -470,159 +605,4 @@ func generatePassword(length int) string {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
 	}
 	return string(b)
-}
-
-type User struct {
-	ID       int    `json:"id"`
-	Method   string `json:"method"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Insecure bool   `json:"insecure"`
-	Apitoken string `json:"apitoken,omitempty"`
-}
-
-type KindConfig struct {
-	Kind       string `yaml:"kind"`
-	APIVersion string `yaml:"apiVersion"`
-	Name       string `yaml:"name"`
-	Networking struct {
-		IPFamily         string `yaml:"ipFamily"`
-		APIServerAddress string `yaml:"apiServerAddress"`
-	} `yaml:"networking"`
-	Nodes []struct {
-		Role                 string   `yaml:"role"`
-		Image                string   `yaml:"image,omitempty"`
-		KubeadmConfigPatches []string `yaml:"kubeadmConfigPatches"`
-		ExtraPortMappings    []struct {
-			ContainerPort int    `yaml:"containerPort"`
-			HostPort      int    `yaml:"hostPort"`
-			Protocol      string `yaml:"protocol"`
-		} `yaml:"extraPortMappings"`
-	} `yaml:"nodes"`
-}
-
-type KuberoUIConfig struct {
-	APIVersion string `yaml:"apiVersion"`
-	Kind       string `yaml:"kind"`
-	Metadata   struct {
-		Name string `yaml:"name"`
-	} `yaml:"metadata"`
-	Spec struct {
-		Affinity struct {
-		} `yaml:"affinity"`
-		FullnameOverride string `yaml:"fullnameOverride"`
-		Image            struct {
-			PullPolicy string `yaml:"pullPolicy"`
-			Repository string `yaml:"repository"`
-			Tag        string `yaml:"tag"`
-		} `yaml:"image"`
-		ImagePullSecrets []interface{} `yaml:"imagePullSecrets"`
-		Ingress          struct {
-			Annotations struct {
-			} `yaml:"annotations"`
-			ClassName string `yaml:"className"`
-			Enabled   bool   `yaml:"enabled"`
-			Hosts     []struct {
-				Host  string `yaml:"host"`
-				Paths []struct {
-					Path     string `yaml:"path"`
-					PathType string `yaml:"pathType"`
-				} `yaml:"paths"`
-			} `yaml:"hosts"`
-			TLS []interface{} `yaml:"tls"`
-		} `yaml:"ingress"`
-		NameOverride string `yaml:"nameOverride"`
-		NodeSelector struct {
-		} `yaml:"nodeSelector"`
-		PodAnnotations struct {
-		} `yaml:"podAnnotations"`
-		PodSecurityContext struct {
-		} `yaml:"podSecurityContext"`
-		ReplicaCount int `yaml:"replicaCount"`
-		Resources    struct {
-		} `yaml:"resources"`
-		SecurityContext struct {
-		} `yaml:"securityContext"`
-		Service struct {
-			Port int    `yaml:"port"`
-			Type string `yaml:"type"`
-		} `yaml:"service"`
-		ServiceAccount struct {
-			Annotations struct {
-			} `yaml:"annotations"`
-			Create bool   `yaml:"create"`
-			Name   string `yaml:"name"`
-		} `yaml:"serviceAccount"`
-		Tolerations []interface{} `yaml:"tolerations"`
-		Kubero      struct {
-			Debug      string `yaml:"debug"`
-			Namespace  string `yaml:"namespace"`
-			Context    string `yaml:"context"`
-			WebhookURL string `yaml:"webhook_url"`
-			SessionKey string `yaml:"sessionKey"`
-			Auth       struct {
-				Github struct {
-					Enabled     bool   `yaml:"enabled"`
-					ID          string `yaml:"id"`
-					Secret      string `yaml:"secret"`
-					CallbackURL string `yaml:"callbackUrl"`
-					Org         string `yaml:"org"`
-				} `yaml:"github"`
-				Oauth2 struct {
-					Enabled     bool   `yaml:"enabled"`
-					Name        string `yaml:"name"`
-					ID          string `yaml:"id"`
-					AuthURL     string `yaml:"authUrl"`
-					TokenURL    string `yaml:"tokenUrl"`
-					Secret      string `yaml:"secret"`
-					CallbackURL string `yaml:"callbackUrl"`
-				} `yaml:"oauth2"`
-				Config string `yaml:"config"`
-				Kubero struct {
-					Context   string `yaml:"context"`
-					Namespace string `yaml:"namespace"`
-					Port      int    `yaml:"port"`
-				} `yaml:"kubero"`
-				Buildpacks []struct {
-					Name     string `yaml:"name"`
-					Language string `yaml:"language"`
-					Fetch    struct {
-						Repository string `yaml:"repository"`
-						Tag        string `yaml:"tag"`
-					} `yaml:"fetch"`
-					Build struct {
-						Repository string `yaml:"repository"`
-						Tag        string `yaml:"tag"`
-						Command    string `yaml:"command"`
-					} `yaml:"build"`
-					Run struct {
-						Repository         string `yaml:"repository"`
-						Tag                string `yaml:"tag"`
-						ReadOnlyAppStorage bool   `yaml:"readOnlyAppStorage"`
-						SecurityContext    struct {
-							AllowPrivilegeEscalation bool `yaml:"allowPrivilegeEscalation"`
-							ReadOnlyRootFilesystem   bool `yaml:"readOnlyRootFilesystem"`
-						} `yaml:"securityContext"`
-						Command string `yaml:"command"`
-					} `yaml:"run,omitempty"`
-				} `yaml:"buildpacks"`
-				PodSizeList []struct {
-					Name        string `yaml:"name"`
-					Description string `yaml:"description"`
-					Default     bool   `yaml:"default,omitempty"`
-					Resources   struct {
-						Requests struct {
-							Memory string `yaml:"memory"`
-							CPU    string `yaml:"cpu"`
-						} `yaml:"requests"`
-						Limits struct {
-							Memory string `yaml:"memory"`
-							CPU    string `yaml:"cpu"`
-						} `yaml:"limits"`
-					} `yaml:"resources,omitempty"`
-					Active bool `yaml:"active,omitempty"`
-				} `yaml:"podSizeList"`
-			} `yaml:"auth"`
-		} `yaml:"kubero"`
-	} `yaml:"spec"`
 }
