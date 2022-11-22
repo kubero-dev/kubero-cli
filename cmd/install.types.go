@@ -220,3 +220,138 @@ type KuberoUIConfig struct {
 		} `yaml:"kubero"`
 	} `yaml:"spec"`
 }
+
+// https://developers.scaleway.com/en/products/k8s/api/#post-612200
+type ScalewayCreate struct {
+	OrganizationID  string             `json:"organization_id,omitempty"` // DEPRECATED
+	ProjectID       string             `json:"project_id"`                // REQUIRED
+	Type            string             `json:"type"`
+	Name            string             `json:"name"` // REQUIRED
+	Description     string             `json:"description"`
+	Tags            []string           `json:"tags"`
+	Version         string             `json:"version"`          // REQUIRED
+	Cni             string             `json:"cni"`              // REQUIRED
+	EnableDashboard bool               `json:"enable_dashboard"` // DEPRECATED
+	Ingress         string             `json:"ingress"`          // DEPRECATED
+	Pools           []ScalewayNodePool `json:"pools"`
+	/*
+		AutoscalerConfig struct {
+			ScaleDownDisabled             bool    `json:"scale_down_disabled"`
+			ScaleDownDelayAfterAdd        string  `json:"scale_down_delay_after_add"`
+			Estimator                     string  `json:"estimator"`
+			Expander                      string  `json:"expander"`
+			IgnoreDaemonsetsUtilization   bool    `json:"ignore_daemonsets_utilization"`
+			BalanceSimilarNodeGroups      bool    `json:"balance_similar_node_groups"`
+			ExpendablePodsPriorityCutoff  int     `json:"expendable_pods_priority_cutoff"`
+			ScaleDownUnneededTime         string  `json:"scale_down_unneeded_time"`
+			ScaleDownUtilizationThreshold float32 `json:"scale_down_utilization_threshold"`
+			MaxGracefulTerminationSec     int     `json:"max_graceful_termination_sec"`
+		} `json:"autoscaler_config,omitempty"`
+	*/
+	AutoUpgrade struct {
+		Enable            bool `json:"enable"`
+		MaintenanceWindow struct {
+			StartHour int    `json:"start_hour"`
+			Day       string `json:"day"`
+		} `json:"maintenance_window"`
+	} `json:"auto_upgrade"`
+	FeatureGates     []string `json:"feature_gates"`
+	AdmissionPlugins []string `json:"admission_plugins"`
+	/*
+		OpenIDConnectConfig struct {
+			IssuerURL      string   `json:"issuer_url"`
+			ClientID       string   `json:"client_id"`
+			UsernameClaim  string   `json:"username_claim"`
+			UsernamePrefix string   `json:"username_prefix"`
+			GroupsClaim    []string `json:"groups_claim"`
+			GroupsPrefix   string   `json:"groups_prefix"`
+			RequiredClaim  []string `json:"required_claim"`
+		} `json:"open_id_connect_config"`
+	*/
+	ApiserverCertSans []string `json:"apiserver_cert_sans"`
+}
+
+type ScalewayNodePool struct {
+	Name             string   `json:"name"`
+	NodeType         string   `json:"node_type"`
+	PlacementGroupID string   `json:"placement_group_id,omitempty"`
+	Autoscaling      bool     `json:"autoscaling"`
+	Size             int      `json:"size"`
+	MinSize          int      `json:"min_size"`
+	MaxSize          int      `json:"max_size"`
+	ContainerRuntime string   `json:"container_runtime"`
+	Autohealing      bool     `json:"autohealing"`
+	Tags             []string `json:"tags"`
+	/* fails {"details":[{"argument_name":"default_pool_config[0].kubelet_args.\u003ckubelet_argKey\u003e","help_message":"kubelet argument \u003ckubelet_argKey\u003e is not available for this version","reason":"constraint"}
+	KubeletArgs      struct {
+		KubeletArgKey string `json:"<kubelet_argKey>"`
+	} `json:"kubelet_args"`
+	*/
+	/* fails with {"argument_name":"default_pool_config[0].upgrade_policy.max_unavailable","help_message":"value must be between 1 and 20","reason":"constraint"}],"message":"invalid argument(s)","type":"invalid_arguments"}
+	UpgradePolicy struct {
+		MaxUnavailable int `json:"max_unavailable"`
+		MaxSurge       int `json:"max_surge"`
+	} `json:"upgrade_policy"`
+	*/
+	Zone           string `json:"zone"`
+	RootVolumeType string `json:"root_volume_type"`
+	RootVolumeSize int    `json:"root_volume_size"`
+}
+
+type ScalewayCreateResponse struct {
+	ID               string    `json:"id"`
+	Type             string    `json:"type"`
+	Name             string    `json:"name"`
+	Status           string    `json:"status"`
+	Version          string    `json:"version"`
+	Region           string    `json:"region"`
+	OrganizationID   string    `json:"organization_id"`
+	ProjectID        string    `json:"project_id"`
+	Tags             []string  `json:"tags"`
+	Cni              string    `json:"cni"`
+	Description      string    `json:"description"`
+	ClusterURL       string    `json:"cluster_url"`
+	DNSWildcard      string    `json:"dns_wildcard"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
+	AutoscalerConfig struct {
+		ScaleDownDisabled             bool    `json:"scale_down_disabled"`
+		ScaleDownDelayAfterAdd        string  `json:"scale_down_delay_after_add"`
+		Estimator                     string  `json:"estimator"`
+		Expander                      string  `json:"expander"`
+		IgnoreDaemonsetsUtilization   bool    `json:"ignore_daemonsets_utilization"`
+		BalanceSimilarNodeGroups      bool    `json:"balance_similar_node_groups"`
+		ExpendablePodsPriorityCutoff  int     `json:"expendable_pods_priority_cutoff"`
+		ScaleDownUnneededTime         int     `json:"scale_down_unneeded_time"`
+		ScaleDownUtilizationThreshold float32 `json:"scale_down_utilization_threshold"`
+		MaxGracefulTerminationSec     int     `json:"max_graceful_termination_sec"`
+	} `json:"autoscaler_config"`
+	DashboardEnabled bool   `json:"dashboard_enabled"`
+	Ingress          string `json:"ingress"`
+	AutoUpgrade      struct {
+		Enabled           bool `json:"enabled"`
+		MaintenanceWindow struct {
+			StartHour int    `json:"start_hour"`
+			Day       string `json:"day"`
+		} `json:"maintenance_window"`
+	} `json:"auto_upgrade"`
+	UpgradeAvailable    string   `json:"upgrade_available"`
+	FeatureGates        []string `json:"feature_gates"`
+	AdmissionPlugins    []string `json:"admission_plugins"`
+	OpenIDConnectConfig struct {
+		IssuerURL      string   `json:"issuer_url"`
+		ClientID       string   `json:"client_id"`
+		UsernameClaim  string   `json:"username_claim"`
+		UsernamePrefix string   `json:"username_prefix"`
+		GroupsClaim    []string `json:"groups_claim"`
+		GroupsPrefix   string   `json:"groups_prefix"`
+		RequiredClaim  []string `json:"required_claim"`
+	} `json:"open_id_connect_config"`
+	ApiserverCertSans []string `json:"apiserver_cert_sans"`
+}
+
+type ScalewayKubeconfigResponse struct {
+	Name        string `json:"name"`
+	ContentType string `json:"content_type"`
+	Content     string `json:"content"`
+}
