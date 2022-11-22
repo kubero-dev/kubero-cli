@@ -106,7 +106,36 @@ func installSwitch() {
 	if clusterType == "digitalocean" {
 		installDigitalOcean()
 	}
+	if clusterType == "aws" {
+		installAWS()
+	}
 
+}
+
+func installAWS() {
+	cfmt.Println("{{\n  Holy shit. This is to complicated.}}::lightRed (not implemented yet, maybe later)")
+	// What we need: https://www.techtarget.com/searchcloudcomputing/tip/Compare-Amazon-ECS-vs-EKS -> EKS with Fargate
+
+	// https://docs.aws.amazon.com/eks/latest/userguide/getting-started-console.html
+
+	// aws cloudformation create-stack --region region-code --stack-name my-eks-vpc-stack --template-url https://s3.us-west-2.amazonaws.com/amazon-eks/cloudformation/2020-10-29/amazon-eks-vpc-private-subnets.yaml
+	// aws iam create-role --role-name myAmazonEKSClusterRole --assume-role-policy-document file://"eks-cluster-role-trust-policy.json"
+	// aws iam attach-role-policy --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy --role-name myAmazonEKSClusterRole
+
+	// https://docs.aws.amazon.com/eks/latest/userguide/create-cluster.html
+	// aws eks create-cluster --region region-code --name my-cluster --kubernetes-version 1.24 --role-arn arn:aws:iam::111122223333:role/myAmazonEKSClusterRole --resources-vpc-config subnetIds=subnet-ExampleID1,subnet-ExampleID2
+
+	// https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html
+	// aws eks update-kubeconfig --region region-code --name kubero-123 --alias aws-kubero-123
+
+	// deploy fargate nodes :
+	// https://docs.aws.amazon.com/eks/latest/userguide/getting-started-console.html
+	// aws iam create-role --role-name AmazonEKSFargatePodExecutionRole --assume-role-policy-document file://"pod-execution-role-trust-policy.json"
+	// aws iam attach-role-policy --policy-arn arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy --role-name AmazonEKSFargatePodExecutionRole
+
+	//name := promptLine("Kubernetes Cluster Name", "", "kubero-"+strconv.Itoa(rand.Intn(1000)))
+	//region := promptLine("Region", "[TBD]", "us-central1-c")
+	//kubernetesVersion := promptLine("Kubernetes Version", "[TBD]", "1.24")
 }
 
 func installGKE() {
