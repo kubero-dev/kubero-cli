@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"log"
@@ -18,6 +19,8 @@ import (
 	"github.com/leaanthony/spinner"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/api/container/v1"
+	"google.golang.org/api/option"
 	"gopkg.in/yaml.v3"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -33,6 +36,8 @@ required binaries:
  - kubectl
  - kind (optional)`,
 	Run: func(cmd *cobra.Command, args []string) {
+
+		getGKEKubeConfig()
 
 		rand.Seed(time.Now().UnixNano())
 		checkAllBinaries()
@@ -90,7 +95,7 @@ func installSwitch() {
 		return
 	}
 
-	clusterType := promptLine("Select a cluster type", "[digitalocean,kind]", "digitalocean")
+	clusterType := promptLine("Select a cluster type", "[gke,digitalocean,kind]", "gke")
 	if clusterType == "kind" {
 		installKind()
 	}
@@ -114,6 +119,119 @@ func installGKE() {
 
 	// https://cloud.google.com/kubernetes-engine/docs/reference/libraries#client-libraries-install-go
 	// https://github.com/googleapis/google-cloud-go
+
+	// https://cloud.google.com/kubernetes-engine/docs/how-to/creating-a-cluster
+
+	// create API Key for GKE: https://cloud.google.com/docs/authentication/api-keys -> https://console.cloud.google.com/apis/credentials -> GOOGLE_API_KEY
+	//export GOOGLE_CREDENTIALS=~/google-credentials/example.json
+
+	token := os.Getenv("GOOGLE_CREDENTIALS")
+	if token == "" {
+		cfmt.Println("{{✗ GOOGLE_CREDENTIALS is not set}}::red")
+		cfmt.Println("{{  Please create a API Key for GKE: https://cloud.google.com/docs/authentication/api-keys}}::lightBlue")
+		cfmt.Println("{{  -> https://console.cloud.google.com/apis/credentials}}::lightBlue")
+		log.Fatal("missing GOOGLE_CREDENTIALS")
+	}
+
+	ctx := context.Background()
+
+	//containerService, _ := container.NewService(ctx, option.WithAPIKey(token))
+	containerService, _ := container.NewService(ctx, option.WithCredentialsFile(token))
+
+	projectID := promptLine("Project ID", "", "kubecluster-XXXXXX")
+	clusterName := promptLine("Kubernetes Cluster Name", "", "kubero-"+strconv.Itoa(rand.Intn(1000)))
+	zone := promptLine("Zone", "[https://cloud.google.com/compute/docs/regions-zones]", "us-central1-c")
+	clusterVersion := promptLine("Cluster Version", "[https://cloud.google.com/kubernetes-engine/docs/release-notes-regular]", "1.23.8-gke.1900")
+
+	rb := &container.CreateClusterRequest{
+		Cluster: &container.Cluster{
+			Name:                  clusterName,
+			InitialClusterVersion: clusterVersion,
+			Autopilot: &container.Autopilot{
+				Enabled: false,
+			},
+			InitialNodeCount: 1,
+			// NodeConfig: &container.NodeConfig{
+			// 	MachineType: "n1-standard-1",
+			// },
+			// AddonsConfig: &container.AddonsConfig{
+			// 	HttpLoadBalancing: &container.HttpLoadBalancing{
+			// 		Disabled: false,
+			// 	},
+			// 	HorizontalPodAutoscaling: &container.HorizontalPodAutoscaling{
+			// 		Disabled: false,
+			// 	},
+			// },
+			// Network: "default",
+			// Subnetwork: "default",
+			// Location: "us-central1-c",
+		},
+	}
+
+	res := containerService.Projects.Zones.Clusters.Create(projectID, zone, rb)
+	_, err := res.Do()
+	if err != nil {
+		cfmt.Println("{{✗ Error creating GKE cluster}}::red")
+		log.Fatal(err)
+	} else {
+		cfmt.Println("{{✓ GKE Cluster created}}::lightGreen")
+	}
+
+	// check if cluster is ready
+	// https://cloud.google.com/kubernetes-engine/docs/how-to/creating-a-cluster#checking_cluster_status
+
+	googleSpinner := spinner.New("Starting a kubernetes cluster on Google Cloud")
+	googleSpinner.Start()
+	time.Sleep(2 * time.Second)
+	for {
+		res, err := containerService.Projects.Zones.Clusters.Get(projectID, zone, clusterName).Do()
+		if err != nil {
+			googleSpinner.Error("GKE Cluster creation failed")
+			log.Fatal(err)
+		} else {
+			if res.Status == "RUNNING" {
+				googleSpinner.Success("GKE Cluster is running")
+				break
+			}
+
+			time.Sleep(5 * time.Second)
+		}
+	}
+}
+
+func getGKEKubeConfig() {
+	token := os.Getenv("GOOGLE_CREDENTIALS")
+	if token == "" {
+		cfmt.Println("{{✗ GOOGLE_CREDENTIALS is not set}}::red")
+		cfmt.Println("{{  Please create a API Key for GKE: https://cloud.google.com/docs/authentication/api-keys}}::lightBlue")
+		cfmt.Println("{{  -> https://console.cloud.google.com/apis/credentials}}::lightBlue")
+		log.Fatal("missing GOOGLE_CREDENTIALS")
+	}
+
+	projectID := "kubecluster-275506"
+	clusterName := "kubero-cluster-99"
+	zone := "us-central1-c"
+
+	ctx := context.Background()
+
+	// containerService, _ := container.NewService(ctx, option.WithAPIKey(token))
+	containerService, _ := container.NewService(ctx, option.WithCredentialsFile(token))
+	// gcloud container clusters get-credentials kubero-cluster-4 --region=us-central1-c
+	aaa, _ := containerService.Projects.Zones.Clusters.Get(projectID, zone, clusterName).Do()
+	fmt.Println(aaa.MasterAuth.ClusterCaCertificate)
+	fmt.Println(aaa.PrivateClusterConfig.PublicEndpoint)
+	fmt.Println(aaa.Endpoint)
+	fmt.Println(aaa.MasterAuth.ClientKey)
+	fmt.Println(aaa.MasterAuth.ClientCertificate)
+
+	new := clientcmd.NewDefaultPathOptions()
+	config1, _ := new.GetStartingConfig()
+
+	clientcmd.NewNonInteractiveClientConfig(*config1, "kubero-cluster-99", &clientcmd.ConfigOverrides{}, nil)
+
+	//clientcmd.NewDefaultClientConfig(*config1, &clientcmd.ConfigOverrides{})
+
+	os.Exit(0)
 }
 
 func installDigitalOcean() {
