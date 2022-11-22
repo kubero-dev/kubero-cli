@@ -96,18 +96,22 @@ func installSwitch() {
 		return
 	}
 
-	clusterType := promptLine("Select a cluster type", "[scaleway,gke,digitalocean,kind]", "scaleway")
-	if clusterType == "kind" {
-		installKind()
-	}
-	if clusterType == "gke" {
-		installGKE()
-	}
-	if clusterType == "digitalocean" {
-		installDigitalOcean()
-	}
-	if clusterType == "scaleway" {
+	clusterType := promptLine("Select a cluster type", "[scaleway,linode,gke,digitalocean,kind]", "linode")
+
+	switch clusterType {
+	case "scaleway":
 		installScaleway()
+	case "linode":
+		installLinode()
+	case "gke":
+		installGKE()
+	case "digitalocean":
+		installDigitalOcean()
+	case "kind":
+		installKind()
+	default:
+		cfmt.Println("{{✗ Unknown cluster type}}::red")
+		os.Exit(1)
 	}
 
 }
@@ -257,6 +261,104 @@ func installGKE() {
 		spinner.Success("GKE cluster credentials set")
 	}
 
+}
+
+func installLinode() {
+
+	// https://www.linode.com/docs/api/linode-kubernetes-engine-lke/#kubernetes-cluster-create
+	// https://www.linode.com/docs/api/linode-kubernetes-engine-lke/#kubernetes-cluster-view
+	// https://www.linode.com/docs/api/linode-kubernetes-engine-lke/#kubeconfig-view
+	cfmt.Println("{{⚠ Installing Kubernetes on Linode is currently beta state in kubero-cli}}::yellow")
+	cfmt.Println("{{  Please report if you run into errors}}::yellow")
+
+	token := os.Getenv("LINODE_ACCESS_TOKEN")
+	if token == "" {
+		cfmt.Println("{{✗ LINODE_ACCESS_TOKEN is not set}}::red")
+		log.Fatal("missing LINODE_ACCESS_TOKEN")
+	}
+
+	api := resty.New().
+		SetAuthScheme("Bearer").
+		SetAuthToken(token).
+		SetHeader("Accept", "application/json").
+		SetHeader("Content-Type", "application/json").
+		SetHeader("User-Agent", "kubero-cli/0.0.1").
+		SetBaseURL("https://api.linode.com/v4/lke/clusters")
+
+	var clusterConfig LinodeCreateClusterRequest
+	clusterConfig.Label = promptLine("Cluster Name", "", "kubero-"+strconv.Itoa(rand.Intn(1000)))
+	clusterConfig.Region = promptLine("Region", "[https://www.linode.com/global-infrastructure/]", "us-central") // TODO load the list of regions or point to e better document
+
+	workerNodesCount, _ := strconv.Atoi(promptLine("Worker Nodes Count", "", "3"))
+	workerNodesType := promptLine("Worker Nodes Type", "[https://www.linode.com/pricing/]", "g6-standard-2")
+
+	clusterConfig.K8SVersion = promptLine("Kubernetes Version", "[1.24,1.23,1.22,1.21,1.19]", "1.23")
+	clusterConfig.Tags = []string{"kubero"}
+	clusterConfig.NodePools = []LinodeNodepool{
+		{
+			Type:  workerNodesType,
+			Count: workerNodesCount,
+		},
+	}
+
+	spinner := spinner.New("Spin up a Linode Kubernetes Cluster")
+	spinner.Start("Create Linode Kubernetes Cluster")
+	clusterResponse, _ := api.R().SetBody(clusterConfig).Post("")
+	if clusterResponse.StatusCode() > 299 {
+		fmt.Println()
+		spinner.Error("Failed to create Linode Kubernetes Cluster")
+		log.Fatal(clusterResponse.String())
+	}
+	spinner.Success("Linode Kubernetes Cluster created")
+
+	/* According to the docs, the cluster is ready after 2-5 minutes.
+	// And there is no way to check the status of the cluster, so we just wait for 5 minutes
+	var cluster LinodeCluster
+	json.Unmarshal(clusterResponse.Body(), &cluster)
+
+	spinner.Start("Wait for Linode Kubernetes Cluster to be ready")
+	for {
+		clusterResponse, _ := api.R().Get("/" + cluster.ID)
+		if clusterResponse.StatusCode() > 299 {
+			fmt.Println()
+			spinner.Error("Failed to get Linode Kubernetes Cluster")
+			log.Fatal(clusterResponse.String())
+		}
+		json.Unmarshal(clusterResponse.Body(), &cluster)
+		if cluster.Status == "ready" {
+			break
+		}
+		time.Sleep(5 * time.Second)
+	}
+	*/
+	cfmt.Println("{{  Wait for Linode Kubernetes Cluster to be ready}}::lightBlue")
+	cfmt.Println("{{  According to the docs this may take up to 5 minutes}}::lightBlue")
+	cfmt.Println("{{  Time for a coffee break and some Chuck Norris jokes.}}::lightBlue")
+	spinner.Start("Wait for Linode Kubernetes Cluster to be ready.")
+
+	tellAChucknorrisJoke(10, 30)
+
+	spinner.Success("Chuck Norris has deployed the Linode Kubernetes Cluster")
+
+	spinner.Start("Get credentials for the Linode Kubernetes Cluster")
+
+}
+
+func tellAChucknorrisJoke(count int, interval time.Duration) {
+
+	jokesapi := resty.New().
+		SetHeader("Accept", "application/json").
+		SetHeader("Content-Type", "application/json").
+		SetHeader("User-Agent", "kubero-cli/0.0.1").
+		SetBaseURL("https://api.chucknorris.io/jokes/random")
+
+	for i := 0; i < count; i++ {
+		time.Sleep(interval * time.Second)
+		joke, _ := jokesapi.R().Get("?category=dev")
+		var jokeResponse JokeResponse
+		json.Unmarshal(joke.Body(), &jokeResponse)
+		cfmt.Println("\r{{  " + jokeResponse.Value + "                                      }}::gray")
+	}
 }
 
 func installDigitalOcean() {
