@@ -264,10 +264,10 @@ func installGKE() {
 }
 
 func installLinode() {
-
 	// https://www.linode.com/docs/api/linode-kubernetes-engine-lke/#kubernetes-cluster-create
 	// https://www.linode.com/docs/api/linode-kubernetes-engine-lke/#kubernetes-cluster-view
 	// https://www.linode.com/docs/api/linode-kubernetes-engine-lke/#kubeconfig-view
+
 	cfmt.Println("{{⚠ Installing Kubernetes on Linode is currently beta state in kubero-cli}}::yellow")
 	cfmt.Println("{{  Please report if you run into errors}}::yellow")
 
@@ -290,9 +290,9 @@ func installLinode() {
 	clusterConfig.Region = promptLine("Region", "[https://www.linode.com/global-infrastructure/]", "us-central") // TODO load the list of regions or point to e better document
 
 	workerNodesCount, _ := strconv.Atoi(promptLine("Worker Nodes Count", "", "3"))
-	workerNodesType := promptLine("Worker Nodes Type", "[https://www.linode.com/pricing/]", "g6-standard-2")
+	workerNodesType := promptLine("Worker Nodes Type", "[https://www.linode.com/pricing/]", "g6-standard-2") // TODO load the list of types or point to e better document
 
-	clusterConfig.K8SVersion = promptLine("Kubernetes Version", "[1.24,1.23,1.22,1.21,1.19]", "1.23")
+	clusterConfig.K8SVersion = promptLine("Kubernetes Version", "[1.23]", "1.23")
 	clusterConfig.Tags = []string{"kubero"}
 	clusterConfig.NodePools = []LinodeNodepool{
 		{
@@ -302,6 +302,7 @@ func installLinode() {
 	}
 
 	spinner := spinner.New("Spin up a Linode Kubernetes Cluster")
+
 	spinner.Start("Create Linode Kubernetes Cluster")
 	clusterResponse, _ := api.R().SetBody(clusterConfig).Post("")
 	if clusterResponse.StatusCode() > 299 {
@@ -310,6 +311,9 @@ func installLinode() {
 		log.Fatal(clusterResponse.String())
 	}
 	spinner.Success("Linode Kubernetes Cluster created")
+
+	var cluster LinodeCreateClusterResponse
+	json.Unmarshal(clusterResponse.Body(), &cluster)
 
 	/* According to the docs, the cluster is ready after 2-5 minutes.
 	// And there is no way to check the status of the cluster, so we just wait for 5 minutes
@@ -341,6 +345,28 @@ func installLinode() {
 	spinner.Success("Chuck Norris has deployed the Linode Kubernetes Cluster")
 
 	spinner.Start("Get credentials for the Linode Kubernetes Cluster")
+
+	var LinodeKubeconfig struct {
+		Kubeconfig string `json:"kubeconfig"`
+	}
+
+	api.R().SetResult(&LinodeKubeconfig).Get("/" + strconv.Itoa(cluster.ID) + "/kubeconfig")
+
+	kubeconfig, err := base64.StdEncoding.DecodeString(LinodeKubeconfig.Kubeconfig)
+	if err != nil {
+		fmt.Println()
+		spinner.Error("Failed to decode kubeconfig")
+		log.Fatal(err)
+	}
+
+	err = mergeKubeconfig(kubeconfig)
+	if err != nil {
+		fmt.Println()
+		spinner.Error("Failed to merge kubeconfig")
+		log.Fatal(err)
+	}
+
+	spinner.Success("Linode Kubernetes Cluster credentials set")
 
 }
 

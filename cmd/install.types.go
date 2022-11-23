@@ -367,6 +367,19 @@ type LinodeCreateClusterRequest struct {
 	NodePools []LinodeNodepool `json:"node_pools"`
 }
 
+type LinodeCreateClusterResponse struct {
+	ControlPlane struct {
+		HighAvailability bool `json:"high_availability"`
+	} `json:"control_plane"`
+	Created    time.Time `json:"created"`
+	ID         int       `json:"id"`
+	K8SVersion string    `json:"k8s_version"`
+	Label      string    `json:"label"`
+	Region     string    `json:"region"`
+	Tags       []string  `json:"tags"`
+	Updated    time.Time `json:"updated"`
+}
+
 type LinodeNodepool struct {
 	Type       string `json:"type"`
 	Count      int    `json:"count"`
