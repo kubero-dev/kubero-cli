@@ -648,7 +648,7 @@ func installIngress() {
 	if ingressInstall != "y" {
 		log.Fatal("Ingress is required to install Kubero")
 	} else {
-		ingressProvider := promptLine("Provider", "[kind,aws,baremetal,cloud(Azure,Google,Oracle),do(digital ocean),exoscale,scw(scaleway)]", "kind")
+		ingressProvider := promptLine("Provider", "[kind,aws,baremetal,cloud(Azure,Google,Oracle,Linode),do(digital ocean),exoscale,scw(scaleway)]", "kind")
 		ingressSpinner := spinner.New("Install Ingress")
 		ingressSpinner.Start("run command : kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/" + ingressProvider + "/deploy.yaml")
 		_, ingressErr := exec.Command("kubectl", "apply", "-f", "https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/"+ingressProvider+"/deploy.yaml").Output()
