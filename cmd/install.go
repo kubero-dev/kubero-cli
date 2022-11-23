@@ -336,11 +336,11 @@ func installLinode() {
 	}
 	*/
 	cfmt.Println("{{  Wait for Linode Kubernetes Cluster to be ready}}::lightBlue")
-	cfmt.Println("{{  According to the docs this may take up to 5 minutes}}::lightBlue")
+	cfmt.Println("{{  According to the docs this may take up to 7 minutes}}::lightBlue")
 	cfmt.Println("{{  Time for a coffee break and some Chuck Norris jokes.}}::lightBlue")
 	spinner.Start("Wait for Linode Kubernetes Cluster to be ready.")
 
-	tellAChucknorrisJoke(10, 30)
+	tellAChucknorrisJoke(14, 30)
 
 	spinner.Success("Chuck Norris has deployed the Linode Kubernetes Cluster")
 
