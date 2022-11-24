@@ -6,6 +6,14 @@ The main repository is [here](https://github.com/kubero-dev/kubero).
 
 Download the latest release [here](https://github.com/kubero-dev/kubero-cli/releases/latest) and extract the binary.
 
+## Supported installer
+- Scaleway
+- Linode
+- Digital Ocean
+- Google GKE
+- Kind (localhost)
+- Exoscale (soon)
+
 ## Usage
 Command map
 ```
