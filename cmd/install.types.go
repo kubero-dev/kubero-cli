@@ -388,3 +388,47 @@ type KuberoIngress struct {
 		} `json:"status"`
 	} `json:"items"`
 }
+
+type LinodeCreateClusterRequest struct {
+	Label        string   `json:"label"`
+	Region       string   `json:"region"`
+	K8SVersion   string   `json:"k8s_version"`
+	Tags         []string `json:"tags"`
+	ControlPlane struct {
+		HighAvailability bool `json:"high_availability"`
+	} `json:"control_plane"`
+	NodePools []LinodeNodepool `json:"node_pools"`
+}
+
+type LinodeCreateClusterResponse struct {
+	ControlPlane struct {
+		HighAvailability bool `json:"high_availability"`
+	} `json:"control_plane"`
+	Created    time.Time `json:"created"`
+	ID         int       `json:"id"`
+	K8SVersion string    `json:"k8s_version"`
+	Label      string    `json:"label"`
+	Region     string    `json:"region"`
+	Tags       []string  `json:"tags"`
+	Updated    time.Time `json:"updated"`
+}
+
+type LinodeNodepool struct {
+	Type       string `json:"type"`
+	Count      int    `json:"count"`
+	Autoscaler struct {
+		Enabled bool `json:"enabled"`
+		Max     int  `json:"max,omitempty"`
+		Min     int  `json:"min,omitempty"`
+	} `json:"autoscaler,omitempty"`
+}
+
+type JokeResponse struct {
+	Categories []string `json:"categories"`
+	CreatedAt  string   `json:"created_at"`
+	IconURL    string   `json:"icon_url"`
+	ID         string   `json:"id"`
+	UpdatedAt  string   `json:"updated_at"`
+	URL        string   `json:"url"`
+	Value      string   `json:"value"`
+}
