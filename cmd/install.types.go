@@ -356,6 +356,39 @@ type ScalewayKubeconfigResponse struct {
 	Content     string `json:"content"`
 }
 
+type KuberoIngress struct {
+	Items []struct {
+		Kind string `json:"kind"`
+		Spec struct {
+			IngressClassName string `json:"ingressClassName"`
+			Rules            []struct {
+				Host string `json:"host"`
+				HTTP struct {
+					Paths []struct {
+						Backend struct {
+							Service struct {
+								Name string `json:"name"`
+								Port struct {
+									Number int `json:"number"`
+								} `json:"port"`
+							} `json:"service"`
+						} `json:"backend"`
+						Path string `json:"path"`
+					} `json:"paths"`
+				} `json:"http"`
+			} `json:"rules"`
+		} `json:"spec"`
+		Status struct {
+			LoadBalancer struct {
+				Ingress []struct {
+					Hostname string `json:"hostname"`
+					IP       string `json:"ip"`
+				} `json:"ingress"`
+			} `json:"loadBalancer"`
+		} `json:"status"`
+	} `json:"items"`
+}
+
 type LinodeCreateClusterRequest struct {
 	Label        string   `json:"label"`
 	Region       string   `json:"region"`

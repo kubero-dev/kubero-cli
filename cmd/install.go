@@ -44,6 +44,7 @@ required binaries:
 		installKuberoOperator()
 		installKuberoUi()
 		writeCLIconfig()
+		printDNSinfo()
 		finalMessage()
 	},
 }
@@ -870,10 +871,26 @@ func writeCLIconfig() {
 	viper.WriteConfig()
 }
 
+func printDNSinfo() {
+
+	ingressInstalled, err := exec.Command("kubectl", "get", "ingress", "-n", "kubero").Output()
+	if err != nil {
+		cfmt.Println("{{✗ Failed to fetch DNS informations}}::red")
+		return
+	}
+	var kuberoIngress KuberoIngress
+	json.Unmarshal(ingressInstalled, &kuberoIngress)
+
+	cfmt.Println("{{⚠ make sure your DNS is pointing to your Kubernetes cluster}}::yellow")
+	for _, ingress := range kuberoIngress.Items {
+		cfmt.Printf("{{  %s.		IN		A		%s}}::lightBlue", ingress.Spec.Rules[0].Host, ingress.Status.LoadBalancer.Ingress[0].IP)
+	}
+	cfmt.Printf("{{  *.review.example.com.		IN		A		%s}}::lightBlue", kuberoIngress.Items[0].Status.LoadBalancer.Ingress[0].IP)
+
+}
+
 func finalMessage() {
 	cfmt.Println(`
-
-{{⚠ make sure your DNS is pointing to your Kubernetes cluster}}::yellow
 
 	,--. ,--.        ,--.
 	|  .'   /,--.,--.|  |-.  ,---. ,--.--. ,---.
