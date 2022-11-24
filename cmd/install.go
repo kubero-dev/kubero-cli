@@ -53,6 +53,7 @@ var arg_domain string
 var arg_apiToken string
 var arg_port string
 var arg_portSecure string
+var clusterType string
 
 func init() {
 	installCmd.Flags().StringVarP(&arg_adminUser, "user", "u", "", "Admin username for the kubero UI")
@@ -96,7 +97,7 @@ func installSwitch() {
 		return
 	}
 
-	clusterType := promptLine("Select a cluster type", "[scaleway,linode,gke,digitalocean,kind]", "linode")
+	clusterType = promptLine("Select a cluster type", "[scaleway,linode,gke,digitalocean,kind]", "linode")
 
 	switch clusterType {
 	case "scaleway":
@@ -767,6 +768,10 @@ func installKuberoUi() {
 			arg_domain = promptLine("Kuberi UI Domain", "", "kubero.lacolhost.com")
 		}
 		kuberiUIConfig.Spec.Ingress.Hosts[0].Host = arg_domain
+
+		if clusterType == "linode" {
+			kuberiUIConfig.Spec.Ingress.ClassName = "nginx"
+		}
 
 		kuberiUIYaml, _ := yaml.Marshal(kuberiUIConfig)
 		kuberiUIErr := os.WriteFile("kuberoUI.yaml", kuberiUIYaml, 0644)
