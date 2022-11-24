@@ -621,10 +621,10 @@ func installKuberoUi() {
 		)
 
 		if githubPersonalAccessToken != "" {
-			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=KUBERO_GITHUB_PERSONAL_ACCESS_TOKEN="+githubPersonalAccessToken)
+			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITHUB_PERSONAL_ACCESS_TOKEN="+githubPersonalAccessToken)
 		}
 		if giteaPersonalAccessToken != "" {
-			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=KUBERO_GITEA_PERSONAL_ACCESS_TOKEN="+giteaPersonalAccessToken)
+			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITEA_PERSONAL_ACCESS_TOKEN="+giteaPersonalAccessToken)
 		}
 
 		createSecretCommand.Args = append(createSecretCommand.Args, "-n", "kubero")
