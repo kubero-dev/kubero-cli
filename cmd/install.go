@@ -42,7 +42,7 @@ required binaries:
 		installIngress()
 		installKuberoOperator()
 		installKuberoUi()
-		writeCLIconffig()
+		writeCLIconfig()
 		finalMessage()
 	},
 }
@@ -696,7 +696,35 @@ func installKuberoUi() {
 
 }
 
-func writeCLIconffig() {
+func installCertManager() {
+	certManagerInstalled, _ := exec.Command("kubectl", "get", "certificaterequests.cert-manager.io", "-n", "cert-manager").Output()
+	if len(certManagerInstalled) > 0 {
+		cfmt.Println("{{✓ Cert Manager allready installed}}::lightGreen")
+	} else {
+		certManagerSpinner := spinner.New("Install Cert Manager")
+		certManagerSpinner.Start("run command : kubectl create -f https://operatorhub.io/install/cert-manager.yaml")
+		_, certManagerErr := exec.Command("kubectl", "create", "-f", "https://operatorhub.io/install/cert-manager.yaml").Output()
+		if certManagerErr != nil {
+			fmt.Println("") // keeps the spinner from overwriting the last line
+			certManagerSpinner.Error("Failed to run command. Try runnig it manually")
+			log.Fatal(certManagerErr)
+		}
+		certManagerSpinner.Success("Cert Manager installed")
+
+		time.Sleep(2 * time.Second)
+		certManagerSpinner = spinner.New("Wait for Cert Manager to be ready")
+		certManagerSpinner.Start("run command : kubectl wait --for=condition=available deployment/cert-manager-webhook -n cert-manager --timeout=180s")
+		_, certManagerWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/cert-manager-webhook", "-n", "cert-manager", "--timeout=180s").Output()
+		if certManagerWaitErr != nil {
+			fmt.Println("") // keeps the spinner from overwriting the last line
+			certManagerSpinner.Error("Failed to run command. Try runnig it manually")
+			log.Fatal(certManagerWaitErr)
+		}
+		certManagerSpinner.Success("Cert Manager is ready")
+	}
+}
+
+func writeCLIconfig() {
 
 	ingressInstall := promptLine("Generate CLI config", "[y,n]", "y")
 	if ingressInstall != "y" {
