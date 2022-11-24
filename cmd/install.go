@@ -315,44 +315,29 @@ func installLinode() {
 	var cluster LinodeCreateClusterResponse
 	json.Unmarshal(clusterResponse.Body(), &cluster)
 
-	/* According to the docs, the cluster is ready after 2-5 minutes.
-	// And there is no way to check the status of the cluster, so we just wait for 5 minutes
-	var cluster LinodeCluster
-	json.Unmarshal(clusterResponse.Body(), &cluster)
-
-	spinner.Start("Wait for Linode Kubernetes Cluster to be ready")
-	for {
-		clusterResponse, _ := api.R().Get("/" + cluster.ID)
-		if clusterResponse.StatusCode() > 299 {
-			fmt.Println()
-			spinner.Error("Failed to get Linode Kubernetes Cluster")
-			log.Fatal(clusterResponse.String())
-		}
-		json.Unmarshal(clusterResponse.Body(), &cluster)
-		if cluster.Status == "ready" {
-			break
-		}
-		time.Sleep(5 * time.Second)
-	}
-	*/
+	// According to the docs, the cluster is ready after 2-5 minutes.
 	cfmt.Println("{{  Wait for Linode Kubernetes Cluster to be ready}}::lightBlue")
 	cfmt.Println("{{  According to the docs this may take up to 7 minutes}}::lightBlue")
 	cfmt.Println("{{  Time for a coffee break and some Chuck Norris jokes.}}::lightBlue")
-	spinner.Start("Wait for Linode Kubernetes Cluster to be ready.")
-
-	tellAChucknorrisJoke(14, 30)
-
-	spinner.Success("Chuck Norris has deployed the Linode Kubernetes Cluster")
-
-	spinner.Start("Get credentials for the Linode Kubernetes Cluster")
+	spinner.Start("Wait for Linode Kubernetes Cluster to be ready")
 
 	var LinodeKubeconfig struct {
 		Kubeconfig string `json:"kubeconfig"`
 	}
 
-	api.R().SetResult(&LinodeKubeconfig).Get("/" + strconv.Itoa(cluster.ID) + "/kubeconfig")
-
+	for i := 0; true; i++ {
+		time.Sleep(15 * time.Second)
+		r, _ := api.R().SetResult(&LinodeKubeconfig).Get("/" + strconv.Itoa(cluster.ID) + "/kubeconfig")
+		if r.StatusCode() > 299 {
+			tellAChucknorrisJoke()
+		}
+		if LinodeKubeconfig.Kubeconfig != "" {
+			spinner.Success("Linode Kubernetes Cluster is ready")
+			break
+		}
+	}
 	kubeconfig, err := base64.StdEncoding.DecodeString(LinodeKubeconfig.Kubeconfig)
+
 	if err != nil {
 		fmt.Println()
 		spinner.Error("Failed to decode kubeconfig")
@@ -370,7 +355,7 @@ func installLinode() {
 
 }
 
-func tellAChucknorrisJoke(count int, interval time.Duration) {
+func tellAChucknorrisJoke() {
 
 	jokesapi := resty.New().
 		SetHeader("Accept", "application/json").
@@ -378,13 +363,10 @@ func tellAChucknorrisJoke(count int, interval time.Duration) {
 		SetHeader("User-Agent", "kubero-cli/0.0.1").
 		SetBaseURL("https://api.chucknorris.io/jokes/random")
 
-	for i := 0; i < count; i++ {
-		time.Sleep(interval * time.Second)
-		joke, _ := jokesapi.R().Get("?category=dev")
-		var jokeResponse JokeResponse
-		json.Unmarshal(joke.Body(), &jokeResponse)
-		cfmt.Println("\r{{  " + jokeResponse.Value + "                                      }}::gray")
-	}
+	joke, _ := jokesapi.R().Get("?category=dev")
+	var jokeResponse JokeResponse
+	json.Unmarshal(joke.Body(), &jokeResponse)
+	cfmt.Println("\r{{  " + jokeResponse.Value + "       }}::gray")
 }
 
 func installDigitalOcean() {
@@ -618,8 +600,8 @@ func installOLM() {
 	olmSpinner.Success("OLM installed sucessfully")
 
 	olmWaitSpinner := spinner.New("Wait for OLM to be ready")
-	olmWaitSpinner.Start("run command : kubectl wait --for=condition=available deployment/olm-operator -n " + namespace + " --timeout=60s")
-	_, olmWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/olm-operator", "-n", namespace, "--timeout=60s").Output()
+	olmWaitSpinner.Start("run command : kubectl wait --for=condition=available deployment/olm-operator -n " + namespace + " --timeout=180s")
+	_, olmWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/olm-operator", "-n", namespace, "--timeout=180s").Output()
 	if olmWaitErr != nil {
 		olmWaitSpinner.Error("Failed to run command. Try runnig it manually")
 		log.Fatal(olmWaitErr)
@@ -627,8 +609,8 @@ func installOLM() {
 	olmWaitSpinner.Success("OLM is ready")
 
 	olmWaitCatalogSpinner := spinner.New("Wait for OLM Catalog to be ready")
-	olmWaitCatalogSpinner.Start("run command : kubectl wait --for=condition=available deployment/catalog-operator -n " + namespace + " --timeout=60s")
-	_, olmWaitCatalogErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/catalog-operator", "-n", namespace, "--timeout=60s").Output()
+	olmWaitCatalogSpinner.Start("run command : kubectl wait --for=condition=available deployment/catalog-operator -n " + namespace + " --timeout=180s")
+	_, olmWaitCatalogErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/catalog-operator", "-n", namespace, "--timeout=180s").Output()
 	if olmWaitCatalogErr != nil {
 		olmWaitCatalogSpinner.Error("Failed to run command. Try runnig it manually")
 		log.Fatal(olmWaitCatalogErr)
@@ -812,8 +794,8 @@ func installKuberoUi() {
 
 		time.Sleep(1 * time.Second)
 		kuberoUISpinner := spinner.New("Wait for Kubero UI to be ready")
-		kuberoUISpinner.Start("run command : kubectl wait --for=condition=available deployment/kubero-sample -n kubero --timeout=60s")
-		_, olmWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/kubero-sample", "-n", "kubero", "--timeout=60s").Output()
+		kuberoUISpinner.Start("run command : kubectl wait --for=condition=available deployment/kubero-sample -n kubero --timeout=180s")
+		_, olmWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/kubero-sample", "-n", "kubero", "--timeout=180s").Output()
 		if olmWaitErr != nil {
 			fmt.Println("") // keeps the spinner from overwriting the last line
 			kuberoUISpinner.Error("Failed to run command. Try runnig it manually")
