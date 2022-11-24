@@ -40,6 +40,7 @@ required binaries:
 		checkCluster()
 		installOLM()
 		installIngress()
+		installCertManager()
 		installKuberoOperator()
 		installKuberoUi()
 		writeCLIconfig()
@@ -697,10 +698,16 @@ func installKuberoUi() {
 }
 
 func installCertManager() {
-	certManagerInstalled, _ := exec.Command("kubectl", "get", "certificaterequests.cert-manager.io", "-n", "cert-manager").Output()
+	certManagerInstalled, _ := exec.Command("kubectl", "get", "deployment", "cert-manager-webhook", "-n", "olm").Output()
 	if len(certManagerInstalled) > 0 {
 		cfmt.Println("{{✓ Cert Manager allready installed}}::lightGreen")
 	} else {
+
+		install := promptLine("Install SSL Certmanager", "[y,n]", "y")
+		if install != "y" {
+			return
+		}
+
 		certManagerSpinner := spinner.New("Install Cert Manager")
 		certManagerSpinner.Start("run command : kubectl create -f https://operatorhub.io/install/cert-manager.yaml")
 		_, certManagerErr := exec.Command("kubectl", "create", "-f", "https://operatorhub.io/install/cert-manager.yaml").Output()
