@@ -12,6 +12,7 @@ Download the latest release [here](https://github.com/kubero-dev/kubero-cli/rele
 - Digital Ocean
 - Google GKE
 - Kind (localhost)
+- Oracle Cloud OCI
 - Exoscale (soon)
 
 ## Usage
