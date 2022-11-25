@@ -56,6 +56,9 @@ var arg_apiToken string
 var arg_port string
 var arg_portSecure string
 var clusterType string
+var ingressControllerVersion = "v1.5.1" // https://github.com/kubernetes/ingress-nginx/tags -> controller-v1.5.1
+
+var clusterTypeSelection = "[scaleway,linode,gke,digitalocean,kind]"
 
 func init() {
 	installCmd.Flags().StringVarP(&arg_adminUser, "user", "u", "", "Admin username for the kubero UI")
@@ -99,7 +102,7 @@ func installSwitch() {
 		return
 	}
 
-	clusterType = promptLine("Select a cluster type", "[scaleway,linode,gke,digitalocean,kind]", "linode")
+	clusterType = promptLine("Select a cluster type", clusterTypeSelection, "linode")
 
 	switch clusterType {
 	case "scaleway":
@@ -389,7 +392,7 @@ func installDigitalOcean() {
 		SetAuthToken(token).
 		SetHeader("Accept", "application/json").
 		SetHeader("Content-Type", "application/json").
-		SetHeader("User-Agent", "kubero-cli/0.0.1").
+		SetHeader("User-Agent", "kubero-cli/0.0.1"). //TODO dynamic version
 		SetBaseURL("https://api.digitalocean.com")
 
 	var doConfig DigitalOceanKubernetesConfig
@@ -496,7 +499,7 @@ func installKind() {
 	yaml.Unmarshal(kf.Body(), &kindConfig)
 
 	kindConfig.Name = promptLine("Kind Cluster Name", "", "kubero-"+strconv.Itoa(rand.Intn(1000)))
-	kindConfig.Nodes[0].Image = "kindest/node:v1.25.3"
+	kindConfig.Nodes[0].Image = "kindest/node:v1.25.3" //TODO make configurable version
 
 	if arg_port == "" {
 		arg_port = promptLine("Local HTTP Port", "", "80")
@@ -578,20 +581,23 @@ func installOLM() {
 	olmRelease := promptLine("Install OLM from which release?", "[0.19.0,0.20.0,0.21.0,0.22.0]", "0.22.0")
 	olmURL := "https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v" + olmRelease
 
+	olmSpinner := spinner.New("Install OLM")
+
 	olmCRDInstalled, _ := exec.Command("kubectl", "get", "crd", "subscriptions.operators.coreos.com").Output()
 	if len(olmCRDInstalled) > 0 {
 		cfmt.Println("{{✓ OLM CRD's allredy installed}}::lightGreen")
 	} else {
+		olmSpinner.Start("run command : kubectl create -f " + olmURL + "/olm.yaml")
 		_, olmCRDErr := exec.Command("kubectl", "create", "-f", olmURL+"/crds.yaml").Output()
 		if olmCRDErr != nil {
-			cfmt.Println("{{✗ OLM CRD installation failed }}::red")
+			fmt.Println("")
+			olmSpinner.Error("OLM CRD installation failed. Try runnig it manually")
 			log.Fatal(olmCRDErr)
 		} else {
-			cfmt.Println("{{✓ OLM CRDs installed}}::lightGreen")
+			olmSpinner.Success("OLM CRDs installed sucessfully")
 		}
 	}
 
-	olmSpinner := spinner.New("Install OLM")
 	olmSpinner.Start("run command : kubectl create -f " + olmURL + "/olm.yaml")
 
 	_, olmOLMErr := exec.Command("kubectl", "create", "-f", olmURL+"/olm.yaml").Output()
@@ -631,12 +637,32 @@ func installIngress() {
 
 	ingressInstall := promptLine("Install Ingress", "[y,n]", "y")
 	if ingressInstall != "y" {
-		log.Fatal("Ingress is required to install Kubero")
+		return
 	} else {
-		ingressProvider := promptLine("Provider", "[kind,aws,baremetal,cloud(Azure,Google,Oracle,Linode),do(digital ocean),exoscale,scw(scaleway)]", "kind")
+
+		if clusterType == "" {
+			clusterType = promptLine("Which cluster type have you insalled?", clusterTypeSelection, "")
+		}
+
+		prefill := "baremetal"
+		switch clusterType {
+		case "kind":
+			prefill = "kind"
+		case "linode":
+			prefill = "cloud"
+		case "gke":
+			prefill = "cloud"
+		case "scaleway":
+			prefill = "scw"
+		case "digitalocean":
+			prefill = "do"
+		}
+
+		ingressProvider := promptLine("Provider", "[kind,aws,baremetal,cloud(Azure,Google,Oracle,Linode),do(digital ocean),exoscale,scw(scaleway)]", prefill)
 		ingressSpinner := spinner.New("Install Ingress")
-		ingressSpinner.Start("run command : kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/" + ingressProvider + "/deploy.yaml")
-		_, ingressErr := exec.Command("kubectl", "apply", "-f", "https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/"+ingressProvider+"/deploy.yaml").Output()
+		URL := "https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-" + ingressControllerVersion + "/deploy/static/provider/" + ingressProvider + "/deploy.yaml"
+		ingressSpinner.Start("run command : kubectl apply -f " + URL)
+		_, ingressErr := exec.Command("kubectl", "apply", "-f", URL).Output()
 		if ingressErr != nil {
 			ingressSpinner.Error("Failed to run command. Try runnig it manually")
 			log.Fatal(ingressErr)
@@ -756,8 +782,6 @@ func installKuberoUi() {
 	if len(kuberoUIInstalled) > 0 {
 		cfmt.Println("{{✓ Kubero UI allready installed}}::lightGreen")
 	} else {
-		var outb, errb bytes.Buffer
-
 		installer := resty.New()
 
 		installer.SetBaseURL("https://raw.githubusercontent.com")
@@ -771,6 +795,10 @@ func installKuberoUi() {
 		}
 		kuberiUIConfig.Spec.Ingress.Hosts[0].Host = arg_domain
 
+		if clusterType == "" {
+			clusterType = promptLine("Which cluster type have you insalled?", clusterTypeSelection, "")
+		}
+
 		if clusterType == "linode" {
 			kuberiUIConfig.Spec.Ingress.ClassName = "nginx"
 		}
@@ -781,16 +809,30 @@ func installKuberoUi() {
 			fmt.Println(kuberiUIErr)
 			return
 		}
+		/*
+			kuberoUI := exec.Command("kubectl", "apply", "-f", "kuberoUI.yaml", "-n", "kubero")
+			kuberoUI.Stdout = &outb
+			kuberoUI.Stderr = &errb
+			err := kuberoUI.Run()
+			if err != nil {
+				fmt.Println(errb.String())
+				fmt.Println(outb.String())
+				cfmt.Println("{{✗ Failed to run command to install Kubero UI. Try runnig it manually}}::red")
+				log.Fatal()
+			} else {
+				e := os.Remove("kuberoUI.yaml")
+				if e != nil {
+					log.Fatal(e)
+				}
+				cfmt.Println("{{✓ Kubero UI installed}}::lightGreen")
+			}
+		*/
 
-		kuberoUI := exec.Command("kubectl", "apply", "-f", "kuberoUI.yaml", "-n", "kubero")
-		kuberoUI.Stdout = &outb
-		kuberoUI.Stderr = &errb
-		err := kuberoUI.Run()
-		if err != nil {
-			fmt.Println(errb.String())
-			fmt.Println(outb.String())
+		_, olminstallErr := exec.Command("kubectl", "apply", "-f", "kuberoUI.yaml", "-n", "kubero").Output()
+		if olminstallErr != nil {
+			fmt.Println(olminstallErr)
 			cfmt.Println("{{✗ Failed to run command to install Kubero UI. Try runnig it manually}}::red")
-			log.Fatal()
+			return
 		} else {
 			e := os.Remove("kuberoUI.yaml")
 			if e != nil {
@@ -799,8 +841,8 @@ func installKuberoUi() {
 			cfmt.Println("{{✓ Kubero UI installed}}::lightGreen")
 		}
 
-		time.Sleep(1 * time.Second)
 		kuberoUISpinner := spinner.New("Wait for Kubero UI to be ready")
+		time.Sleep(8 * time.Second) //linide needs a bit more time to get the ingress up
 		kuberoUISpinner.Start("run command : kubectl wait --for=condition=available deployment/kubero-sample -n kubero --timeout=180s")
 		_, olmWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/kubero-sample", "-n", "kubero", "--timeout=180s").Output()
 		if olmWaitErr != nil {
@@ -814,7 +856,7 @@ func installKuberoUi() {
 }
 
 func installCertManager() {
-	certManagerInstalled, _ := exec.Command("kubectl", "get", "deployment", "cert-manager-webhook", "-n", "olm").Output()
+	certManagerInstalled, _ := exec.Command("kubectl", "get", "deployment", "cert-manager-webhook", "-n", "operators").Output()
 	if len(certManagerInstalled) > 0 {
 		cfmt.Println("{{✓ Cert Manager allready installed}}::lightGreen")
 	} else {
@@ -836,8 +878,8 @@ func installCertManager() {
 
 		time.Sleep(2 * time.Second)
 		certManagerSpinner = spinner.New("Wait for Cert Manager to be ready")
-		certManagerSpinner.Start("run command : kubectl wait --for=condition=available deployment/cert-manager-webhook -n cert-manager --timeout=180s")
-		_, certManagerWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/cert-manager-webhook", "-n", "cert-manager", "--timeout=180s").Output()
+		certManagerSpinner.Start("run command : kubectl wait --for=condition=available deployment/cert-manager-webhook -n cert-manager --timeout=180s -n operators")
+		_, certManagerWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/cert-manager-webhook", "-n", "cert-manager", "--timeout=180s", "-n", "operators").Output()
 		if certManagerWaitErr != nil {
 			fmt.Println("") // keeps the spinner from overwriting the last line
 			certManagerSpinner.Error("Failed to run command. Try runnig it manually")
@@ -873,7 +915,7 @@ func writeCLIconfig() {
 
 func printDNSinfo() {
 
-	ingressInstalled, err := exec.Command("kubectl", "get", "ingress", "-n", "kubero").Output()
+	ingressInstalled, err := exec.Command("kubectl", "get", "ingress", "-n", "kubero", "-o", "json").Output()
 	if err != nil {
 		cfmt.Println("{{✗ Failed to fetch DNS informations}}::red")
 		return
@@ -882,10 +924,14 @@ func printDNSinfo() {
 	json.Unmarshal(ingressInstalled, &kuberoIngress)
 
 	cfmt.Println("{{⚠ make sure your DNS is pointing to your Kubernetes cluster}}::yellow")
-	for _, ingress := range kuberoIngress.Items {
-		cfmt.Printf("{{  %s.		IN		A		%s}}::lightBlue", ingress.Spec.Rules[0].Host, ingress.Status.LoadBalancer.Ingress[0].IP)
+
+	//TODO this should be replaces by the default reviewapp domain
+	if len(kuberoIngress.Items) > 0 &&
+		len(kuberoIngress.Items[0].Spec.Rules[0].Host) > 0 &&
+		len(kuberoIngress.Items[0].Status.LoadBalancer.Ingress) > 0 {
+		cfmt.Printf("{{  %s.		IN		A		%s}}::lightBlue\n", kuberoIngress.Items[0].Spec.Rules[0].Host, kuberoIngress.Items[0].Status.LoadBalancer.Ingress[0].IP)
+		cfmt.Printf("{{  *.review.example.com.			IN		A		%s}}::lightBlue", kuberoIngress.Items[0].Status.LoadBalancer.Ingress[0].IP)
 	}
-	cfmt.Printf("{{  *.review.example.com.		IN		A		%s}}::lightBlue", kuberoIngress.Items[0].Status.LoadBalancer.Ingress[0].IP)
 
 }
 
@@ -909,7 +955,7 @@ Documentation:
 }
 
 func generatePassword(length int) string {
-	var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!$?.-%")
+	var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!+?._-%")
 	b := make([]rune, length)
 	for i := range b {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
