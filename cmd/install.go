@@ -799,7 +799,9 @@ func installKuberoUi() {
 			clusterType = promptLine("Which cluster type have you insalled?", clusterTypeSelection, "")
 		}
 
-		if clusterType == "linode" {
+		if clusterType == "linode" ||
+			clusterType == "digitalocean" ||
+			clusterType == "gke" {
 			kuberiUIConfig.Spec.Ingress.ClassName = "nginx"
 		}
 
@@ -809,24 +811,6 @@ func installKuberoUi() {
 			fmt.Println(kuberiUIErr)
 			return
 		}
-		/*
-			kuberoUI := exec.Command("kubectl", "apply", "-f", "kuberoUI.yaml", "-n", "kubero")
-			kuberoUI.Stdout = &outb
-			kuberoUI.Stderr = &errb
-			err := kuberoUI.Run()
-			if err != nil {
-				fmt.Println(errb.String())
-				fmt.Println(outb.String())
-				cfmt.Println("{{✗ Failed to run command to install Kubero UI. Try runnig it manually}}::red")
-				log.Fatal()
-			} else {
-				e := os.Remove("kuberoUI.yaml")
-				if e != nil {
-					log.Fatal(e)
-				}
-				cfmt.Println("{{✓ Kubero UI installed}}::lightGreen")
-			}
-		*/
 
 		_, olminstallErr := exec.Command("kubectl", "apply", "-f", "kuberoUI.yaml", "-n", "kubero").Output()
 		if olminstallErr != nil {
