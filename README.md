@@ -37,3 +37,27 @@ Command map
         ├── list
         └── delete
 ```
+
+
+## Environment variables for credentials
+### Scaleway
+```
+export SCALEWAY_ACCESS_TOKEN=xxx
+export SCALEWAY_PROJECTID=xxx
+export SCALEWAY_ORGANIZATIONID=xxx
+```
+
+### Linode
+```
+export LINODE_ACCESS_TOKEN=xxx
+```
+
+### Digital Ocean
+```
+export DIGITALOCEAN_ACCESS_TOKEN=xxx
+```
+
+### Google GKE
+```
+export GOOGLE_API_KEY=xxx
+```
