@@ -795,6 +795,9 @@ func installKuberoUi() {
 		}
 		kuberiUIConfig.Spec.Ingress.Hosts[0].Host = arg_domain
 
+		webhookURL := promptLine("URL to which the webhooks should be sent", "", arg_domain+"/api/repo/webhooks")
+		kuberiUIConfig.Spec.Kubero.WebhookURL = webhookURL
+
 		if clusterType == "" {
 			clusterType = promptLine("Which cluster type have you insalled?", clusterTypeSelection, "")
 		}
