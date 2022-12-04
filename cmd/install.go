@@ -854,7 +854,7 @@ func installKuberoUi() {
 		_, olminstallErr := exec.Command("kubectl", "apply", "-f", "kuberoUI.yaml", "-n", "kubero").Output()
 		if olminstallErr != nil {
 			fmt.Println(olminstallErr)
-			cfmt.Println("{{✗ Failed to run command to install Kubero UI. Try runnig it manually}}::red")
+			cfmt.Println("{{✗ Failed to run command to install Kubero UI. Rerun installer to finish installation}}::red")
 			return
 		} else {
 			e := os.Remove("kuberoUI.yaml")
@@ -870,7 +870,7 @@ func installKuberoUi() {
 		_, olmWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/kubero-sample", "-n", "kubero", "--timeout=180s").Output()
 		if olmWaitErr != nil {
 			fmt.Println("") // keeps the spinner from overwriting the last line
-			kuberoUISpinner.Error("Failed to run command. Try runnig it manually")
+			kuberoUISpinner.Error("Failed to run command. Rerun installer to finish installation")
 			log.Fatal(olmWaitErr)
 		}
 		kuberoUISpinner.Success("Kubero UI is ready")
@@ -967,14 +967,18 @@ func finalMessage() {
 	|  |\   \'  ''  '| '-' |\   --.|  |   ' '-' '
 	'--' '--' '----'  '---'  '----''--'    '---'
 
-Your Kubero UI :{{
-  URL : ` + arg_domain + `:` + arg_port + `
-  User: ` + arg_adminUser + `
-  Pass: ` + arg_adminPassword + `}}::lightBlue
+	Documentation:
+	https://github.com/kubero-dev/kubero/wiki
+	`)
 
-Documentation:
-  https://github.com/kubero-dev/kubero/wiki
-`)
+	if arg_domain != "" && arg_port != "" && arg_apiToken != "" && arg_adminPassword != "" {
+		cfmt.Println(`
+	Your Kubero UI :{{
+	URL : ` + arg_domain + `:` + arg_port + `
+	User: ` + arg_adminUser + `
+	Pass: ` + arg_adminPassword + `}}::lightBlue
+	`)
+	}
 }
 
 func generatePassword(length int) string {
