@@ -732,10 +732,6 @@ func installKuberoUi() {
 
 		sessionKey := promptLine("Random string for your session key", "", generatePassword(20))
 
-		githubPersonalAccessToken := promptLine("Github personal access token (empty=disabled)", "", "")
-
-		giteaPersonalAccessToken := promptLine("Gitea personal access token (empty=disabled)", "", "")
-
 		if arg_adminUser == "" {
 			arg_adminUser = promptLine("Admin User", "", "admin")
 		}
@@ -759,11 +755,51 @@ func installKuberoUi() {
 			"--from-literal=KUBERO_USERS="+userDBencoded,
 		)
 
-		if githubPersonalAccessToken != "" {
+		githubConfigure := promptLine("Configure Github", "[y,n]", "y")
+		githubPersonalAccessToken := ""
+		if githubConfigure == "y" {
+			githubPersonalAccessToken = promptLine("Github personal access token", "", "")
 			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITHUB_PERSONAL_ACCESS_TOKEN="+githubPersonalAccessToken)
 		}
-		if giteaPersonalAccessToken != "" {
+
+		giteaConfigure := promptLine("Configure Gitea", "[y,n]", "n")
+		giteaPersonalAccessToken := ""
+		giteaBaseUrl := ""
+		if giteaConfigure == "y" {
+			giteaPersonalAccessToken = promptLine("Gitea personal access token", "", "")
+			giteaBaseUrl = promptLine("Gitea URL", "http://localhost:3000", "")
 			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITEA_PERSONAL_ACCESS_TOKEN="+giteaPersonalAccessToken)
+			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITEA_BASEURL="+giteaBaseUrl)
+		}
+
+		gogsConfigure := promptLine("Configure Gogs", "[y,n]", "n")
+		gogsPersonalAccessToken := ""
+		gogsBaseUrl := ""
+		if gogsConfigure == "y" {
+			gogsPersonalAccessToken = promptLine("Gogs personal access token", "", "")
+			gogsBaseUrl = promptLine("Gogs URL", "http://localhost:3000", "")
+			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GOGS_PERSONAL_ACCESS_TOKEN="+gogsPersonalAccessToken)
+			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GOGS_BASEURL="+gogsBaseUrl)
+		}
+
+		gitlabConfigure := promptLine("Configure Gitlab", "[y,n]", "n")
+		gitlabPersonalAccessToken := ""
+		gitlabBaseUrl := ""
+		if gitlabConfigure == "y" {
+			gitlabPersonalAccessToken = promptLine("Gitlab personal access token", "", "")
+			gitlabBaseUrl = promptLine("Gitlab URL", "http://localhost:3080", "")
+			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITLAB_PERSONAL_ACCESS_TOKEN="+gitlabPersonalAccessToken)
+			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITLAB_BASEURL="+gitlabBaseUrl)
+		}
+
+		bitbucketConfigure := promptLine("Configure Bitbucket", "[y,n]", "n")
+		bitbucketUsername := ""
+		bitbucketAppPassword := ""
+		if bitbucketConfigure == "y" {
+			bitbucketUsername = promptLine("Bitbucket Username", "", "")
+			bitbucketAppPassword = promptLine("Bitbucket App Password", "", "")
+			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=BITBUCKET_USERNAME="+bitbucketUsername)
+			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=BITBUCKET_APP_PASSWORD="+bitbucketAppPassword)
 		}
 
 		createSecretCommand.Args = append(createSecretCommand.Args, "-n", "kubero")
