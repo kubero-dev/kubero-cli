@@ -951,7 +951,8 @@ func printDNSinfo() {
 	//TODO this should be replaces by the default reviewapp domain
 	if len(kuberoIngress.Items) > 0 &&
 		len(kuberoIngress.Items[0].Spec.Rules[0].Host) > 0 &&
-		len(kuberoIngress.Items[0].Status.LoadBalancer.Ingress) > 0 {
+		len(kuberoIngress.Items[0].Status.LoadBalancer.Ingress) > 0 &&
+		len(kuberoIngress.Items[0].Status.LoadBalancer.Ingress[0].IP) > 0 {
 		cfmt.Printf("{{  %s.		IN		A		%s}}::lightBlue\n", kuberoIngress.Items[0].Spec.Rules[0].Host, kuberoIngress.Items[0].Status.LoadBalancer.Ingress[0].IP)
 		cfmt.Printf("{{  *.review.example.com.			IN		A		%s}}::lightBlue", kuberoIngress.Items[0].Status.LoadBalancer.Ingress[0].IP)
 	}
@@ -961,23 +962,25 @@ func printDNSinfo() {
 func finalMessage() {
 	cfmt.Println(`
 
-	,--. ,--.        ,--.
-	|  .'   /,--.,--.|  |-.  ,---. ,--.--. ,---.
-	|  .   ' |  ||  || .-. '| .-. :|  .--'| .-. |
-	|  |\   \'  ''  '| '-' |\   --.|  |   ' '-' '
-	'--' '--' '----'  '---'  '----''--'    '---'
+    ,--. ,--.        ,--.
+    |  .'   /,--.,--.|  |-.  ,---. ,--.--. ,---.
+    |  .   ' |  ||  || .-. '| .-. :|  .--'| .-. |
+    |  |\   \'  ''  '| '-' |\   --.|  |   ' '-' '
+    '--' '--' '----'  '---'  '----''--'    '---'
 
-	Documentation:
-	https://github.com/kubero-dev/kubero/wiki
-	`)
+    Documentation:
+    https://github.com/kubero-dev/kubero/wiki
+`)
 
 	if arg_domain != "" && arg_port != "" && arg_apiToken != "" && arg_adminPassword != "" {
 		cfmt.Println(`
-	Your Kubero UI :{{
-	URL : ` + arg_domain + `:` + arg_port + `
-	User: ` + arg_adminUser + `
-	Pass: ` + arg_adminPassword + `}}::lightBlue
+    Your Kubero UI :{{
+    URL : ` + arg_domain + `:` + arg_port + `
+    User: ` + arg_adminUser + `
+    Pass: ` + arg_adminPassword + `}}::lightBlue
 	`)
+	} else {
+		cfmt.Println("\n\n    {{Done - you can now login to your Kubero UI}}::lightGreen\n\n")
 	}
 }
 
