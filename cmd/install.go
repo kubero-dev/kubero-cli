@@ -732,10 +732,6 @@ func installKuberoUi() {
 
 		sessionKey := promptLine("Random string for your session key", "", generatePassword(20))
 
-		githubPersonalAccessToken := promptLine("Github personal access token (empty=disabled)", "", "")
-
-		giteaPersonalAccessToken := promptLine("Gitea personal access token (empty=disabled)", "", "")
-
 		if arg_adminUser == "" {
 			arg_adminUser = promptLine("Admin User", "", "admin")
 		}
@@ -759,11 +755,51 @@ func installKuberoUi() {
 			"--from-literal=KUBERO_USERS="+userDBencoded,
 		)
 
-		if githubPersonalAccessToken != "" {
+		githubConfigure := promptLine("Configure Github", "[y,n]", "y")
+		githubPersonalAccessToken := ""
+		if githubConfigure == "y" {
+			githubPersonalAccessToken = promptLine("Github personal access token", "", "")
 			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITHUB_PERSONAL_ACCESS_TOKEN="+githubPersonalAccessToken)
 		}
-		if giteaPersonalAccessToken != "" {
+
+		giteaConfigure := promptLine("Configure Gitea", "[y,n]", "n")
+		giteaPersonalAccessToken := ""
+		giteaBaseUrl := ""
+		if giteaConfigure == "y" {
+			giteaPersonalAccessToken = promptLine("Gitea personal access token", "", "")
+			giteaBaseUrl = promptLine("Gitea URL", "http://localhost:3000", "")
 			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITEA_PERSONAL_ACCESS_TOKEN="+giteaPersonalAccessToken)
+			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITEA_BASEURL="+giteaBaseUrl)
+		}
+
+		gogsConfigure := promptLine("Configure Gogs", "[y,n]", "n")
+		gogsPersonalAccessToken := ""
+		gogsBaseUrl := ""
+		if gogsConfigure == "y" {
+			gogsPersonalAccessToken = promptLine("Gogs personal access token", "", "")
+			gogsBaseUrl = promptLine("Gogs URL", "http://localhost:3000", "")
+			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GOGS_PERSONAL_ACCESS_TOKEN="+gogsPersonalAccessToken)
+			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GOGS_BASEURL="+gogsBaseUrl)
+		}
+
+		gitlabConfigure := promptLine("Configure Gitlab", "[y,n]", "n")
+		gitlabPersonalAccessToken := ""
+		gitlabBaseUrl := ""
+		if gitlabConfigure == "y" {
+			gitlabPersonalAccessToken = promptLine("Gitlab personal access token", "", "")
+			gitlabBaseUrl = promptLine("Gitlab URL", "http://localhost:3080", "")
+			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITLAB_PERSONAL_ACCESS_TOKEN="+gitlabPersonalAccessToken)
+			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITLAB_BASEURL="+gitlabBaseUrl)
+		}
+
+		bitbucketConfigure := promptLine("Configure Bitbucket", "[y,n]", "n")
+		bitbucketUsername := ""
+		bitbucketAppPassword := ""
+		if bitbucketConfigure == "y" {
+			bitbucketUsername = promptLine("Bitbucket Username", "", "")
+			bitbucketAppPassword = promptLine("Bitbucket App Password", "", "")
+			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=BITBUCKET_USERNAME="+bitbucketUsername)
+			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=BITBUCKET_APP_PASSWORD="+bitbucketAppPassword)
 		}
 
 		createSecretCommand.Args = append(createSecretCommand.Args, "-n", "kubero")
@@ -818,7 +854,7 @@ func installKuberoUi() {
 		_, olminstallErr := exec.Command("kubectl", "apply", "-f", "kuberoUI.yaml", "-n", "kubero").Output()
 		if olminstallErr != nil {
 			fmt.Println(olminstallErr)
-			cfmt.Println("{{✗ Failed to run command to install Kubero UI. Try runnig it manually}}::red")
+			cfmt.Println("{{✗ Failed to run command to install Kubero UI. Rerun installer to finish installation}}::red")
 			return
 		} else {
 			e := os.Remove("kuberoUI.yaml")
@@ -834,7 +870,7 @@ func installKuberoUi() {
 		_, olmWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/kubero-sample", "-n", "kubero", "--timeout=180s").Output()
 		if olmWaitErr != nil {
 			fmt.Println("") // keeps the spinner from overwriting the last line
-			kuberoUISpinner.Error("Failed to run command. Try runnig it manually")
+			kuberoUISpinner.Error("Failed to run command. Rerun installer to finish installation")
 			log.Fatal(olmWaitErr)
 		}
 		kuberoUISpinner.Success("Kubero UI is ready")
@@ -915,7 +951,8 @@ func printDNSinfo() {
 	//TODO this should be replaces by the default reviewapp domain
 	if len(kuberoIngress.Items) > 0 &&
 		len(kuberoIngress.Items[0].Spec.Rules[0].Host) > 0 &&
-		len(kuberoIngress.Items[0].Status.LoadBalancer.Ingress) > 0 {
+		len(kuberoIngress.Items[0].Status.LoadBalancer.Ingress) > 0 &&
+		len(kuberoIngress.Items[0].Status.LoadBalancer.Ingress[0].IP) > 0 {
 		cfmt.Printf("{{  %s.		IN		A		%s}}::lightBlue\n", kuberoIngress.Items[0].Spec.Rules[0].Host, kuberoIngress.Items[0].Status.LoadBalancer.Ingress[0].IP)
 		cfmt.Printf("{{  *.review.example.com.			IN		A		%s}}::lightBlue", kuberoIngress.Items[0].Status.LoadBalancer.Ingress[0].IP)
 	}
@@ -925,20 +962,26 @@ func printDNSinfo() {
 func finalMessage() {
 	cfmt.Println(`
 
-	,--. ,--.        ,--.
-	|  .'   /,--.,--.|  |-.  ,---. ,--.--. ,---.
-	|  .   ' |  ||  || .-. '| .-. :|  .--'| .-. |
-	|  |\   \'  ''  '| '-' |\   --.|  |   ' '-' '
-	'--' '--' '----'  '---'  '----''--'    '---'
+    ,--. ,--.        ,--.
+    |  .'   /,--.,--.|  |-.  ,---. ,--.--. ,---.
+    |  .   ' |  ||  || .-. '| .-. :|  .--'| .-. |
+    |  |\   \'  ''  '| '-' |\   --.|  |   ' '-' '
+    '--' '--' '----'  '---'  '----''--'    '---'
 
-Your Kubero UI :{{
-  URL : ` + arg_domain + `:` + arg_port + `
-  User: ` + arg_adminUser + `
-  Pass: ` + arg_adminPassword + `}}::lightBlue
-
-Documentation:
-  https://github.com/kubero-dev/kubero/wiki
+    Documentation:
+    https://github.com/kubero-dev/kubero/wiki
 `)
+
+	if arg_domain != "" && arg_port != "" && arg_apiToken != "" && arg_adminPassword != "" {
+		cfmt.Println(`
+    Your Kubero UI :{{
+    URL : ` + arg_domain + `:` + arg_port + `
+    User: ` + arg_adminUser + `
+    Pass: ` + arg_adminPassword + `}}::lightBlue
+	`)
+	} else {
+		cfmt.Println("\n\n    {{Done - you can now login to your Kubero UI}}::lightGreen\n\n")
+	}
 }
 
 func generatePassword(length int) string {
