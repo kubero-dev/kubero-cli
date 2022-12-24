@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"log"
@@ -18,6 +19,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -84,6 +88,7 @@ var arg_portSecure string
 var clusterType string
 var arg_component string
 var ingressControllerVersion = "v1.5.1" // https://github.com/kubernetes/ingress-nginx/tags -> controller-v1.5.1
+var clientset *kubernetes.Clientset
 
 var clusterTypeSelection = "[scaleway,linode,gke,digitalocean,kind]"
 
@@ -96,6 +101,20 @@ func init() {
 	installCmd.Flags().StringVarP(&arg_portSecure, "secureport", "P", "", "Kubero UI HTTPS port")
 	installCmd.Flags().StringVarP(&arg_domain, "domain", "d", "", "Domain name for the kubero UI")
 	rootCmd.AddCommand(installCmd)
+
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	configOverrides := &clientcmd.ConfigOverrides{}
+	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
+
+	config, err := kubeConfig.ClientConfig()
+	if err != nil {
+		panic(err.Error())
+	}
+	// create the clientset
+	clientset, err = kubernetes.NewForConfig(config)
+	if err != nil {
+		panic(err.Error())
+	}
 }
 
 func checkAllBinaries() {
@@ -284,43 +303,43 @@ func installOLM() {
 
 func installMetrics() {
 
-	ingressInstalled, _ := exec.Command("kubectl", "get", "deployments.apps", "metrics-serverXXXX", "-n", "kube-system").Output()
-	if len(ingressInstalled) > 0 {
+	metrics, err := clientset.AppsV1().Deployments("kube-system").Get(context.Background(), "metrics-server", metav1.GetOptions{})
+	if err != nil {
+		fmt.Println("failed to get metrics server")
+		log.Fatal(err)
+	}
+
+	if metrics.Status.AvailableReplicas > 0 {
 		cfmt.Println("{{✓ Metrics is allredy enabled}}::lightGreen")
 		return
 	}
+
 	ingressInstall := promptLine("Install Kubernetes internal metrics service (ruquired for HPA and stats)", "[y,n]", "y")
 	if ingressInstall != "y" {
 		return
 	}
-	/*
-	   _, installErr := exec.Command("kubectl", "apply", "-f", "https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml").Output()
 
-	   	if installErr != nil {
-	   		fmt.Println("failed to install metrics server")
-	   		log.Fatal(installErr)
-	   	}
+	//https://gist.github.com/pytimer/0ad436972a073bb37b8b6b8b474520fc
+	_, installErr := exec.Command("kubectl", "apply", "-f", "https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml").Output()
 
-	   asdf := "-p='[{\"op\": \"add\", \"path\": \"/spec/template/spec/containers/0/args/1\", \"value\": \"--kubelet-insecure-tls\"}]'"
-	   fmt.Println(asdf)
-	   //ret, patchErr := exec.Command("kubectl", "-v=8", "patch", "deployment", "metrics-server", "-n", "kube-system", "--type=json", `-p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/1", "value": "--kubelet-insecure-tls"}]'`).CombinedOutput()
-	   ret, patchErr := exec.Command("kubectl", "-v=8", "patch", "deployment", "metrics-server", "-n", "kube-system", "--type=json", `-p='[{op: add, path: /spec/template/spec/containers/0/args/1, value: --kubelet-insecure-tls}]'`).CombinedOutput()
-	   //ret, patchErr := exec.Command("kubectl", "patch", "deployment", "metrics-server", "-n", "kube-system", "--type=json", "-p='[{\\\"op\\\": \\\"add\\\", \\\"path\\\": \\\"/spec/template/spec/containers/0/args/1\\\", \\\"value\\\": \\\"--kubelet-insecure-tls\\\"}]'").CombinedOutput()
-	   //ret, patchErr := exec.Command("kubectl", "patch", "deployment", "metrics-server", "-n", "kube-system", "--type=json", asdf).CombinedOutput()
-	   //ret, patchErr := exec.Command("kubectl", "-v=8", "patch", "deployment", "metrics-server", "-n", "kube-system", "--type=json", "-p=\"[{'op': 'add', 'path': '/spec/template/spec/containers/0/args/1', 'value': '--kubelet-insecure-tls'}]\"").CombinedOutput()
+	if installErr != nil {
+		fmt.Println("failed to install metrics server")
+		log.Fatal(installErr)
+	}
 
-	   	if patchErr != nil {
-	   		fmt.Println("failed to patch metrics server")
-	   		fmt.Println(string(ret))
-	   		log.Fatal(patchErr)
-	   	}
-	*/
+	_, err = clientset.AppsV1().Deployments("kube-system").Patch(context.Background(), "metrics-server", types.JSONPatchType, []byte(`[{"op": "add", "path": "/spec/template/spec/containers/0/args/1", "value": "--kubelet-insecure-tls"}]`), metav1.PatchOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
 }
 
 func installIngress() {
 
-	ingressInstalled, _ := exec.Command("kubectl", "get", "ns", "ingress-nginx").Output()
-	if len(ingressInstalled) > 0 {
+	ns, err := clientset.CoreV1().Namespaces().Get(context.Background(), "ingress-nginx", metav1.GetOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
+	if ns.Status.Phase == "Active" {
 		cfmt.Println("{{✓ Ingress is allredy installed}}::lightGreen")
 		return
 	}
