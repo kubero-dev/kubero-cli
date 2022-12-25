@@ -293,28 +293,13 @@ func installMetrics() {
 	if ingressInstall != "y" {
 		return
 	}
-	/*
-	   _, installErr := exec.Command("kubectl", "apply", "-f", "https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml").Output()
+	_, installErr := exec.Command("kubectl", "apply", "-f", "https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml").Output()
 
-	   	if installErr != nil {
-	   		fmt.Println("failed to install metrics server")
-	   		log.Fatal(installErr)
-	   	}
-
-	   asdf := "-p='[{\"op\": \"add\", \"path\": \"/spec/template/spec/containers/0/args/1\", \"value\": \"--kubelet-insecure-tls\"}]'"
-	   fmt.Println(asdf)
-	   //ret, patchErr := exec.Command("kubectl", "-v=8", "patch", "deployment", "metrics-server", "-n", "kube-system", "--type=json", `-p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/1", "value": "--kubelet-insecure-tls"}]'`).CombinedOutput()
-	   ret, patchErr := exec.Command("kubectl", "-v=8", "patch", "deployment", "metrics-server", "-n", "kube-system", "--type=json", `-p='[{op: add, path: /spec/template/spec/containers/0/args/1, value: --kubelet-insecure-tls}]'`).CombinedOutput()
-	   //ret, patchErr := exec.Command("kubectl", "patch", "deployment", "metrics-server", "-n", "kube-system", "--type=json", "-p='[{\\\"op\\\": \\\"add\\\", \\\"path\\\": \\\"/spec/template/spec/containers/0/args/1\\\", \\\"value\\\": \\\"--kubelet-insecure-tls\\\"}]'").CombinedOutput()
-	   //ret, patchErr := exec.Command("kubectl", "patch", "deployment", "metrics-server", "-n", "kube-system", "--type=json", asdf).CombinedOutput()
-	   //ret, patchErr := exec.Command("kubectl", "-v=8", "patch", "deployment", "metrics-server", "-n", "kube-system", "--type=json", "-p=\"[{'op': 'add', 'path': '/spec/template/spec/containers/0/args/1', 'value': '--kubelet-insecure-tls'}]\"").CombinedOutput()
-
-	   	if patchErr != nil {
-	   		fmt.Println("failed to patch metrics server")
-	   		fmt.Println(string(ret))
-	   		log.Fatal(patchErr)
-	   	}
-	*/
+	if installErr != nil {
+		fmt.Println("failed to install metrics server")
+		log.Fatal(installErr)
+	}
+	cfmt.Println("{{✓ Metrics server installed}}::lightGreen")
 }
 
 func installIngress() {
