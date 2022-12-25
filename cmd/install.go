@@ -47,8 +47,10 @@ required binaries:
 		case "olm":
 			installOLM()
 			return
-		case "kubero":
+		case "kubero-operator":
 			installKuberoOperator()
+			return
+		case "kubero-ui":
 			installKuberoUi()
 			return
 		case "ingress":
@@ -58,7 +60,8 @@ required binaries:
 			installKubernetes()
 			checkCluster()
 			return
-		default:
+		case "all":
+		case "":
 			installKubernetes()
 			checkCluster()
 			installOLM()
@@ -70,6 +73,8 @@ required binaries:
 			writeCLIconfig()
 			printDNSinfo()
 			finalMessage()
+			return
+		default:
 			return
 		}
 	},
@@ -88,7 +93,7 @@ var ingressControllerVersion = "v1.5.1" // https://github.com/kubernetes/ingress
 var clusterTypeSelection = "[scaleway,linode,gke,digitalocean,kind]"
 
 func init() {
-	installCmd.Flags().StringVarP(&arg_component, "component", "c", "", "install sincel component (kubernetes,olm,ingress,metrics,certmanager,kubero-operator,kubero-ui)")
+	installCmd.Flags().StringVarP(&arg_component, "component", "c", "", "install component (kubernetes,olm,ingress,metrics,certmanager,kubero-operator,kubero-ui,all)")
 	installCmd.Flags().StringVarP(&arg_adminUser, "user", "u", "", "Admin username for the kubero UI")
 	installCmd.Flags().StringVarP(&arg_adminPassword, "user-password", "U", "", "Password for the admin user")
 	installCmd.Flags().StringVarP(&arg_apiToken, "apitoken", "a", "", "API token for the admin user")
