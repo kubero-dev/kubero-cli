@@ -34,17 +34,49 @@ required binaries:
 	Run: func(cmd *cobra.Command, args []string) {
 
 		rand.Seed(time.Now().UnixNano())
+
 		checkAllBinaries()
-		installSwitch()
-		checkCluster()
-		installOLM()
-		installIngress()
-		installCertManager()
-		installKuberoOperator()
-		installKuberoUi()
-		writeCLIconfig()
-		printDNSinfo()
-		finalMessage()
+
+		switch arg_component {
+		case "metrics":
+			installMetrics()
+			return
+		case "certmanager":
+			installCertManager()
+			return
+		case "olm":
+			installOLM()
+			return
+		case "kubero-operator":
+			installKuberoOperator()
+			return
+		case "kubero-ui":
+			installKuberoUi()
+			return
+		case "ingress":
+			installIngress()
+			return
+		case "kubernetes":
+			installKubernetes()
+			checkCluster()
+			return
+		case "all":
+		case "":
+			installKubernetes()
+			checkCluster()
+			installOLM()
+			installIngress()
+			installMetrics()
+			installCertManager()
+			installKuberoOperator()
+			installKuberoUi()
+			writeCLIconfig()
+			printDNSinfo()
+			finalMessage()
+			return
+		default:
+			return
+		}
 	},
 }
 
@@ -55,11 +87,13 @@ var arg_apiToken string
 var arg_port string
 var arg_portSecure string
 var clusterType string
+var arg_component string
 var ingressControllerVersion = "v1.5.1" // https://github.com/kubernetes/ingress-nginx/tags -> controller-v1.5.1
 
 var clusterTypeSelection = "[scaleway,linode,gke,digitalocean,kind]"
 
 func init() {
+	installCmd.Flags().StringVarP(&arg_component, "component", "c", "", "install component (kubernetes,olm,ingress,metrics,certmanager,kubero-operator,kubero-ui,all)")
 	installCmd.Flags().StringVarP(&arg_adminUser, "user", "u", "", "Admin username for the kubero UI")
 	installCmd.Flags().StringVarP(&arg_adminPassword, "user-password", "U", "", "Password for the admin user")
 	installCmd.Flags().StringVarP(&arg_apiToken, "apitoken", "a", "", "API token for the admin user")
@@ -95,7 +129,7 @@ func checkBinary(binary string) bool {
 	return err == nil
 }
 
-func installSwitch() {
+func installKubernetes() {
 	kubernetesInstall := promptLine("Start a kubernetes Cluster", "[y,n]", "y")
 	if kubernetesInstall != "y" {
 		return
@@ -251,6 +285,26 @@ func installOLM() {
 		log.Fatal(olmWaitCatalogErr)
 	}
 	olmWaitCatalogSpinner.Success("OLM Catalog is ready")
+}
+
+func installMetrics() {
+
+	ingressInstalled, _ := exec.Command("kubectl", "get", "deployments.apps", "metrics-serverXXXX", "-n", "kube-system").Output()
+	if len(ingressInstalled) > 0 {
+		cfmt.Println("{{✓ Metrics is allredy enabled}}::lightGreen")
+		return
+	}
+	ingressInstall := promptLine("Install Kubernetes internal metrics service (ruquired for HPA and stats)", "[y,n]", "y")
+	if ingressInstall != "y" {
+		return
+	}
+	_, installErr := exec.Command("kubectl", "apply", "-f", "https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml").Output()
+
+	if installErr != nil {
+		fmt.Println("failed to install metrics server")
+		log.Fatal(installErr)
+	}
+	cfmt.Println("{{✓ Metrics server installed}}::lightGreen")
 }
 
 func installIngress() {
