@@ -6,7 +6,6 @@ package main
 import (
 	"fmt"
 	"kubero/cmd"
-	"os"
 
 	"github.com/spf13/viper"
 )
@@ -26,7 +25,7 @@ func loadConfig() {
 	viper.SetDefault("api.url", "http://localhost:2000")
 	viper.SetConfigName("kubero") // name of config file (without extension)
 	viper.SetConfigType("yaml")   // REQUIRED if the config file does not have the extension in the name
-	viper.AddConfigPath(".")
+	viper.AddConfigPath(".")      // TODO this should search for the git repo root
 	err := viper.ReadInConfig()
 
 	personal := viper.New()
@@ -42,9 +41,7 @@ func loadConfig() {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			fmt.Println("No config file found; using defaults")
 		} else {
-			fmt.Println("No config file found")
-			os.Exit(1)
-			//panic(fmt.Errorf("fatal error config file: %w", err))
+			fmt.Printf("Error while loading config files: %v \n\n\n%v", err, errCred)
 		}
 	}
 }
