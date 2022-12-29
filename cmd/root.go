@@ -99,11 +99,11 @@ func printCLI(table *tablewriter.Table, r *resty.Response) {
 // question, options/example, default
 func promptLine(question string, options string, def string) string {
 	if def != "" && force {
-		cfmt.Printf("\n  {{%s}}::lightWhite %s : {{%s}}::green\n", question, options, def)
+		cfmt.Printf("\n  %s %s : {{%s}}::green\n", question, options, def)
 		return def
 	}
 	reader := bufio.NewReader(os.Stdin)
-	cfmt.Printf("\n  {{%s}}::lightWhite %s {{%s}}::green : ", question, options, def)
+	cfmt.Printf("\n  %s %s {{%s}}::green : ", question, options, def)
 	text, _ := reader.ReadString('\n')
 	text = strings.Replace(text, "\n", "", -1)
 	if text == "" {

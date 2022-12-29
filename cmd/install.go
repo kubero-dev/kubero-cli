@@ -104,7 +104,7 @@ func init() {
 }
 
 func checkAllBinaries() {
-	cfmt.Println("{{\n  Check for required binaries}}::lightWhite")
+	cfmt.Println("\n  Check for required binaries")
 	if !checkBinary("kubectl") {
 		cfmt.Println("{{✗ kubectl is not installed}}::red")
 	} else {
@@ -354,7 +354,7 @@ func installIngress() {
 
 func installKuberoOperator() {
 
-	cfmt.Println("{{\n  Install Kubero Operator}}::lightWhite")
+	cfmt.Println("\n  Install Kubero Operator")
 
 	kuberoInstalled, _ := exec.Command("kubectl", "get", "operator", "kubero-operator.operators").Output()
 	if len(kuberoInstalled) > 0 {
