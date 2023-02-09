@@ -305,12 +305,12 @@ func installOLM() {
 
 func installMetrics() {
 
-	ingressInstalled, _ := exec.Command("kubectl", "get", "deployments.apps", "metrics-serverXXXX", "-n", "kube-system").Output()
+	ingressInstalled, _ := exec.Command("kubectl", "get", "deployments.apps", "metrics-server", "-n", "kube-system").Output()
 	if len(ingressInstalled) > 0 {
 		cfmt.Println("{{✓ Metrics is allredy enabled}}::lightGreen")
 		return
 	}
-	ingressInstall := promptLine("Install Kubernetes internal metrics service (ruquired for HPA and stats)", "[y,n]", "y")
+	ingressInstall := promptLine("4) Install Kubernetes internal metrics service (ruquired for HPA and stats)", "[y,n]", "y")
 	if ingressInstall != "y" {
 		return
 	}
@@ -559,7 +559,7 @@ func installKuberoUi() {
 		}
 		kuberiUIConfig.Spec.Ingress.Hosts[0].Host = arg_domain
 
-		webhookURL := promptLine("URL to which the webhooks should be sent", "", arg_domain+"/api/repo/webhooks")
+		webhookURL := promptLine("URL to which the webhooks should be sent", "", "https://"+arg_domain+"/api/repo/webhooks")
 		kuberiUIConfig.Spec.Kubero.WebhookURL = webhookURL
 
 		if clusterType == "" {
@@ -729,7 +729,7 @@ func finalMessage() {
     '--' '--' '----'  '---'  '----''--'    '---'
 
     Documentation:
-    https://github.com/kubero-dev/kubero/wiki
+    https://docs.kubero.dev
 `)
 
 	if arg_domain != "" && arg_port != "" && arg_apiToken != "" && arg_adminPassword != "" {

@@ -44,7 +44,7 @@ func installLinode() {
 	workerNodesCount, _ := strconv.Atoi(promptLine("Worker Nodes Count", "", "3"))
 	workerNodesType := promptLine("Worker Nodes Type", "[https://www.linode.com/pricing/]", "g6-standard-2") // TODO load the list of types or point to e better document
 
-	clusterConfig.K8SVersion = promptLine("Kubernetes Version", "[1.23]", "1.23")
+	clusterConfig.K8SVersion = promptLine("Kubernetes Version", "[1.25]", "1.25")
 	clusterConfig.Tags = []string{"kubero"}
 	clusterConfig.NodePools = []LinodeNodepool{
 		{
