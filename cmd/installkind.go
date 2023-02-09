@@ -28,7 +28,7 @@ func installKind() {
 	yaml.Unmarshal(kf.Body(), &kindConfig)
 
 	kindConfig.Name = promptLine("Kind Cluster Name", "", "kubero-"+strconv.Itoa(rand.Intn(1000)))
-	kindConfig.Nodes[0].Image = "kindest/node:v1.25.3" //TODO make configurable version
+	kindConfig.Nodes[0].Image = "kindest/node:v1.26.0" //TODO make configurable version
 
 	if arg_port == "" {
 		arg_port = promptLine("Local HTTP Port", "", "80")
