@@ -88,6 +88,7 @@ var arg_port string
 var arg_portSecure string
 var clusterType string
 var arg_component string
+var install_olm bool
 var ingressControllerVersion = "v1.5.1" // https://github.com/kubernetes/ingress-nginx/tags -> controller-v1.5.1
 
 var clusterTypeSelection = "[scaleway,linode,gke,digitalocean,kind]"
@@ -122,6 +123,18 @@ func checkAllBinaries() {
 	} else {
 		cfmt.Println("{{✓ gcloud is installed}}::lightGreen")
 	}
+
+	cfmt.Print(`
+  Steps to install kubero:
+    1. Create a kubernetes cluster {{(optional)}}::gray
+    2. Install the OLM {{(optional)}}::gray
+    3. Install the ingress controller {{(required)}}::gray
+    4. Install the metrics server {{(optional, but recommended)}}::gray
+    5. Install the cert-manager {{(optional)}}::gray
+    6. Install the kubero operator {{(required)}}::gray
+    7. Install the kubero UI {{(optional, but highly recommended)}}::gray
+    8. Write the kubero CLI config
+`)
 }
 
 func checkBinary(binary string) bool {
@@ -130,12 +143,12 @@ func checkBinary(binary string) bool {
 }
 
 func installKubernetes() {
-	kubernetesInstall := promptLine("Start a kubernetes Cluster", "[y,n]", "y")
+	kubernetesInstall := promptLine("1) Create a kubernetes cluster", "[y,n]", "y")
 	if kubernetesInstall != "y" {
 		return
 	}
 
-	clusterType = promptLine("Select a cluster type", clusterTypeSelection, "linode")
+	clusterType = promptLine("Select a cluster type", clusterTypeSelection, "kind")
 
 	switch clusterType {
 	case "scaleway":
@@ -233,12 +246,15 @@ func installOLM() {
 		return
 	}
 
-	olmInstall := promptLine("Install OLM", "[y,n]", "y")
+	olmInstall := promptLine("2) Install OLM", "[y,n]", "n")
 	if olmInstall != "y" {
-		log.Fatal("OLM is required to install Kubero")
+		install_olm = false
+		return
+	} else {
+		install_olm = true
 	}
 
-	olmRelease := promptLine("Install OLM from which release?", "[0.19.0,0.20.0,0.21.0,0.22.0]", "0.22.0")
+	olmRelease := promptLine("Install OLM from which release?", "[0.20.0,0.21.0,0.22.0,0.23.1]", "0.23.1")
 	olmURL := "https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v" + olmRelease
 
 	olmSpinner := spinner.New("Install OLM")
@@ -289,12 +305,12 @@ func installOLM() {
 
 func installMetrics() {
 
-	ingressInstalled, _ := exec.Command("kubectl", "get", "deployments.apps", "metrics-serverXXXX", "-n", "kube-system").Output()
+	ingressInstalled, _ := exec.Command("kubectl", "get", "deployments.apps", "metrics-server", "-n", "kube-system").Output()
 	if len(ingressInstalled) > 0 {
 		cfmt.Println("{{✓ Metrics is allredy enabled}}::lightGreen")
 		return
 	}
-	ingressInstall := promptLine("Install Kubernetes internal metrics service (ruquired for HPA and stats)", "[y,n]", "y")
+	ingressInstall := promptLine("4) Install Kubernetes internal metrics service (ruquired for HPA and stats)", "[y,n]", "y")
 	if ingressInstall != "y" {
 		return
 	}
@@ -315,7 +331,7 @@ func installIngress() {
 		return
 	}
 
-	ingressInstall := promptLine("Install Ingress", "[y,n]", "y")
+	ingressInstall := promptLine("3) Install Ingress", "[y,n]", "y")
 	if ingressInstall != "y" {
 		return
 	} else {
@@ -354,13 +370,22 @@ func installIngress() {
 
 func installKuberoOperator() {
 
-	cfmt.Println("\n  Install Kubero Operator")
+	cfmt.Println("\n  6) Install Kubero Operator")
 
 	kuberoInstalled, _ := exec.Command("kubectl", "get", "operator", "kubero-operator.operators").Output()
 	if len(kuberoInstalled) > 0 {
 		cfmt.Println("{{✓ Kubero Operator is allredy installed}}::lightGreen")
 		return
 	}
+
+	if install_olm {
+		installKuberoOLMOperator()
+	} else {
+		installKuberoOperatorSlim()
+	}
+}
+
+func installKuberoOLMOperator() {
 
 	kuberoSpinner := spinner.New("Install Kubero Operator")
 	kuberoSpinner.Start("run command : kubectl apply -f https://operatorhub.io/install/kubero-operator.yaml")
@@ -383,9 +408,32 @@ func installKuberoOperator() {
 
 }
 
+func installKuberoOperatorSlim() {
+
+	kuberoSpinner := spinner.New("Install Kubero Operator")
+	kuberoSpinner.Start("run command : kubectl apply -f https://raw.githubusercontent.com/kubero-dev/kubero-operator/main/deploy/operator.yaml")
+	_, kuberoErr := exec.Command("kubectl", "apply", "-f", "https://raw.githubusercontent.com/kubero-dev/kubero-operator/main/deploy/operator.yaml").Output()
+	if kuberoErr != nil {
+		fmt.Println("")
+		kuberoSpinner.Error("Failed to run command to install the Operator. Try runnig it manually and then rerun the installation")
+		log.Fatal(kuberoErr)
+	}
+
+	kuberoSpinner.UpdateMessage("Wait for Kubero Operator to be ready")
+	var kuberoWait []byte
+	for len(kuberoWait) == 0 {
+		// kubectl api-resources --api-group=application.kubero.dev --no-headers=true
+		kuberoWait, _ = exec.Command("kubectl", "api-resources", "--api-group=application.kubero.dev", "--no-headers=true").Output()
+		time.Sleep(1 * time.Second)
+	}
+
+	kuberoSpinner.Success("Kubero Operator installed sucessfully")
+
+}
+
 func installKuberoUi() {
 
-	ingressInstall := promptLine("Install Kubero UI", "[y,n]", "y")
+	ingressInstall := promptLine("7) Install Kubero UI", "[y,n]", "y")
 	if ingressInstall != "y" {
 		return
 	}
@@ -511,7 +559,7 @@ func installKuberoUi() {
 		}
 		kuberiUIConfig.Spec.Ingress.Hosts[0].Host = arg_domain
 
-		webhookURL := promptLine("URL to which the webhooks should be sent", "", arg_domain+"/api/repo/webhooks")
+		webhookURL := promptLine("URL to which the webhooks should be sent", "", "https://"+arg_domain+"/api/repo/webhooks")
 		kuberiUIConfig.Spec.Kubero.WebhookURL = webhookURL
 
 		if clusterType == "" {
@@ -544,13 +592,22 @@ func installKuberoUi() {
 			cfmt.Println("{{✓ Kubero UI installed}}::lightGreen")
 		}
 
-		kuberoUISpinner := spinner.New("Wait for Kubero UI to be ready")
-		time.Sleep(8 * time.Second) //linide needs a bit more time to get the ingress up
-		kuberoUISpinner.Start("run command : kubectl wait --for=condition=available deployment/kubero-sample -n kubero --timeout=180s")
-		_, olmWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/kubero-sample", "-n", "kubero", "--timeout=180s").Output()
+		kuberoUISpinner := spinner.New("Wait for Kubero UI to be created")
+		kuberoUISpinner.Start("Wait for Kubero UI to be created")
+
+		var kuberoWait []byte
+		for len(kuberoWait) == 0 {
+			// kubectl get --ignore-not-found deployment kubero
+			kuberoWait, _ = exec.Command("kubectl", "get", "--ignore-not-found", "deployment", "kubero", "-n", "kubero").Output()
+			kuberoUISpinner.UpdateMessage("Waiting for Kubero UI to be created")
+			time.Sleep(1 * time.Second)
+		}
+
+		kuberoUISpinner.UpdateMessage("Waiting for Kubero UI to be ready")
+		// kubectl wait --for=condition=available deployment/kubero -n kubero --timeout=180s
+		_, olmWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/kubero", "-n", "kubero", "--timeout=180s").Output()
 		if olmWaitErr != nil {
-			fmt.Println("") // keeps the spinner from overwriting the last line
-			kuberoUISpinner.Error("Failed to run command. Rerun installer to finish installation")
+			kuberoUISpinner.Error("Failed to wait for Kubero UI to become ready")
 			log.Fatal(olmWaitErr)
 		}
 		kuberoUISpinner.Success("Kubero UI is ready")
@@ -559,42 +616,65 @@ func installKuberoUi() {
 }
 
 func installCertManager() {
+
+	install := promptLine("5) Install SSL Certmanager", "[y,n]", "y")
+	if install != "y" {
+		return
+	}
+
 	certManagerInstalled, _ := exec.Command("kubectl", "get", "deployment", "cert-manager-webhook", "-n", "operators").Output()
 	if len(certManagerInstalled) > 0 {
 		cfmt.Println("{{✓ Cert Manager allready installed}}::lightGreen")
-	} else {
-
-		install := promptLine("Install SSL Certmanager", "[y,n]", "y")
-		if install != "y" {
-			return
-		}
-
-		certManagerSpinner := spinner.New("Install Cert Manager")
-		certManagerSpinner.Start("run command : kubectl create -f https://operatorhub.io/install/cert-manager.yaml")
-		_, certManagerErr := exec.Command("kubectl", "create", "-f", "https://operatorhub.io/install/cert-manager.yaml").Output()
-		if certManagerErr != nil {
-			fmt.Println("") // keeps the spinner from overwriting the last line
-			certManagerSpinner.Error("Failed to run command. Try runnig it manually")
-			log.Fatal(certManagerErr)
-		}
-		certManagerSpinner.Success("Cert Manager installed")
-
-		time.Sleep(2 * time.Second)
-		certManagerSpinner = spinner.New("Wait for Cert Manager to be ready")
-		certManagerSpinner.Start("run command : kubectl wait --for=condition=available deployment/cert-manager-webhook -n cert-manager --timeout=180s -n operators")
-		_, certManagerWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/cert-manager-webhook", "-n", "cert-manager", "--timeout=180s", "-n", "operators").Output()
-		if certManagerWaitErr != nil {
-			fmt.Println("") // keeps the spinner from overwriting the last line
-			certManagerSpinner.Error("Failed to run command. Try runnig it manually")
-			log.Fatal(certManagerWaitErr)
-		}
-		certManagerSpinner.Success("Cert Manager is ready")
+		return
 	}
+
+	if install_olm {
+		installOLMCertManager()
+	} else {
+		installCertManagerSlim()
+	}
+}
+
+func installCertManagerSlim() {
+
+	certManagerSpinner := spinner.New("Install Cert Manager")
+	certManagerSpinner.Start("run command : kubectl create -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml")
+	_, certManagerErr := exec.Command("kubectl", "create", "-f", "https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml").Output()
+	if certManagerErr != nil {
+		fmt.Println("") // keeps the spinner from overwriting the last line
+		certManagerSpinner.Error("Failed to run command. Try runnig it manually")
+		log.Fatal(certManagerErr)
+	}
+	certManagerSpinner.Success("Cert Manager installed")
+}
+
+func installOLMCertManager() {
+
+	certManagerSpinner := spinner.New("Install Cert Manager")
+	certManagerSpinner.Start("run command : kubectl create -f https://operatorhub.io/install/cert-manager.yaml")
+	_, certManagerErr := exec.Command("kubectl", "create", "-f", "https://operatorhub.io/install/cert-manager.yaml").Output()
+	if certManagerErr != nil {
+		fmt.Println("") // keeps the spinner from overwriting the last line
+		certManagerSpinner.Error("Failed to run command. Try runnig it manually")
+		log.Fatal(certManagerErr)
+	}
+	certManagerSpinner.Success("Cert Manager installed")
+
+	time.Sleep(2 * time.Second)
+	certManagerSpinner = spinner.New("Wait for Cert Manager to be ready")
+	certManagerSpinner.Start("run command : kubectl wait --for=condition=available deployment/cert-manager-webhook -n cert-manager --timeout=180s -n operators")
+	_, certManagerWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/cert-manager-webhook", "-n", "cert-manager", "--timeout=180s", "-n", "operators").Output()
+	if certManagerWaitErr != nil {
+		fmt.Println("") // keeps the spinner from overwriting the last line
+		certManagerSpinner.Error("Failed to run command. Try runnig it manually")
+		log.Fatal(certManagerWaitErr)
+	}
+	certManagerSpinner.Success("Cert Manager is ready")
 }
 
 func writeCLIconfig() {
 
-	ingressInstall := promptLine("Generate CLI config", "[y,n]", "y")
+	ingressInstall := promptLine("8) Write the Kubero CLI config", "[y,n]", "y")
 	if ingressInstall != "y" {
 		return
 	}
@@ -649,7 +729,7 @@ func finalMessage() {
     '--' '--' '----'  '---'  '----''--'    '---'
 
     Documentation:
-    https://github.com/kubero-dev/kubero/wiki
+    https://docs.kubero.dev
 `)
 
 	if arg_domain != "" && arg_port != "" && arg_apiToken != "" && arg_adminPassword != "" {
