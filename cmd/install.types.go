@@ -434,25 +434,25 @@ type JokeResponse struct {
 }
 
 type CertmanagerClusterIssuer struct {
-	APIVersion string `json:"apiVersion"`
-	Kind       string `json:"kind"`
+	APIVersion string `yaml:"apiVersion"`
+	Kind       string `yaml:"kind"`
 	Metadata   struct {
-		Name string `json:"name"`
-	} `json:"metadata"`
+		Name string `yaml:"name"`
+	} `yaml:"metadata"`
 	Spec struct {
 		Acme struct {
-			Server              string `json:"server"`
-			Email               string `json:"email"`
+			Server              string `yaml:"server"`
+			Email               string `yaml:"email"`
 			PrivateKeySecretRef struct {
-				Name string `json:"name"`
-			} `json:"privateKeySecretRef"`
+				Name string `yaml:"name"`
+			} `yaml:"privateKeySecretRef"`
 			Solvers []struct {
 				HTTP01 struct {
 					Ingress struct {
-						Class string `json:"class"`
-					} `json:"ingress"`
-				} `json:"http01"`
-			} `json:"solvers"`
-		} `json:"acme"`
-	} `json:"spec"`
+						Class string `yaml:"class"`
+					} `yaml:"ingress"`
+				} `yaml:"http01"`
+			} `yaml:"solvers"`
+		} `yaml:"acme"`
+	} `yaml:"spec"`
 }

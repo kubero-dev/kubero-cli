@@ -637,6 +637,7 @@ func installCertManager() {
 
 func installCertManagerSlim() {
 
+	installCertManagerClusterissuer()
 	kuberoUIInstalled, _ := exec.Command("kubectl", "get", "crd", "certificates.cert-manager.io").Output()
 	if len(kuberoUIInstalled) > 0 {
 		cfmt.Println("{{✓ Certmanager already installed}}::lightGreen")
@@ -659,9 +660,6 @@ func installCertManagerSlim() {
 
 func installCertManagerClusterissuer() {
 
-	certManagerSpinner := spinner.New("Create Cluster Certissuer")
-	certManagerSpinner.Start("Create Cluster Certissuer")
-
 	installer := resty.New()
 
 	installer.SetBaseURL("https://raw.githubusercontent.com")
@@ -682,7 +680,6 @@ func installCertManagerClusterissuer() {
 
 	_, certmanagerClusterIssuerErr := exec.Command("kubectl", "apply", "-f", "kuberoCertmanagerClusterIssuer.yaml", "-n", "cert-manager").Output()
 	if certmanagerClusterIssuerErr != nil {
-		fmt.Println(certmanagerClusterIssuerErr)
 		cfmt.Println("{{✗ Failed to create Certmanager Clusterissuer}}::red")
 		return
 	} else {
@@ -690,7 +687,7 @@ func installCertManagerClusterissuer() {
 		if e != nil {
 			log.Fatal(e)
 		}
-		certManagerSpinner.Success("Cert Manager Cluster Issuer created")
+		cfmt.Println("{{✓ Cert Manager Cluster Issuer created}}::lightGreen")
 	}
 }
 
