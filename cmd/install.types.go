@@ -432,3 +432,27 @@ type JokeResponse struct {
 	URL        string   `json:"url"`
 	Value      string   `json:"value"`
 }
+
+type CertmanagerClusterIssuer struct {
+	APIVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+	Metadata   struct {
+		Name string `json:"name"`
+	} `json:"metadata"`
+	Spec struct {
+		Acme struct {
+			Server              string `json:"server"`
+			Email               string `json:"email"`
+			PrivateKeySecretRef struct {
+				Name string `json:"name"`
+			} `json:"privateKeySecretRef"`
+			Solvers []struct {
+				HTTP01 struct {
+					Ingress struct {
+						Class string `json:"class"`
+					} `json:"ingress"`
+				} `json:"http01"`
+			} `json:"solvers"`
+		} `json:"acme"`
+	} `json:"spec"`
+}

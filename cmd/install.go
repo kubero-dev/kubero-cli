@@ -62,6 +62,7 @@ required binaries:
 			return
 		case "all":
 		case "":
+			printInstallSteps()
 			installKubernetes()
 			checkCluster()
 			installOLM()
@@ -102,6 +103,8 @@ func init() {
 	installCmd.Flags().StringVarP(&arg_portSecure, "secureport", "P", "", "Kubero UI HTTPS port")
 	installCmd.Flags().StringVarP(&arg_domain, "domain", "d", "", "Domain name for the kubero UI")
 	rootCmd.AddCommand(installCmd)
+
+	install_olm = false
 }
 
 func checkAllBinaries() {
@@ -123,6 +126,9 @@ func checkAllBinaries() {
 	} else {
 		cfmt.Println("{{✓ gcloud is installed}}::lightGreen")
 	}
+}
+
+func printInstallSteps() {
 
 	cfmt.Print(`
   Steps to install kubero:
@@ -622,12 +628,6 @@ func installCertManager() {
 		return
 	}
 
-	certManagerInstalled, _ := exec.Command("kubectl", "get", "deployment", "cert-manager-webhook", "-n", "operators").Output()
-	if len(certManagerInstalled) > 0 {
-		cfmt.Println("{{✓ Cert Manager allready installed}}::lightGreen")
-		return
-	}
-
 	if install_olm {
 		installOLMCertManager()
 	} else {
@@ -636,6 +636,12 @@ func installCertManager() {
 }
 
 func installCertManagerSlim() {
+
+	kuberoUIInstalled, _ := exec.Command("kubectl", "get", "crd", "certificates.cert-manager.io").Output()
+	if len(kuberoUIInstalled) > 0 {
+		cfmt.Println("{{✓ Certmanager already installed}}::lightGreen")
+		return
+	}
 
 	certManagerSpinner := spinner.New("Install Cert Manager")
 	certManagerSpinner.Start("run command : kubectl create -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml")
@@ -646,9 +652,55 @@ func installCertManagerSlim() {
 		log.Fatal(certManagerErr)
 	}
 	certManagerSpinner.Success("Cert Manager installed")
+
+	installCertManagerClusterissuer()
+
+}
+
+func installCertManagerClusterissuer() {
+
+	certManagerSpinner := spinner.New("Create Cluster Certissuer")
+	certManagerSpinner.Start("Create Cluster Certissuer")
+
+	installer := resty.New()
+
+	installer.SetBaseURL("https://raw.githubusercontent.com")
+	kf, _ := installer.R().Get("kubero-dev/kubero-cli/main/templates/certmanagerClusterIssuer.prod.yaml")
+
+	var certmanagerClusterIssuer CertmanagerClusterIssuer
+	yaml.Unmarshal(kf.Body(), &certmanagerClusterIssuer)
+
+	arg_certmanagerContact := promptLine("Letsencrypt ACME contact email", "", "noreply@yourdomain.com")
+	certmanagerClusterIssuer.Spec.Acme.Email = arg_certmanagerContact
+
+	certmanagerClusterIssuerYaml, _ := yaml.Marshal(certmanagerClusterIssuer)
+	certmanagerClusterIssuerYamlErr := os.WriteFile("kuberoCertmanagerClusterIssuer.yaml", certmanagerClusterIssuerYaml, 0644)
+	if certmanagerClusterIssuerYamlErr != nil {
+		fmt.Println(certmanagerClusterIssuerYamlErr)
+		return
+	}
+
+	_, certmanagerClusterIssuerErr := exec.Command("kubectl", "apply", "-f", "kuberoCertmanagerClusterIssuer.yaml", "-n", "cert-manager").Output()
+	if certmanagerClusterIssuerErr != nil {
+		fmt.Println(certmanagerClusterIssuerErr)
+		cfmt.Println("{{✗ Failed to create Certmanager Clusterissuer}}::red")
+		return
+	} else {
+		e := os.Remove("kuberoCertmanagerClusterIssuer.yaml")
+		if e != nil {
+			log.Fatal(e)
+		}
+		certManagerSpinner.Success("Cert Manager Cluster Issuer created")
+	}
 }
 
 func installOLMCertManager() {
+
+	certManagerInstalled, _ := exec.Command("kubectl", "get", "deployment", "cert-manager-webhook", "-n", "operators").Output()
+	if len(certManagerInstalled) > 0 {
+		cfmt.Println("{{✓ Cert Manager allready installed}}::lightGreen")
+		return
+	}
 
 	certManagerSpinner := spinner.New("Install Cert Manager")
 	certManagerSpinner.Start("run command : kubectl create -f https://operatorhub.io/install/cert-manager.yaml")
