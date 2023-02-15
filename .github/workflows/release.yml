@@ -23,6 +23,10 @@ jobs:
         with:
           fetch-depth: 0
       -
+        name: Set version
+        run: |
+          echo $(git describe --tags --abbrev=0) > cmd/VERSION
+      -
         name: Set up Go
         uses: actions/setup-go@v3
         with:
