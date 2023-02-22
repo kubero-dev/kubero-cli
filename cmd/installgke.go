@@ -32,7 +32,7 @@ func installGKE() {
 		"--cluster-version="+gcloudClusterVersion).Output()
 	if err != nil {
 		fmt.Println()
-		spinner.Error("Failed to run command. Try runnig it manually and skip this step")
+		spinner.Error("Failed to run command. Try runnig this command manually and skip this step: 'gcloud container clusters create " + gcloudName + " --region=" + gcloudRegion + " --cluster-version=" + gcloudClusterVersion + "'")
 		log.Fatal(err)
 	}
 	spinner.Success("GKE cluster started sucessfully")
@@ -41,7 +41,7 @@ func installGKE() {
 	_, err = exec.Command("gcloud", "container", "clusters", "get-credentials", gcloudName, "--region="+gcloudRegion).Output()
 	if err != nil {
 		fmt.Println()
-		spinner.Error("Failed to run command. Try runnig it manually and skip this step")
+		spinner.Error("Failed to run command. Try runnig this command manually and skip this step: 'gcloud container clusters get-credentials " + gcloudName + " --region=" + gcloudRegion + "'")
 		log.Fatal(err)
 	} else {
 		spinner.Success("GKE cluster credentials set")

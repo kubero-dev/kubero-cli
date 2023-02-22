@@ -55,7 +55,7 @@ func installKind() {
 	kindSpinner.Start("run command : kind create cluster --config kind.yaml")
 	out, err := exec.Command("kind", "create", "cluster", "--config", "kind.yaml").Output()
 	if err != nil {
-		kindSpinner.Error("Failed to run command. Try runnig it manually and skip this step")
+		kindSpinner.Error("Failed to run command. Try runnig this command manually and skip this step : 'kind create cluster --config kind.yaml'")
 		log.Fatal(err)
 	}
 	kindSpinner.Success("Kind cluster started sucessfully")
