@@ -22,3 +22,5 @@ notes.txt
 pipeline.yaml
 app.*.yaml
 kind.yaml
+
+cmd/VERSION

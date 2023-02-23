@@ -61,3 +61,9 @@ export DIGITALOCEAN_ACCESS_TOKEN=xxx
 ```
 export GOOGLE_API_KEY=xxx
 ```
+
+### Development
+Create a dev VERSION File
+```
+echo "dev" > cmd/VERSION
+```
