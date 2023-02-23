@@ -273,7 +273,7 @@ func installOLM() {
 		_, olmCRDErr := exec.Command("kubectl", "create", "-f", olmURL+"/crds.yaml").Output()
 		if olmCRDErr != nil {
 			fmt.Println("")
-			olmSpinner.Error("OLM CRD installation failed. Try runnig it manually")
+			olmSpinner.Error("OLM CRD installation failed. Try runnig this command manually: kubectl create -f " + olmURL + "/crds.yaml")
 			log.Fatal(olmCRDErr)
 		} else {
 			olmSpinner.Success("OLM CRDs installed sucessfully")
@@ -285,7 +285,7 @@ func installOLM() {
 	_, olmOLMErr := exec.Command("kubectl", "create", "-f", olmURL+"/olm.yaml").Output()
 	if olmOLMErr != nil {
 		fmt.Println("")
-		olmSpinner.Error("Failed to run command. Try runnig it manually")
+		olmSpinner.Error("Failed to run command. Try runnig this command manually: kubectl create -f " + olmURL + "/olm.yaml")
 		log.Fatal(olmOLMErr)
 	}
 	olmSpinner.Success("OLM installed sucessfully")
@@ -294,7 +294,7 @@ func installOLM() {
 	olmWaitSpinner.Start("run command : kubectl wait --for=condition=available deployment/olm-operator -n " + namespace + " --timeout=180s")
 	_, olmWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/olm-operator", "-n", namespace, "--timeout=180s").Output()
 	if olmWaitErr != nil {
-		olmWaitSpinner.Error("Failed to run command. Try runnig it manually")
+		olmWaitSpinner.Error("Failed to run command. Try runnig this command manually: kubectl wait --for=condition=available deployment/olm-operator -n " + namespace + " --timeout=180s")
 		log.Fatal(olmWaitErr)
 	}
 	olmWaitSpinner.Success("OLM is ready")
@@ -303,7 +303,7 @@ func installOLM() {
 	olmWaitCatalogSpinner.Start("run command : kubectl wait --for=condition=available deployment/catalog-operator -n " + namespace + " --timeout=180s")
 	_, olmWaitCatalogErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/catalog-operator", "-n", namespace, "--timeout=180s").Output()
 	if olmWaitCatalogErr != nil {
-		olmWaitCatalogSpinner.Error("Failed to run command. Try runnig it manually")
+		olmWaitCatalogSpinner.Error("Failed to run command. Try runnig this command manually: kubectl wait --for=condition=available deployment/catalog-operator -n " + namespace + " --timeout=180s")
 		log.Fatal(olmWaitCatalogErr)
 	}
 	olmWaitCatalogSpinner.Success("OLM Catalog is ready")
@@ -366,7 +366,7 @@ func installIngress() {
 		ingressSpinner.Start("run command : kubectl apply -f " + URL)
 		_, ingressErr := exec.Command("kubectl", "apply", "-f", URL).Output()
 		if ingressErr != nil {
-			ingressSpinner.Error("Failed to run command. Try runnig it manually")
+			ingressSpinner.Error("Failed to run command. Try runnig this command manually: kubectl apply -f " + URL)
 			log.Fatal(ingressErr)
 		}
 		ingressSpinner.Success("Ingress installed sucessfully")
@@ -398,7 +398,7 @@ func installKuberoOLMOperator() {
 	_, kuberoErr := exec.Command("kubectl", "apply", "-f", "https://operatorhub.io/install/kubero-operator.yaml").Output()
 	if kuberoErr != nil {
 		fmt.Println("")
-		kuberoSpinner.Error("Failed to run command to install the Operator. Try runnig it manually and then rerun the installation")
+		kuberoSpinner.Error("Failed to run command to install the Operator. Try runnig this command manually: kubectl apply -f https://operatorhub.io/install/kubero-operator.yaml")
 		log.Fatal(kuberoErr)
 	}
 
@@ -421,7 +421,7 @@ func installKuberoOperatorSlim() {
 	_, kuberoErr := exec.Command("kubectl", "apply", "-f", "https://raw.githubusercontent.com/kubero-dev/kubero-operator/main/deploy/operator.yaml").Output()
 	if kuberoErr != nil {
 		fmt.Println("")
-		kuberoSpinner.Error("Failed to run command to install the Operator. Try runnig it manually and then rerun the installation")
+		kuberoSpinner.Error("Failed to run command to install the Operator. Try runnig this command manually: kubectl apply -f https://raw.githubusercontent.com/kubero-dev/kubero-operator/main/deploy/operator.yaml")
 		log.Fatal(kuberoErr)
 	}
 
@@ -450,7 +450,7 @@ func installKuberoUi() {
 	} else {
 		_, kuberoNSErr := exec.Command("kubectl", "create", "namespace", "kubero").Output()
 		if kuberoNSErr != nil {
-			fmt.Println("Failed to run command to create the namespace. Try runnig it manually")
+			fmt.Println("Failed to run command to create the namespace. Try runnig this command manually: kubectl create namespace kubero")
 			log.Fatal(kuberoNSErr)
 		} else {
 			cfmt.Println("{{✓ Kubero Namespace created}}::lightGreen")
@@ -541,7 +541,7 @@ func installKuberoUi() {
 		_, kuberoErr := createSecretCommand.Output()
 
 		if kuberoErr != nil {
-			cfmt.Println("{{✗ Failed to run command to create the secret. Try runnig it manually}}::red")
+			cfmt.Println("{{✗ Failed to run command to create the secrets.}}::red")
 			log.Fatal(kuberoErr)
 		} else {
 			cfmt.Println("{{✓ Kubero Secret created}}::lightGreen")
@@ -587,8 +587,7 @@ func installKuberoUi() {
 
 		_, olminstallErr := exec.Command("kubectl", "apply", "-f", "kuberoUI.yaml", "-n", "kubero").Output()
 		if olminstallErr != nil {
-			fmt.Println(olminstallErr)
-			cfmt.Println("{{✗ Failed to run command to install Kubero UI. Rerun installer to finish installation}}::red")
+			cfmt.Println("{{✗ Failed to run command to install Kubero UI. Try runnig this command manually: kubectl apply -f kuberoUI.yaml -n kubero}}::red")
 			return
 		} else {
 			e := os.Remove("kuberoUI.yaml")
@@ -648,8 +647,7 @@ func installCertManagerSlim() {
 	certManagerSpinner.Start("run command : kubectl create -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml")
 	_, certManagerErr := exec.Command("kubectl", "create", "-f", "https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml").Output()
 	if certManagerErr != nil {
-		fmt.Println("") // keeps the spinner from overwriting the last line
-		certManagerSpinner.Error("Failed to run command. Try runnig it manually")
+		certManagerSpinner.Error("Failed to run command. Try runnig this command manually: kubectl create -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml")
 		log.Fatal(certManagerErr)
 	}
 	certManagerSpinner.Success("Cert Manager installed")
@@ -680,7 +678,7 @@ func installCertManagerClusterissuer() {
 
 	_, certmanagerClusterIssuerErr := exec.Command("kubectl", "apply", "-f", "kuberoCertmanagerClusterIssuer.yaml", "-n", "cert-manager").Output()
 	if certmanagerClusterIssuerErr != nil {
-		cfmt.Println("{{✗ Failed to create Certmanager Clusterissuer}}::red")
+		cfmt.Println("{{✗ Failed to create Certmanager Clusterissuer. Try runnig this command manually: kubectl apply -f kuberoCertmanagerClusterIssuer.yaml -n cert-manager}}::red")
 		return
 	} else {
 		e := os.Remove("kuberoCertmanagerClusterIssuer.yaml")
@@ -703,8 +701,7 @@ func installOLMCertManager() {
 	certManagerSpinner.Start("run command : kubectl create -f https://operatorhub.io/install/cert-manager.yaml")
 	_, certManagerErr := exec.Command("kubectl", "create", "-f", "https://operatorhub.io/install/cert-manager.yaml").Output()
 	if certManagerErr != nil {
-		fmt.Println("") // keeps the spinner from overwriting the last line
-		certManagerSpinner.Error("Failed to run command. Try runnig it manually")
+		certManagerSpinner.Error("Failed to run command. Try runnig this command manually: kubectl create -f https://operatorhub.io/install/cert-manager.yaml")
 		log.Fatal(certManagerErr)
 	}
 	certManagerSpinner.Success("Cert Manager installed")
@@ -714,8 +711,7 @@ func installOLMCertManager() {
 	certManagerSpinner.Start("run command : kubectl wait --for=condition=available deployment/cert-manager-webhook -n cert-manager --timeout=180s -n operators")
 	_, certManagerWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/cert-manager-webhook", "-n", "cert-manager", "--timeout=180s", "-n", "operators").Output()
 	if certManagerWaitErr != nil {
-		fmt.Println("") // keeps the spinner from overwriting the last line
-		certManagerSpinner.Error("Failed to run command. Try runnig it manually")
+		certManagerSpinner.Error("Failed to run command. Try runnig it manually: kubectl wait --for=condition=available deployment/cert-manager-webhook -n cert-manager --timeout=180s -n operators")
 		log.Fatal(certManagerWaitErr)
 	}
 	certManagerSpinner.Success("Cert Manager is ready")
