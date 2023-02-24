@@ -316,7 +316,7 @@ func installMetrics() {
 		cfmt.Println("{{✓ Metrics is allredy enabled}}::lightGreen")
 		return
 	}
-	ingressInstall := promptLine("4) Install Kubernetes internal metrics service (ruquired for HPA and stats)", "[y,n]", "y")
+	ingressInstall := promptLine("4) Install Kubernetes internal metrics service (required for HPA and stats)", "[y,n]", "y")
 	if ingressInstall != "y" {
 		return
 	}
