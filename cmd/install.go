@@ -320,7 +320,10 @@ func installMetrics() {
 	if ingressInstall != "y" {
 		return
 	}
-	_, installErr := exec.Command("kubectl", "apply", "-f", "https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml").Output()
+
+	//components := "https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml"
+	components := "https://raw.githubusercontent.com/kubero-dev/kubero-operator/main/deploy/metrics-server.yaml"
+	_, installErr := exec.Command("kubectl", "apply", "-f", components).Output()
 
 	if installErr != nil {
 		fmt.Println("failed to install metrics server")
@@ -636,7 +639,6 @@ func installCertManager() {
 
 func installCertManagerSlim() {
 
-	installCertManagerClusterissuer()
 	kuberoUIInstalled, _ := exec.Command("kubectl", "get", "crd", "certificates.cert-manager.io").Output()
 	if len(kuberoUIInstalled) > 0 {
 		cfmt.Println("{{✓ Certmanager already installed}}::lightGreen")
