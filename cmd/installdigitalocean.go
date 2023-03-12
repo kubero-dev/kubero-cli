@@ -49,7 +49,7 @@ func installDigitalOcean() {
 
 	doConfig.Name = promptLine("Kubernetes Cluster Name", "", "kubero-"+strconv.Itoa(rand.Intn(1000)))
 	doConfig.Region = promptLine("Cluster Region", "[nyc1,sgp1,lon1,ams3,fra1,...]", "nyc1")
-	doConfig.Version = promptLine("Cluster Version", "[1.24.4-do.0,1.17.11-do.0,1.16.14-do.0]", "1.24.4-do.0")
+	doConfig.Version = promptLine("Cluster Version", "[1.25.4-do.0,1.24.8-do.0]", "1.25.4-do.0")
 
 	doConfig.NodePools[0].Size = promptLine("Cluster Node Size", "[s-1vcpu-2gb,s-2vcpu-4gb,s-4vcpu-8gb,s-8vcpu-16gb,s-16vcpu-32gb,s-32vcpu-64gb,s-48vcpu-96gb,s-64vcpu-128gb]", "s-1vcpu-2gb")
 	doConfig.NodePools[0].Count, _ = strconv.Atoi(promptLine("Cluster Node Count", "", "1"))
