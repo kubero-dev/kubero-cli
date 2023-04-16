@@ -612,6 +612,8 @@ func installKuberoUi() {
 		}
 
 		kuberoUISpinner.UpdateMessage("Waiting for Kubero UI to be ready")
+
+		time.Sleep(5 * time.Second)
 		// kubectl wait --for=condition=available deployment/kubero -n kubero --timeout=180s
 		_, olmWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/kubero", "-n", "kubero", "--timeout=180s").Output()
 		if olmWaitErr != nil {
@@ -651,6 +653,14 @@ func installCertManagerSlim() {
 	if certManagerErr != nil {
 		certManagerSpinner.Error("Failed to run command. Try runnig this command manually: kubectl create -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml")
 		log.Fatal(certManagerErr)
+	}
+
+	certManagerSpinner.UpdateMessage("Waiting for Cert Manager to be ready")
+	time.Sleep(5 * time.Second)
+	_, certManagerWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/cert-manager-webhook", "-n", "cert-manager", "--timeout=180s", "-n", "cert-manager").Output()
+	if certManagerWaitErr != nil {
+		certManagerSpinner.Error("Failed to run command. Try runnig it manually: kubectl wait --for=condition=available deployment/cert-manager-webhook -n cert-manager --timeout=180s -n cert-manager")
+		log.Fatal(certManagerWaitErr)
 	}
 	certManagerSpinner.Success("Cert Manager installed")
 
