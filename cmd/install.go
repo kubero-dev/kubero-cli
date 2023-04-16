@@ -90,7 +90,7 @@ var arg_portSecure string
 var clusterType string
 var arg_component string
 var install_olm bool
-var ingressControllerVersion = "v1.5.1" // https://github.com/kubernetes/ingress-nginx/tags -> controller-v1.5.1
+var ingressControllerVersion = "v1.7.0" // https://github.com/kubernetes/ingress-nginx/tags -> controller-v1.5.1
 
 var clusterTypeSelection = "[scaleway,linode,gke,digitalocean,kind]"
 
@@ -311,13 +311,13 @@ func installOLM() {
 
 func installMetrics() {
 
-	ingressInstalled, _ := exec.Command("kubectl", "get", "deployments.apps", "metrics-server", "-n", "kube-system").Output()
-	if len(ingressInstalled) > 0 {
+	installed, _ := exec.Command("kubectl", "get", "deployments.apps", "metrics-server", "-n", "kube-system").Output()
+	if len(installed) > 0 {
 		cfmt.Println("{{✓ Metrics is allredy enabled}}::lightGreen")
 		return
 	}
-	ingressInstall := promptLine("4) Install Kubernetes internal metrics service (required for HPA and stats)", "[y,n]", "y")
-	if ingressInstall != "y" {
+	install := promptLine("4) Install Kubernetes internal metrics service (required for HPA and stats)", "[y,n]", "y")
+	if install != "y" {
 		return
 	}
 

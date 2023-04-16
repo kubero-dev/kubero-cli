@@ -171,52 +171,8 @@ type KuberoUIConfig struct {
 					Secret      string `yaml:"secret"`
 					CallbackURL string `yaml:"callbackUrl"`
 				} `yaml:"oauth2"`
-				Config string `yaml:"config"`
-				Kubero struct {
-					Context   string `yaml:"context"`
-					Namespace string `yaml:"namespace"`
-					Port      int    `yaml:"port"`
-				} `yaml:"kubero"`
-				Buildpacks []struct {
-					Name     string `yaml:"name"`
-					Language string `yaml:"language"`
-					Fetch    struct {
-						Repository string `yaml:"repository"`
-						Tag        string `yaml:"tag"`
-					} `yaml:"fetch"`
-					Build struct {
-						Repository string `yaml:"repository"`
-						Tag        string `yaml:"tag"`
-						Command    string `yaml:"command"`
-					} `yaml:"build"`
-					Run struct {
-						Repository         string `yaml:"repository"`
-						Tag                string `yaml:"tag"`
-						ReadOnlyAppStorage bool   `yaml:"readOnlyAppStorage"`
-						SecurityContext    struct {
-							AllowPrivilegeEscalation bool `yaml:"allowPrivilegeEscalation"`
-							ReadOnlyRootFilesystem   bool `yaml:"readOnlyRootFilesystem"`
-						} `yaml:"securityContext"`
-						Command string `yaml:"command"`
-					} `yaml:"run,omitempty"`
-				} `yaml:"buildpacks"`
-				PodSizeList []struct {
-					Name        string `yaml:"name"`
-					Description string `yaml:"description"`
-					Default     bool   `yaml:"default,omitempty"`
-					Resources   struct {
-						Requests struct {
-							Memory string `yaml:"memory"`
-							CPU    string `yaml:"cpu"`
-						} `yaml:"requests"`
-						Limits struct {
-							Memory string `yaml:"memory"`
-							CPU    string `yaml:"cpu"`
-						} `yaml:"limits"`
-					} `yaml:"resources,omitempty"`
-					Active bool `yaml:"active,omitempty"`
-				} `yaml:"podSizeList"`
 			} `yaml:"auth"`
+			Config string `yaml:"config"`
 		} `yaml:"kubero"`
 	} `yaml:"spec"`
 }
