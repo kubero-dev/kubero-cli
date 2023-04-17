@@ -43,21 +43,8 @@ var rootCmd = &cobra.Command{
 
 
 Documentation:
-  https://github.com/kubero-dev/kubero/wiki
+  https://docs.kubero.dev
 `,
-
-	/* not sure, which one is better
-	Long: `
-	 ___ ___       __               _______
-	|   Y   .--.--|  |--.-----.----|   _   |
-	|.  1  /|  |  |  _  |  -__|   _|.  |   |
-	|.  _  \|_____|_____|_____|__| |.  |   |
-	|:  |   \                      |:  1   |
-	|::.| .  )         CLI         |::.. . |
-	'--- ---'                      '-------'
-
-	`,
-	*/
 
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
