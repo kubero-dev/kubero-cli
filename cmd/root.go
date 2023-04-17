@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 
@@ -27,6 +28,7 @@ var force bool
 var version string
 
 var pipelineConfig *viper.Viper
+var pipelineConfigList []*viper.Viper
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -44,6 +46,10 @@ var rootCmd = &cobra.Command{
 
 Documentation:
   https://docs.kubero.dev
+
+Env vars:
+  KUBERO_API_URL - Kubero api URL
+  KUBERO_API_TOKEN - Kubero api token
 `,
 
 	// Uncomment the following line if your bare application
@@ -54,7 +60,7 @@ Documentation:
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	loadConfigs()
+	getPipelinesInRepository()
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
@@ -147,7 +153,7 @@ func loadContexts() {
 }
 
 func getGitRemote() string {
-	gitdir := getGitdir()
+	gitdir := GetGitdir()
 	fs := osfs.New(gitdir)
 	s := filesystem.NewStorageWithOptions(fs, cache.NewObjectLRUDefault(), filesystem.Options{KeepDescriptors: true})
 	r, err := git.Open(s, fs)
@@ -158,7 +164,7 @@ func getGitRemote() string {
 	return ""
 }
 
-func getGitdir() string {
+func GetGitdir() string {
 	wd, _ := os.Getwd()
 
 	path := strings.Split(wd, "/")
@@ -184,14 +190,44 @@ func getGitdir() string {
 	return ""
 }
 
-func loadConfigs() {
+func getPipelinesInRepository() {
 
-	pipelineConfig = viper.New()
-	pipelineConfig.SetConfigName("pipeline") // name of config file (without extension)
-	pipelineConfig.SetConfigType("yaml")     // REQUIRED if the config file does not have the extension in the name
-	pipelineConfig.AddConfigPath(".")        // path to look for the config file in
-	pipelineConfig.ReadInConfig()
+	gitdir := GetGitdir() + "/../.kubero"
 
-	//fmt.Println("Using config file:", viper.ConfigFileUsed())
-	//fmt.Println("Using config file:", pipelineConfig.ConfigFileUsed())
+	// iterate over all directories and append pipeline.yaml config to pipelineConfig
+	err := filepath.Walk(gitdir, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			//fmt.Println("Checking dir: " + path)
+			if _, err := os.Stat(path + "/pipeline.yaml"); err == nil {
+				//fmt.Println("Found pipeline.yaml in: " + path)
+				pc := viper.New()
+				pc.SetConfigName("pipeline") // name of config file (without extension)
+				pc.SetConfigType("yaml")     // REQUIRED if the config file does not have the extension in the name
+				pc.AddConfigPath(path)
+				pc.ReadInConfig()
+
+				pipelineConfigList = append(pipelineConfigList, pc)
+				//fmt.Println("Using config file:", pc.ConfigFileUsed())
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		panic(err)
+	}
+
+	//fmt.Println("Pipeline Configs: " + strconv.Itoa(len(pipelineConfigList)))
+}
+
+func checkConfig() {
+	if viper.GetString("api.url") == "" {
+		fmt.Println("No API URL set. Create a .kubero/credentials.yaml file in your repository or set the KUBERO_API_URL environment variable.")
+		os.Exit(1)
+	}
+
+	if viper.GetString("api.token") == "" {
+		fmt.Println("No API token set. Create a .kubero/credentials.yaml file in your repository or set the KUBERO_API_TOKEN environment variable.")
+		os.Exit(1)
+	}
 }

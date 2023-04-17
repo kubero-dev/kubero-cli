@@ -24,15 +24,22 @@ to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if pipeline == "" {
-			pipeline = pipelineConfig.GetString("spec.name")
-			if pipeline == "" {
-				cfmt.Println("{{  Pipeline not found in config file}}::red")
-				os.Exit(1)
-			}
-		}
+			//iterate over all pipelines in pipelineConfigList
+			for _, pc := range pipelineConfigList {
 
-		pipelineResp, _ := client.Get("/api/cli/pipelines/" + pipeline + "/apps")
-		printAppsList(pipelineResp)
+				pipeline = pc.GetString("spec.name")
+
+				pipelineResp := getAppsList(pipeline)
+
+				cfmt.Println("{{Pipeline: " + pipeline + "}}::bold|underline")
+				printAppsList(pipelineResp)
+			}
+		} else {
+			pipelineResp := getAppsList(pipeline)
+
+			cfmt.Println("{{Pipeline: " + pipeline + "}}::bold|underline")
+			printAppsList(pipelineResp)
+		}
 	},
 }
 
@@ -40,6 +47,16 @@ func init() {
 	appsListCmd.Flags().StringVarP(&pipeline, "pipeline", "p", "", "Name of the Pipeline")
 	//appsListCmd.MarkFlagRequired("pipeline")
 	appsCmd.AddCommand(appsListCmd)
+}
+
+func getAppsList(pipeline string) *resty.Response {
+	checkConfig()
+	pipelineResp, err := client.Get("/api/cli/pipelines/" + pipeline + "/apps")
+	if err != nil {
+		cfmt.Println("{{  Error getting pipeline list}}::red")
+		os.Exit(1)
+	}
+	return pipelineResp
 }
 
 func printAppsList(r *resty.Response) {
@@ -53,7 +70,7 @@ func printAppsList(r *resty.Response) {
 			continue
 		}
 
-		cfmt.Println("{{  " + strings.ToUpper(phase.Name) + "}}::bold|white")
+		cfmt.Println("{{  " + strings.ToUpper(phase.Name) + "}}::bold")
 
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetHeader([]string{
