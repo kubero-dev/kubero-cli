@@ -194,6 +194,12 @@ func getPipelinesInRepository() {
 
 	gitdir := GetGitdir() + "/../.kubero"
 
+	if _, err := os.Stat(gitdir); os.IsNotExist(err) {
+		// path/to/whatever does not exist
+		fmt.Println("No pipelines found in repository")
+		os.Exit(0)
+	}
+
 	// iterate over all directories and append pipeline.yaml config to pipelineConfig
 	err := filepath.Walk(gitdir, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
