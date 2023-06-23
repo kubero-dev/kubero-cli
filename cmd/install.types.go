@@ -180,7 +180,7 @@ type KuberoUIConfig struct {
 // https://developers.scaleway.com/en/products/k8s/api/#post-612200
 type ScalewayCreate struct {
 	OrganizationID  string             `json:"organization_id,omitempty"` // DEPRECATED
-	ProjectID       string             `json:"project_id"`                // REQUIRED
+	ProjectID       string             `json:"project_id,omitempty"`      // REQUIRED
 	Type            string             `json:"type"`
 	Name            string             `json:"name"` // REQUIRED
 	Description     string             `json:"description"`
@@ -252,6 +252,22 @@ type ScalewayNodePool struct {
 	Zone           string `json:"zone"`
 	RootVolumeType string `json:"root_volume_type"`
 	RootVolumeSize int    `json:"root_volume_size"`
+}
+
+type ScalewayVersionsResponse struct {
+	Versions []struct {
+		Name                       string   `json:"name"`
+		Label                      string   `json:"label"`
+		Region                     string   `json:"region"`
+		AvailableCnis              []string `json:"available_cnis"`
+		AvailableIngresses         []string `json:"available_ingresses"`
+		AvailableContainerRuntimes []string `json:"available_container_runtimes"`
+		AvailableFeatureGates      []string `json:"available_feature_gates"`
+		AvailableAdmissionPlugins  []string `json:"available_admission_plugins"`
+		AvailableKubeletArgs       struct {
+			AvailableKubeletArgKey string `json:"<available_kubelet_argKey>"`
+		} `json:"available_kubelet_args"`
+	} `json:"versions"`
 }
 
 type ScalewayCreateResponse struct {
