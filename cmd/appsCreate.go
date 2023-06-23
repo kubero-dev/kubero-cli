@@ -170,7 +170,7 @@ func writeAppYaml(app CreateApp) {
 	}
 	//fmt.Println(string(yamlData))
 
-	fileName := "app." + app.Spec.Phase + ".yaml"
+	fileName := ".kubero/" + app.Spec.Pipeline + "/" + app.Spec.Phase + "/" + app.Spec.Name + ".yaml"
 	err = os.WriteFile(fileName, yamlData, 0644)
 	if err != nil {
 		panic("Unable to write data into the file")
