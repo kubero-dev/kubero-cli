@@ -3,7 +3,6 @@ package cmd
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"log"
 	"math/rand"
 	"os"
@@ -74,19 +73,21 @@ func installScaleway() {
 	cluster.AutoUpgrade.MaintenanceWindow.Day = "any"
 
 	// TODO load the options from the api
-	nodeType := promptLine("Node Types", "[DEV1-M,DEV1-XL,GP1-M]", "DEV1-M")
+	nodeType := promptLine("Node Types", "[DEV1-M,DEV1-XL,START1-M]", "DEV1-M")
+
+	clusterSize, _ := strconv.Atoi(promptLine("Cluster Size", "[at least 3]", "3"))
 
 	cluster.Pools = append(cluster.Pools, ScalewayNodePool{
 		Name:             "default",
 		NodeType:         nodeType,
 		Autoscaling:      false,
-		Size:             3,
+		Size:             clusterSize,
 		ContainerRuntime: "unknown_runtime",
 		RootVolumeType:   "default_volume_type",
 		//RootVolumeSize:   50,
 	})
 
-	fmt.Printf("%+v\n", cluster)
+	//fmt.Printf("%+v\n", cluster)
 	newCluster, _ := api.R().SetBody(cluster).Post(region + "/clusters")
 
 	var clusterResponse ScalewayCreateResponse
