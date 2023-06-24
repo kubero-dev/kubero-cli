@@ -577,6 +577,7 @@ func installKuberoUi() {
 
 		if clusterType == "linode" ||
 			clusterType == "digitalocean" ||
+			clusterType == "scaleway" ||
 			clusterType == "gke" {
 			kuberiUIConfig.Spec.Ingress.ClassName = "nginx"
 		}

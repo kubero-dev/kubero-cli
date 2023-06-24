@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -29,12 +30,13 @@ func installScaleway() {
 	cfmt.Println("{{  Please report if you run into errors}}::yellow")
 
 	var cluster ScalewayCreate
-
-	cluster.ProjectID = os.Getenv("SCALEWAY_PROJECTID")
-	if cluster.ProjectID == "" {
-		cfmt.Println("{{✗ SCALEWAY_PROJECTID is not set}}::red")
-		log.Fatal("missing SCALEWAY_PROJECTID")
-	}
+	/*
+		cluster.ProjectID = os.Getenv("SCALEWAY_PROJECTID")
+		if cluster.ProjectID == "" {
+			cfmt.Println("{{✗ SCALEWAY_PROJECTID is not set}}::red")
+			log.Fatal("missing SCALEWAY_PROJECTID")
+		}
+	*/
 	cluster.OrganizationID = os.Getenv("SCALEWAY_PROJECTID")
 
 	token := os.Getenv("SCALEWAY_ACCESS_TOKEN")
@@ -52,7 +54,9 @@ func installScaleway() {
 
 	cluster.Name = promptLine("Kubernetes Cluster Name", "", "kubero-"+strconv.Itoa(rand.Intn(1000)))
 	region := promptLine("Cluster Region", "[fr-par,nl-ams,pl-waw]", "nl-ams")
-	cluster.Version = promptLine("Kubernetes Version", "[1.23.13,1.22.15,1.21.14]", "1.24.7")
+
+	versions := getScalewayVersions(api, region)
+	cluster.Version = promptLine("Kubernetes Version", "["+strings.Join(versions, ",")+"]", versions[0])
 
 	// TODO lets make this configurable if needed in the future
 	cluster.Cni = "unknown_cni"
@@ -69,13 +73,15 @@ func installScaleway() {
 	cluster.AutoUpgrade.MaintenanceWindow.Day = "any"
 
 	// TODO load the options from the api
-	nodeType := promptLine("Node Types", "[DEV1-M,DEV1-XL,GP1-M]", "DEV1-M")
+	nodeType := promptLine("Node Types", "[DEV1-M,DEV1-XL,START1-M]", "DEV1-M")
+
+	clusterSize, _ := strconv.Atoi(promptLine("Cluster Size", "[at least 3]", "3"))
 
 	cluster.Pools = append(cluster.Pools, ScalewayNodePool{
 		Name:             "default",
 		NodeType:         nodeType,
 		Autoscaling:      false,
-		Size:             3,
+		Size:             clusterSize,
 		ContainerRuntime: "unknown_runtime",
 		RootVolumeType:   "default_volume_type",
 		//RootVolumeSize:   50,
@@ -120,4 +126,24 @@ func installScaleway() {
 		cfmt.Println("{{✓ Kubeconfig downloaded}}::lightGreen")
 	}
 
+}
+
+func getScalewayVersions(api *resty.Client, region string) []string {
+	token := os.Getenv("SCALEWAY_ACCESS_TOKEN")
+	if token == "" {
+		cfmt.Println("{{✗ SCALEWAY_ACCESS_TOKEN is not set}}::red")
+		log.Fatal("missing SCALEWAY_ACCESS_TOKEN")
+	}
+
+	versions_r, _ := api.R().Get(region + "/versions")
+
+	var versionsResponse ScalewayVersionsResponse
+	json.Unmarshal(versions_r.Body(), &versionsResponse)
+
+	var versions []string
+	for _, v := range versionsResponse.Versions {
+		versions = append(versions, v.Name)
+	}
+
+	return versions
 }
