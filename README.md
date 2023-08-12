@@ -39,6 +39,31 @@ Command map
 ```
 
 
+## Usage
+Command map
+```
+    kubero
+    ├── login
+    ├── install
+    ├── create
+    │   ├── app
+    │   └── pipeline
+    ├── list
+    │   ├── app
+    │   └── pipeline
+    ├── up
+    ├── down
+    ├── sync
+    │   ├── app
+    │   └── pipeline
+    ├── config
+    │   ├── addons
+    │   ├── buildpacks
+    │   └── podsizes
+    └── help
+```
+
+
 ## Environment variables for credentials
 ### Scaleway
 ```
