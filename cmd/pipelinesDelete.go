@@ -19,14 +19,14 @@ to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("delete called")
 
-		pipeline, _ := client.Delete("/api/cli/pipelines/" + pipeline)
+		pipeline, _ := client.Delete("/api/cli/pipelines/" + pipelineName)
 		fmt.Println(pipeline)
 	},
 }
 
 func init() {
 	pipelinesCmd.AddCommand(pipelinesDeleteCmd)
-	pipelinesDeleteCmd.Flags().StringVarP(&pipeline, "pipeline", "p", "", "Name of the pipeline")
+	pipelinesDeleteCmd.Flags().StringVarP(&pipelineName, "pipeline", "p", "", "Name of the pipeline")
 
 	pipelinesDeleteCmd.MarkFlagRequired("pipeline")
 }

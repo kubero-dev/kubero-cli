@@ -22,28 +22,28 @@ var pipelinesFetchCmd = &cobra.Command{
 		} else {
 			json.Unmarshal(p.Body(), &createPipeline.Spec)
 			//json.Unmarshal(p.Body(), &createPipeline)
-			writePipelineYaml(createPipeline)
+			//writePipelineYaml(createPipeline)
 		}
 	},
 }
 
 func init() {
 	pipelinesFetchCmd.PersistentFlags().BoolVarP(&force, "force", "f", false, "Skip asking for confirmation")
-	pipelinesFetchCmd.Flags().StringVarP(&pipeline, "pipeline", "p", "", "Name of the pipeline")
+	pipelinesFetchCmd.Flags().StringVarP(&pipelineName, "pipeline", "p", "", "Name of the pipeline")
 	pipelinesCmd.AddCommand(pipelinesFetchCmd)
 }
 
-func pipelinesFetchForm() CreatePipeline {
+func pipelinesFetchForm() PipelineCRD {
 
-	var cp CreatePipeline
+	var cp PipelineCRD
 
 	cp.APIVersion = "application.kubero.dev/v1alpha1"
 	cp.Kind = "KuberoPipeline"
 
-	if pipeline == "" {
-		pipeline = pipelineConfig.GetString("spec.name")
+	if pipelineName == "" {
+		pipelineName = pipelineConfig.GetString("spec.name")
 	}
-	cp.Spec.Name = promptLine("Pipeline", "", pipeline)
+	cp.Spec.Name = promptLine("Pipeline", "", pipelineName)
 
 	return cp
 }

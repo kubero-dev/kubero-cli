@@ -31,7 +31,7 @@ var appsFetchCmd = &cobra.Command{
 
 func init() {
 	appsFetchCmd.PersistentFlags().BoolVarP(&force, "force", "f", false, "Skip asking for confirmation")
-	appsFetchCmd.Flags().StringVarP(&pipeline, "pipeline", "p", "", "Name of the pipeline")
+	appsFetchCmd.Flags().StringVarP(&pipelineName, "pipeline", "p", "", "Name of the pipeline")
 	appsFetchCmd.Flags().StringVarP(&stage, "stage", "s", "", "Name of the stage")
 	appsFetchCmd.Flags().StringVarP(&app, "app", "a", "", "Name of the app")
 	appsCmd.AddCommand(appsFetchCmd)
@@ -43,10 +43,10 @@ func appsFetchForm() CreateApp {
 	ca.APIVersion = "application.kubero.dev/v1alpha1"
 	ca.Kind = "KuberoApp"
 
-	if pipeline == "" {
-		pipeline = pipelineConfig.GetString("spec.name")
+	if pipelineName == "" {
+		pipelineName = pipelineConfig.GetString("spec.name")
 	}
-	ca.Spec.Pipeline = promptLine("Pipeline", "", pipeline)
+	ca.Spec.Pipeline = promptLine("Pipeline", "", pipelineName)
 
 	/* TODO need remote Phases
 	availablePhases := getPipelinePhases()

@@ -43,24 +43,26 @@ Command map
 Command map
 ```
     kubero
-    ├── login
-    ├── install
-    ├── create
-    │   ├── app
-    │   └── pipeline
-    ├── list
-    │   ├── app
-    │   └── pipeline
-    ├── up
-    ├── down
-    ├── sync
-    │   ├── app
-    │   └── pipeline
-    ├── config
+    ├── install                 // create kubernetes cluster and install kubero with all required components
+*    ├── login                  // login to kubero
+*    ├── logout                 // logout from kubero
+*    ├── create                 // create a new pipeline and app config
+*    │   ├── app
+*    │   └── pipeline
+*    ├── list
+*    │   ├── app
+*    │   └── pipeline
+*    ├── up                     // deploy app and pipeline
+*    ├── down                   // delete app and pipeline
+*    ├── sync                   // sync app and pipeline to local config
+*    │   ├── app
+*    │   └── pipeline
+*    ├── status (show current Auth status)
+    ├── config                  // print configurations
     │   ├── addons
     │   ├── buildpacks
     │   └── podsizes
-    └── help
+    └── help                    // Help about any command   
 ```
 
 

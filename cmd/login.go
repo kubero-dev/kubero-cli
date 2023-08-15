@@ -14,10 +14,10 @@ type Config struct {
 	} `json:"api" yaml:"api"`
 }
 
-// initCmd represents the init command
-var initCmd = &cobra.Command{
-	Use:   "init",
-	Short: "Configure your kubero-cli",
+// loginCmd represents the login command
+var loginCmd = &cobra.Command{
+	Use:   "login",
+	Short: "Login to your Kubero instance",
 	/*
 			Long: `A longer description that spans multiple lines and likely contains examples
 		and usage of using your command. For example:
@@ -41,10 +41,17 @@ var initCmd = &cobra.Command{
 			return
 		}
 
-		viper.WriteConfig()
+		repoAuth := promptLine("Create authentication file in this repository", "[y,n]", "n")
+		if repoAuth == "y" {
+			viper.WriteConfigAs(".kubero/kubero.yaml") //TODO: make .kubero path configurable
+			if err := viper.WriteConfig(); err != nil {
+				fmt.Println(err)
+				return
+			}
+		}
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(initCmd)
+	rootCmd.AddCommand(loginCmd)
 }

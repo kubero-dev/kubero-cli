@@ -14,7 +14,7 @@ var appsDeleteCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("delete called")
 
-		appInstance, _ := client.Delete("/api/cli/pipelines/" + pipeline + "/" + stage + "/" + app)
+		appInstance, _ := client.Delete("/api/cli/pipelines/" + pipelineName + "/" + stage + "/" + app)
 
 		fmt.Println(appInstance)
 
@@ -26,7 +26,7 @@ var stage string
 var app string
 
 func init() {
-	appsDeleteCmd.Flags().StringVarP(&pipeline, "pipeline", "p", "", "* Name of the pipeline")
+	appsDeleteCmd.Flags().StringVarP(&pipelineName, "pipeline", "p", "", "* Name of the pipeline")
 	appsDeleteCmd.MarkFlagRequired("pipeline")
 
 	appsDeleteCmd.Flags().StringVarP(&stage, "stage", "s", "", "* Name of the stage")

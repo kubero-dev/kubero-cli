@@ -23,21 +23,21 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		if pipeline == "" {
-			pipeline = pipelineConfig.GetString("spec.name")
-			if pipeline == "" {
+		if pipelineName == "" {
+			pipelineName = pipelineConfig.GetString("spec.name")
+			if pipelineName == "" {
 				cfmt.Println("{{  Pipeline not found in config file}}::red")
 				os.Exit(1)
 			}
 		}
 
-		pipelineResp, _ := client.Get("/api/cli/pipelines/" + pipeline + "/apps")
+		pipelineResp, _ := client.Get("/api/cli/pipelines/" + pipelineName + "/apps")
 		printAppsList(pipelineResp)
 	},
 }
 
 func init() {
-	appsListCmd.Flags().StringVarP(&pipeline, "pipeline", "p", "", "Name of the Pipeline")
+	appsListCmd.Flags().StringVarP(&pipelineName, "pipeline", "p", "", "Name of the Pipeline")
 	//appsListCmd.MarkFlagRequired("pipeline")
 	appsCmd.AddCommand(appsListCmd)
 }

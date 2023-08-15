@@ -23,9 +23,9 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		if pipeline != "" {
+		if pipelineName != "" {
 			// get a single pipeline
-			pipelineResp, _ := client.Get("/api/cli/pipelines/" + pipeline)
+			pipelineResp, _ := client.Get("/api/cli/pipelines/" + pipelineName)
 			printPipeline(pipelineResp)
 		} else {
 			// get the pipelines

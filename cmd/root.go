@@ -54,7 +54,8 @@ Documentation:
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	loadConfigs()
+	loadCLIConfig()
+	InitClient()
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
@@ -99,22 +100,24 @@ func promptLine(question string, options string, def string) string {
 	return text
 }
 
-type Repositories struct {
-	Github    bool `json:"github"`
-	Gitea     bool `json:"gitea"`
-	Gitlab    bool `json:"gitlab"`
-	Bitbucket bool `json:"bitbucket"`
-	Docker    bool `json:"docker"`
-}
-
 var repoSimpleList []string
 
 func loadRepositories() {
 
-	rep, _ := client.Get("/api/cli/config/repositories")
+	res, err := client.Get("/api/cli/config/repositories")
+	if res.StatusCode() != 200 {
+		fmt.Println("Error: ", res.StatusCode(), "Can't reach Kubero API. Make sure, you are logged in.")
+		os.Exit(1)
+	}
+
+	if err != nil {
+		fmt.Println("Error: ", "Unable to load repositories")
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
 	var availRep Repositories
-	json.Unmarshal(rep.Body(), &availRep)
+	json.Unmarshal(res.Body(), &availRep)
 
 	t := reflect.TypeOf(availRep)
 
@@ -124,12 +127,6 @@ func loadRepositories() {
 			repoSimpleList[i] = t.Field(i).Name
 		}
 	}
-}
-
-type Contexts []struct {
-	Cluster string `json:"cluster"`
-	Name    string `json:"name"`
-	User    string `json:"user"`
 }
 
 var contextSimpleList []string
@@ -147,7 +144,7 @@ func loadContexts() {
 }
 
 func getGitRemote() string {
-	gitdir := getGitdir()
+	gitdir := getGitdir() + "/.git"
 	fs := osfs.New(gitdir)
 	s := filesystem.NewStorageWithOptions(fs, cache.NewObjectLRUDefault(), filesystem.Options{KeepDescriptors: true})
 	r, err := git.Open(s, fs)
@@ -173,7 +170,7 @@ func getGitdir() string {
 		} else {
 			if fileInfo.IsDir() {
 				//fmt.Println(subpath + "/.git is a dir")
-				return strings.Join(path[:i], "/") + "/.git"
+				return strings.Join(path[:i], "/")
 			} else {
 				//fmt.Println(subpath + "/.git not a dir")
 				continue
@@ -184,14 +181,58 @@ func getGitdir() string {
 	return ""
 }
 
-func loadConfigs() {
+func loadConfigs(basePath string, pipelineName string) {
+
+	gitdir := getGitdir()
+	dir := gitdir + basePath + pipelineName
+	fmt.Println(dir)
 
 	pipelineConfig = viper.New()
 	pipelineConfig.SetConfigName("pipeline") // name of config file (without extension)
 	pipelineConfig.SetConfigType("yaml")     // REQUIRED if the config file does not have the extension in the name
-	pipelineConfig.AddConfigPath(".")        // path to look for the config file in
+	pipelineConfig.AddConfigPath(dir)        // path to look for the config file in
 	pipelineConfig.ReadInConfig()
 
 	//fmt.Println("Using config file:", viper.ConfigFileUsed())
 	//fmt.Println("Using config file:", pipelineConfig.ConfigFileUsed())
+}
+
+// create recursive folder if not exists
+func createFolder(path string) {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		os.MkdirAll(path, 0755)
+	}
+}
+
+func loadCLIConfig() {
+
+	gitdir := getGitdir()
+	basePath := "/.kubero/" //TODO Make it dynamic
+	dir := gitdir + basePath
+	fmt.Println(dir)
+
+	//load a default config from the current local git repository
+	viper.SetDefault("api.url", "http://localhost:2000")
+	viper.SetConfigName("kubero") // name of config file (without extension)
+	viper.SetConfigType("yaml")   // REQUIRED if the config file does not have the extension in the name
+	viper.AddConfigPath(dir)      // TODO this should search for the git repo root
+	err := viper.ReadInConfig()
+
+	//load a personal config from the user's home directory
+	personal := viper.New()
+	personal.SetConfigName("kubero")        // name of config file (without extension)
+	personal.SetConfigType("yaml")          // REQUIRED if the config file does not have the extension in the name
+	personal.AddConfigPath("/etc/kubero/")  // path to look for the config file in
+	personal.AddConfigPath("$HOME/.kubero") // call multiple times to add many search paths
+	errCred := personal.ReadInConfig()
+
+	viper.MergeConfigMap(personal.AllSettings())
+	if err != nil && errCred != nil {
+
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			fmt.Println("No config file found; using defaults")
+		} else {
+			fmt.Printf("Error while loading config files: %v \n\n\n%v", err, errCred)
+		}
+	}
 }

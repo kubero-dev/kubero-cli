@@ -24,3 +24,5 @@ app.*.yaml
 kind.yaml
 
 cmd/VERSION
+
+.kubero
