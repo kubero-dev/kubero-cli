@@ -49,7 +49,7 @@ Command map
 *    ├── create                 // create a new pipeline and app config
 *    │   ├── app
 *    │   └── pipeline
-*    ├── list
+*    ├── list                   // list all running pipelines and apps
 *    │   ├── app
 *    │   └── pipeline
 *    ├── up                     // deploy app and pipeline
