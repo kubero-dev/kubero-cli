@@ -1,6 +1,9 @@
 package kuberoCli
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/spf13/cobra"
 )
@@ -30,7 +33,28 @@ func init() {
 func fetchPipeline() {
 	confirmation := promptLine("Are you sure you want to fetch the pipeline "+pipelineName+"?", "[y,n]", "y")
 	if confirmation == "y" {
-		cfmt.Println("{{Fetching pipeline}} " + pipelineName + "::yellow")
+		cfmt.Println("{{Fetching pipeline}}::yellow " + pipelineName)
+
+		var pipeline PipelineCRD
+
+		pipeline.APIVersion = "application.kubero.dev/v1alpha1"
+		pipeline.Kind = "KuberoPipeline"
+		pipeline.Spec.Name = pipelineName
+
+		p, pipelineErr := client.Get("/api/cli/pipelines/" + pipeline.Spec.Name)
+
+		if pipelineErr != nil {
+			if p.StatusCode() != 404 {
+				cfmt.Println("{{ERROR:}}::red Pipeline '" + pipelineName + "' not found ")
+				return
+			}
+			fmt.Println(pipelineErr)
+			return
+		}
+
+		json.Unmarshal(p.Body(), &pipeline.Spec)
+		writePipelineYaml(pipeline)
+
 	} else {
 		cfmt.Println("{{Aborted}}::red")
 		return
@@ -46,7 +70,7 @@ func fetchApp() {
 
 	confirmation := promptLine("Are you sure you want to fetch the app "+appName+" from "+pipelineName+"?", "[y,n]", "y")
 	if confirmation == "y" {
-		cfmt.Println("{{Fetching app}} " + appName + "::yellow")
+		cfmt.Println("{{Fetching app}}::yellow " + appName + "")
 	} else {
 		cfmt.Println("{{Aborted}}::red")
 		return
