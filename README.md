@@ -54,10 +54,8 @@ Command map
 *    │   └── pipeline
 *    ├── up                     // deploy app and pipeline
 *    ├── down                   // delete app and pipeline
-*    ├── sync                   // sync app and pipeline to local config
-*    │   ├── app
-*    │   └── pipeline
-*    ├── status (show current Auth status)
+*    ├── fetch                  // sync app and pipeline to local config
+*    ├── status                 // show current Auth status
     ├── config                  // print configurations
     │   ├── addons
     │   ├── buildpacks

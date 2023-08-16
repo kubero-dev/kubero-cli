@@ -13,6 +13,7 @@ import (
 )
 
 var pipelineName string
+var appName string
 
 // pipelineCmd represents the pipeline command
 var createPipelineCmd = &cobra.Command{
