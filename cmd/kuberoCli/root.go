@@ -237,3 +237,11 @@ func loadCLIConfig() {
 		}
 	}
 }
+
+func boolToEmoji(b bool) string {
+	if b {
+		return "✅"
+	} else {
+		return "❌"
+	}
+}

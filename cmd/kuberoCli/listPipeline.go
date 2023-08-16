@@ -14,17 +14,31 @@ import (
 // pipelineCmd represents the pipeline command
 var listPipelineCmd = &cobra.Command{
 	Use:   "pipeline",
-	Short: "List available pipelines",
-	Long:  `List available pipelines`,
+	Short: "List deployed pipelines",
+	Long:  `List deployed pipelines`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if pipelineName != "" {
 			// get a single pipeline
-			pipelineResp, _ := client.Get("/api/cli/pipelines/" + pipelineName)
+			pipelineResp, err := client.Get("/api/cli/pipelines/" + pipelineName)
+			if pipelineResp.StatusCode() == 404 {
+				cfmt.Println("{{  Pipeline not found}}::red")
+				os.Exit(1)
+			}
+
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
 			printPipeline(pipelineResp)
 		} else {
 			// get the pipelines
-			pipelineListResp, _ := client.Get("/api/cli/pipelines")
+			pipelineListResp, err := client.Get("/api/cli/pipelines")
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
 			printPipelinesList(pipelineListResp)
 		}
 	},
@@ -39,6 +53,9 @@ func init() {
 func printPipelinesList(r *resty.Response) {
 
 	table := tablewriter.NewWriter(os.Stdout)
+	//table.SetAutoFormatHeaders(true)
+	//table.SetBorder(false)
+	//table.SetAlignment(tablewriter.ALIGN_CENTER)
 	table.SetHeader([]string{
 		"Name",
 		"Repository",
@@ -52,7 +69,6 @@ func printPipelinesList(r *resty.Response) {
 		//"Deployment Strategy",
 		//"Review Apps"
 	})
-	//table.SetBorder(false)
 
 	var pipelinesList PipelinesList
 	json.Unmarshal(r.Body(), &pipelinesList)
@@ -66,10 +82,10 @@ func printPipelinesList(r *resty.Response) {
 			//pipeline.Dockerimage,
 			//pipeline.Deploymentstrategy,
 			//fmt.Sprintf("%t", pipeline.Reviewapps)
-			fmt.Sprintf("%t", pipeline.Phases[0].Enabled),
-			fmt.Sprintf("%t", pipeline.Phases[1].Enabled),
-			fmt.Sprintf("%t", pipeline.Phases[2].Enabled),
-			fmt.Sprintf("%t", pipeline.Phases[3].Enabled),
+			boolToEmoji(pipeline.Phases[0].Enabled),
+			boolToEmoji(pipeline.Phases[1].Enabled),
+			boolToEmoji(pipeline.Phases[2].Enabled),
+			boolToEmoji(pipeline.Phases[3].Enabled),
 		})
 	}
 
