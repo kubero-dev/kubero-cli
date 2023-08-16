@@ -30,7 +30,7 @@ func init() {
 func upPipeline() {
 	confirmation := promptLine("Are you sure you want to deploy the pipeline "+pipelineName+"?", "[y,n]", "y")
 	if confirmation == "y" {
-		cfmt.Println("{{Undeploying pipeline}} " + pipelineName + "::yellow")
+		cfmt.Println("{{Deploying pipeline}} " + pipelineName + "::yellow")
 	} else {
 		cfmt.Println("{{Aborted}}::red")
 		return
@@ -46,7 +46,7 @@ func upApp() {
 
 	confirmation := promptLine("Are you sure you want to deploy the app "+appName+" to "+pipelineName+"?", "[y,n]", "y")
 	if confirmation == "y" {
-		cfmt.Println("{{Undeploying app}} " + appName + "::yellow")
+		cfmt.Println("{{Deploying app}} " + appName + "::yellow")
 	} else {
 		cfmt.Println("{{Aborted}}::red")
 		return
@@ -56,7 +56,7 @@ func upApp() {
 func upAllPipelines() {
 	confirmation := promptLine("Are you sure you want to deploy all pipelines?", "[y,n]", "n")
 	if confirmation == "y" {
-		cfmt.Println("{{Undeploying all pipelines}}::yellow")
+		cfmt.Println("{{Deploying all pipelines}}::yellow")
 	} else {
 		cfmt.Println("{{Aborted}}::red")
 		return
