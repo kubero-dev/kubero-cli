@@ -13,13 +13,12 @@ var downCmd = &cobra.Command{
 Subcommands:
   kubero down [pipeline|app]`,
 	Run: func(cmd *cobra.Command, args []string) {
-
 		cfmt.Println("{{Undeploying your pipeline}}::green")
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(downCmd)
-	downCmd.Flags().StringVarP(&pipelineName, "pipeline", "p", "", "name of the pipeline (required)")
-	downCmd.MarkFlagRequired("pipeline")
+	downCmd.Flags().StringVarP(&pipelineName, "pipeline", "p", "", "name of the pipeline")
+	downCmd.Flags().StringVarP(&appName, "app", "a", "", "name of the app")
 }
