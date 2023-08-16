@@ -46,7 +46,7 @@ func downApp() {
 		return
 	}
 
-	confirmation := promptLine("Are you sure you want to undeploy the app "+appName+"?", "[y,n]", "y")
+	confirmation := promptLine("Are you sure you want to undeploy the app "+appName+" from "+pipelineName+"?", "[y,n]", "y")
 	if confirmation == "y" {
 		cfmt.Println("{{Undeploying app}} " + appName + "::yellow")
 	} else {
