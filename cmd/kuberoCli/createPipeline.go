@@ -13,6 +13,7 @@ import (
 )
 
 var pipelineName string
+var stageName string
 var appName string
 
 // pipelineCmd represents the pipeline command

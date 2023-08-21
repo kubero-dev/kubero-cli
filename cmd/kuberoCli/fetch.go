@@ -3,6 +3,7 @@ package kuberoCli
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/spf13/cobra"
@@ -15,9 +16,13 @@ var fetchCmd = &cobra.Command{
 	Long:  `Use the pipeline or app subcommand to sync your pipelines and apps to your local repository`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if pipelineName != "" && appName == "" {
-			fetchPipeline()
-		} else if appName != "" {
-			fetchApp()
+			fetchPipeline(pipelineName)
+		} else if pipelineName != "" && appName != "" {
+			if stageName == "" {
+				stageName = promptLine("Phase", "[test,stage,production]", stage)
+			}
+			fetchPipeline(pipelineName)
+			fetchApp(appName, stageName, pipelineName)
 		} else {
 			fetchAllPipelines()
 		}
@@ -26,11 +31,12 @@ var fetchCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(fetchCmd)
-	fetchCmd.Flags().StringVarP(&pipelineName, "pipeline", "p", "", "name of the pipeline")
-	fetchCmd.Flags().StringVarP(&appName, "app", "a", "", "name of the app")
+	fetchCmd.Flags().StringVarP(&pipelineName, "pipeline", "p", "", "Name of the pipeline")
+	fetchCmd.Flags().StringVarP(&stageName, "stage", "s", "", "Name of the stage [test|stage|production]")
+	fetchCmd.Flags().StringVarP(&appName, "app", "a", "", "Name of the app")
 }
 
-func fetchPipeline() {
+func fetchPipeline(pipelineName string) {
 	confirmation := promptLine("Are you sure you want to fetch the pipeline "+pipelineName+"?", "[y,n]", "y")
 	if confirmation == "y" {
 		cfmt.Println("{{Fetching pipeline}}::yellow " + pipelineName)
@@ -44,12 +50,12 @@ func fetchPipeline() {
 		p, pipelineErr := client.Get("/api/cli/pipelines/" + pipeline.Spec.Name)
 
 		if pipelineErr != nil {
-			if p.StatusCode() != 404 {
+			if p.StatusCode() == 404 {
 				cfmt.Println("{{ERROR:}}::red Pipeline '" + pipelineName + "' not found ")
-				return
+				os.Exit(1)
 			}
 			fmt.Println(pipelineErr)
-			return
+			os.Exit(1)
 		}
 
 		json.Unmarshal(p.Body(), &pipeline.Spec)
@@ -61,12 +67,7 @@ func fetchPipeline() {
 	}
 }
 
-func fetchApp() {
-
-	if pipelineName == "" {
-		cfmt.Println("{{Please specify a pipeline}}::red")
-		return
-	}
+func fetchApp(appName string, stageName string, pipelineName string) {
 
 	confirmation := promptLine("Are you sure you want to fetch the app "+appName+" from "+pipelineName+"?", "[y,n]", "y")
 	if confirmation == "y" {
@@ -75,6 +76,15 @@ func fetchApp() {
 		cfmt.Println("{{Aborted}}::red")
 		return
 	}
+
+	var app CreateApp
+	app.APIVersion = "application.kubero.dev/v1alpha1"
+	app.Kind = "KuberoApp"
+
+	app.Spec.Pipeline = pipelineName
+	app.Spec.Phase = stageName
+	app.Spec.Name = appName
+
 }
 
 func fetchAllPipelines() {
