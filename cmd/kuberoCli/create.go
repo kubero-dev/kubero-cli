@@ -11,9 +11,10 @@ import (
 
 // createCmd represents the create command
 var createCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Create a new pipeline and/or app",
-	Long:  `Initiate a new pipeline and app in your current repository.`,
+	Use:     "create",
+	Aliases: []string{"cr", "add", "new"},
+	Short:   "Create a new pipeline and/or app",
+	Long:    `Initiate a new pipeline and app in your current repository.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		createPipelineAndApp()
 		fmt.Println("create called")
