@@ -17,9 +17,10 @@ import (
 
 // listCmd represents the list command
 var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List pipelines and apps",
-	Long:  `List pipelines and apps`,
+	Use:     "list",
+	Aliases: []string{"ls"},
+	Short:   "List pipelines and apps",
+	Long:    `List pipelines and apps`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if pipelineName != "" {
