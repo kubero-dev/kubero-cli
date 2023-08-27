@@ -11,7 +11,7 @@ import (
 // fetchCmd represents the fetch command
 var appsFetchCmd = &cobra.Command{
 	Use:   "fetch",
-	Short: "Fetch a existing app configuration in a pipeline",
+	Short: "**DEPRECATED** Fetch a existing app configuration in a pipeline",
 	Run: func(cmd *cobra.Command, args []string) {
 
 		app := appsFetchForm()
@@ -24,7 +24,7 @@ var appsFetchCmd = &cobra.Command{
 			cfmt.Println("{{App fetched successfully}}::green")
 			json.Unmarshal(a.Body(), &app)
 			fmt.Println(app)
-			writeAppYaml(app)
+			writeAppYamlDepr(app)
 		}
 	},
 }

@@ -9,7 +9,7 @@ import (
 // deleteCmd represents the delete command
 var appsDeleteCmd = &cobra.Command{
 	Use:   "delete",
-	Short: "Delete a existing app in a pipeline",
+	Short: "**DEPRECATED** Delete a existing app in a pipeline",
 	Long:  `Delete a existing app in a pipeline`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("delete called")

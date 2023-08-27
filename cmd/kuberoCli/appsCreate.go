@@ -15,7 +15,7 @@ import (
 // createCmd represents the create command
 var appsCreateCmd = &cobra.Command{
 	Use:   "create",
-	Short: "Create a new app in a Pipeline",
+	Short: "**DEPRECATED** Create a new app in a Pipeline",
 	Long: `Create a new app in a Pipeline.
 
 If called without arguments, it will ask for all the required information`,
@@ -23,7 +23,7 @@ If called without arguments, it will ask for all the required information`,
 		fmt.Println("create called")
 
 		createApp := appsForm()
-		writeAppYaml(createApp)
+		writeAppYamlDepr(createApp)
 
 		client.SetBody(createApp.Spec)
 		app, appErr := client.Post("/api/cli/apps")
@@ -34,7 +34,7 @@ If called without arguments, it will ask for all the required information`,
 			fmt.Println(app)
 			cfmt.Println("{{App created successfully}}::green")
 			json.Unmarshal(app.Body(), &createApp.Spec)
-			writeAppYaml(createApp)
+			writeAppYamlDepr(createApp)
 		}
 
 	},
@@ -161,7 +161,7 @@ type CreateApp struct {
 	} `json:"spec"`
 }
 
-func writeAppYaml(app CreateApp) {
+func writeAppYamlDepr(app CreateApp) {
 	// write pipeline.yaml
 	yamlData, err := yaml.Marshal(&app)
 
@@ -186,7 +186,7 @@ func appsForm() CreateApp {
 
 	ca.Spec.Pipeline = promptLine("Pipeline", "", pipelineConfig.GetString("spec.name"))
 
-	availablePhases := getPipelinePhases()
+	availablePhases := getPipelinePhasesDepr()
 	ca.Spec.Phase = promptLine("Phase", fmt.Sprint(availablePhases), stage)
 
 	appconfig := loadAppConfig(ca.Spec.Phase)
@@ -229,7 +229,7 @@ func appsForm() CreateApp {
 	return ca
 }
 
-func getPipelinePhases() []string {
+func getPipelinePhasesDepr() []string {
 	var phases []string
 	phasesList := pipelineConfig.GetStringSlice("spec.phases")
 
