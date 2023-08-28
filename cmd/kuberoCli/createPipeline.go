@@ -102,7 +102,7 @@ func pipelinesForm() PipelineCRD {
 	cp.Spec.Buildpack.Name = promptLine("Buildpack ", fmt.Sprint(buildPacksSimpleList), selectedBuildpack)
 
 	domain := pipelineConfig.GetString("spec.domain")
-	cp.Spec.Domain = promptLine("FQDN Domain ", fmt.Sprint(buildPacksSimpleList), domain)
+	cp.Spec.Domain = promptLine("FQDN Domain ", "", domain)
 
 	// those fields are deprecated and may be removed in the future
 	cp.Spec.Dockerimage = ""
