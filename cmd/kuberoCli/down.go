@@ -36,7 +36,7 @@ func init() {
 func downPipeline(pipelineName string) {
 	confirmation := promptLine("Are you sure you want to undeploy the pipeline "+pipelineName+"?", "[y,n]", "y")
 	if confirmation == "y" {
-		cfmt.Println("{{Undeploying pipeline}} " + pipelineName + "::yellow")
+		cfmt.Println("{{Undeploying pipeline}}::yellow " + pipelineName)
 
 		_, err := client.Delete("/api/cli/pipelines/" + pipelineName)
 		if err != nil {
@@ -80,7 +80,11 @@ func downAllPipelines() {
 	confirmation := promptLine("Are you sure you want to undeploy all pipelines?", "[y,n]", "n")
 	if confirmation == "y" {
 		cfmt.Println("{{Undeploying all pipelines}}::yellow")
-		getAllLocalPipelines()
+		pipelinesList := getAllLocalPipelines()
+		for _, pipeline := range pipelinesList {
+			downPipeline(pipeline)
+		}
+
 	} else {
 		cfmt.Println("{{Aborted}}::red")
 		return

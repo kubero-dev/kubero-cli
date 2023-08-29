@@ -25,30 +25,6 @@ func init() {
 
 var buildPacksSimpleList []string
 
-type buildPacks []struct {
-	Name     string `json:"name"`
-	Language string `json:"language"`
-	Fetch    struct {
-		Repository string `json:"repository"`
-		Tag        string `json:"tag"`
-	} `json:"fetch"`
-	Build struct {
-		Repository string `json:"repository"`
-		Tag        string `json:"tag"`
-		Command    string `json:"command"`
-	} `json:"build"`
-	Run struct {
-		Repository         string `json:"repository"`
-		Tag                string `json:"tag"`
-		ReadOnlyAppStorage bool   `json:"readOnlyAppStorage"`
-		SecurityContext    *struct {
-			AllowPrivilegeEscalation *bool `json:"allowPrivilegeEscalation"`
-			ReadOnlyRootFilesystem   *bool `json:"readOnlyRootFilesystem"`
-		} `json:"securityContext"`
-		Command string `json:"command"`
-	} `json:"run,omitempty"`
-}
-
 func loadBuildpacks() {
 
 	b, _ := client.Get("/api/cli/config/buildpacks")

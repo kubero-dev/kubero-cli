@@ -23,23 +23,6 @@ func init() {
 	configCmd.AddCommand(podsizesCmd)
 }
 
-type PodsizeList []struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Default     bool   `json:"default,omitempty"`
-	Resources   struct {
-		Requests struct {
-			Memory string `json:"memory"`
-			CPU    string `json:"cpu"`
-		} `json:"requests"`
-		Limits struct {
-			Memory string `json:"memory"`
-			CPU    string `json:"cpu"`
-		} `json:"limits,omitempty"`
-	} `json:"resources,omitempty"`
-	Active bool `json:"active,omitempty"`
-}
-
 // print the response as a table
 func printPodsizes(r *resty.Response) {
 

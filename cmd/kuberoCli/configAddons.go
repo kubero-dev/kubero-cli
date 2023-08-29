@@ -25,21 +25,6 @@ func init() {
 	configCmd.AddCommand(addonsCmd)
 }
 
-type AddonsList []struct {
-	ID      string `json:"id"`
-	Enabled bool   `json:"enabled"`
-	Version struct {
-		Latest    string `json:"latest"`
-		Installed string `json:"installed"`
-	} `json:"version,omitempty"`
-	Description string `json:"description,omitempty"`
-	Readme      string `json:"readme,omitempty"`
-	ArtifactURL string `json:"artifact_url"`
-	Kind        string `json:"kind"`
-	Install     string `json:"install"`
-	Beta        bool   `json:"beta"`
-}
-
 // print the response as a table
 func printAddons(r *resty.Response) {
 
