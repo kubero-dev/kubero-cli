@@ -3,6 +3,7 @@ package kuberoCli
 import (
 	"encoding/json"
 	"fmt"
+	"kubero/pkg/kuberoApi"
 
 	"github.com/spf13/cobra"
 )
@@ -33,9 +34,9 @@ func init() {
 	pipelinesCmd.AddCommand(pipelinesFetchCmd)
 }
 
-func pipelinesFetchForm() PipelineCRD {
+func pipelinesFetchForm() kuberoApi.PipelineCRD {
 
-	var cp PipelineCRD
+	var cp kuberoApi.PipelineCRD
 
 	cp.APIVersion = "application.kubero.dev/v1alpha1"
 	cp.Kind = "KuberoPipeline"

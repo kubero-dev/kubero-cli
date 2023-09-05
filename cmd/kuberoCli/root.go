@@ -26,6 +26,7 @@ var outputFormat string
 var force bool
 var repoSimpleList []string
 var client *resty.Request
+var api *kuberoApi.KuberoClient
 
 //go:embed VERSION
 var version string
@@ -59,7 +60,10 @@ Documentation:
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	loadCLIConfig()
-	client = kuberoApi.InitClient(viper.GetString("api.url"), viper.GetString("api.token"))
+	api = new(kuberoApi.KuberoClient)
+	client = api.Init(viper.GetString("api.url"), viper.GetString("api.token"))
+
+	//client = kuberoApi.Init(viper.GetString("api.url"), viper.GetString("api.token"))
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)

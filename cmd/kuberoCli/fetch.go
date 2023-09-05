@@ -3,6 +3,7 @@ package kuberoCli
 import (
 	"encoding/json"
 	"fmt"
+	"kubero/pkg/kuberoApi"
 	"os"
 
 	"github.com/i582/cfmt/cmd/cfmt"
@@ -41,7 +42,7 @@ func fetchPipeline(pipelineName string) {
 	if confirmation == "y" {
 		cfmt.Println("{{Fetching pipeline}}::yellow " + pipelineName)
 
-		var pipeline PipelineCRD
+		var pipeline kuberoApi.PipelineCRD
 
 		pipeline.APIVersion = "application.kubero.dev/v1alpha1"
 		pipeline.Kind = "KuberoPipeline"
