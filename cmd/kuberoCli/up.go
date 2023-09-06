@@ -35,8 +35,8 @@ func upPipeline() {
 
 	cfmt.Println("{{Deploying pipeline}}::yellow " + pipelineName)
 
-	pipelineConfig := loadLocalPipeline(pipelineName)
-	api.CreatePipeline(pipelineConfig)
+	pipeline := loadLocalPipeline(pipelineName)
+	api.DeployPipeline(pipeline)
 }
 
 func upApp() {
@@ -66,8 +66,8 @@ func upAllPipelines() {
 
 	cfmt.Println("{{Deploying all pipelines}}::yellow")
 	//iterate over pipelinesConfigs
-	for _, pipelineConfig := range pipelinesConfigs {
-		cfmt.Println("{{Deploying pipeline}}::yellow " + pipelineConfig.Spec.Name + "")
-		api.CreatePipeline(pipelineConfig)
+	for _, pipeline := range pipelinesConfigs {
+		cfmt.Println("{{Deploying pipeline}}::yellow " + pipeline.Spec.Name + "")
+		api.DeployPipeline(pipeline)
 	}
 }

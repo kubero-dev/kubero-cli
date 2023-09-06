@@ -38,7 +38,7 @@ func downPipeline(pipelineName string) {
 	if confirmation == "y" {
 		cfmt.Println("{{Undeploying pipeline}}::yellow " + pipelineName)
 
-		_, err := client.Delete("/api/cli/pipelines/" + pipelineName)
+		_, err := api.UnDeployPipeline(pipelineName)
 		if err != nil {
 			panic("Unable to undeploy Pipeline")
 		}

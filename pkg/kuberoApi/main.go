@@ -32,9 +32,15 @@ func (k *KuberoClient) Init(baseURL string, bearerToken string) *resty.Request {
 	return client
 }
 
-func (k *KuberoClient) CreatePipeline(pipeline PipelineCRD) (*resty.Response, error) {
+func (k *KuberoClient) DeployPipeline(pipeline PipelineCRD) (*resty.Response, error) {
 	k.client.SetBody(pipeline.Spec)
-	pipelineResp, pipelineErr := k.client.Post("/api/cli/pipelines/")
+	res, err := k.client.Post("/api/cli/pipelines/")
 
-	return pipelineResp, pipelineErr
+	return res, err
+}
+
+func (k *KuberoClient) UnDeployPipeline(pipelineName string) (*resty.Response, error) {
+	res, err := k.client.Delete("/api/cli/pipelines/" + pipelineName)
+
+	return res, err
 }
