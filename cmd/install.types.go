@@ -66,6 +66,24 @@ type DigitalOcean struct {
 	} `json:"kubernetes_cluster"`
 }
 
+type DigitaloceanVersionsResponse struct {
+	Options struct {
+		Regions []struct {
+			Name string `json:"name"`
+			Slug string `json:"slug"`
+		} `json:"regions"`
+		Versions []struct {
+			Slug              string   `json:"slug"`
+			KubernetesVersion string   `json:"kubernetes_version"`
+			SupportedFeatures []string `json:"supported_features"`
+		} `json:"versions"`
+		Sizes []struct {
+			Name string `json:"name"`
+			Slug string `json:"slug"`
+		} `json:"sizes"`
+	} `json:"options"`
+}
+
 type User struct {
 	ID       int    `json:"id"`
 	Method   string `json:"method"`
