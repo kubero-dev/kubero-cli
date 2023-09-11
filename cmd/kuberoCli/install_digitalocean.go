@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -47,9 +48,11 @@ func installDigitalOcean() {
 		},
 	}
 
+	versions := getDigitaloceanVersions(doApi)
+
 	doConfig.Name = promptLine("Kubernetes Cluster Name", "", "kubero-"+strconv.Itoa(rand.Intn(1000)))
 	doConfig.Region = promptLine("Cluster Region", "[nyc1,sgp1,lon1,ams3,fra1,...]", "nyc1")
-	doConfig.Version = promptLine("Cluster Version", "[1.25.4-do.0,1.24.8-do.0]", "1.25.4-do.0")
+	doConfig.Version = promptLine("Cluster Version", "["+strings.Join(versions, ",")+"]", "1.25.4-do.0")
 
 	doConfig.NodePools[0].Size = promptLine("Cluster Node Size", "[s-1vcpu-2gb,s-2vcpu-4gb,s-4vcpu-8gb,s-8vcpu-16gb,s-16vcpu-32gb,s-32vcpu-64gb,s-48vcpu-96gb,s-64vcpu-128gb]", "s-1vcpu-2gb")
 	doConfig.NodePools[0].Count, _ = strconv.Atoi(promptLine("Cluster Node Count", "", "1"))
@@ -96,4 +99,24 @@ func installDigitalOcean() {
 		Get("v2/kubernetes/clusters/" + clusterID + "/kubeconfig")
 	mergeKubeconfig(kubectl.Body())
 
+}
+
+func getDigitaloceanVersions(api *resty.Client) []string {
+	token := os.Getenv("DIGITALOCEAN_ACCESS_TOKEN")
+	if token == "" {
+		cfmt.Println("{{✗ DIGITALOCEAN_ACCESS_TOKEN is not set}}::red")
+		log.Fatal("missing DIGITALOCEAN_ACCESS_TOKEN")
+	}
+
+	versions_r, _ := api.R().Get("/v2/kubernetes/options")
+
+	var versionsResponse DigitaloceanVersionsResponse
+	json.Unmarshal(versions_r.Body(), &versionsResponse)
+
+	var versions []string
+	for _, v := range versionsResponse.Options.Versions {
+		versions = append(versions, v.Slug)
+	}
+
+	return versions
 }
