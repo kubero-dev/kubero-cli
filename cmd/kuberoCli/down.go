@@ -17,7 +17,7 @@ Subcommands:
   kubero down [pipeline|app]`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if pipelineName != "" && appName == "" {
-			downPipeline(pipelineName)
+			downPipeline()
 		} else if appName != "" {
 			downApp()
 		} else {
@@ -33,7 +33,15 @@ func init() {
 	downCmd.Flags().StringVarP(&appName, "app", "a", "", "name of the app")
 }
 
-func downPipeline(pipelineName string) {
+func downPipeline() {
+	if pipelineName == "" {
+		pipelineName = promptLine("Please define a pipeline ", "", "")
+		return
+	}
+	downPipelineByName(pipelineName)
+}
+
+func downPipelineByName(pipelineName string) {
 	confirmation := promptLine("Are you sure you want to undeploy the pipeline "+pipelineName+"?", "[y,n]", "y")
 	if confirmation == "y" {
 		cfmt.Println("{{Undeploying pipeline}}::yellow " + pipelineName)
@@ -82,7 +90,7 @@ func downAllPipelines() {
 		cfmt.Println("{{Undeploying all pipelines}}::yellow")
 		pipelinesList := getAllLocalPipelines()
 		for _, pipeline := range pipelinesList {
-			downPipeline(pipeline)
+			downPipelineByName(pipeline)
 		}
 
 	} else {

@@ -51,9 +51,16 @@ Command map
 *    │   └── pipeline
 *    ├── list                   // list all running pipelines and apps
 *    ├── up                     // deploy app and pipeline
+*    │   ├── app
+*    │   └── pipeline
 *    ├── down                   // delete app and pipeline
+*    │   ├── app
+*    │   └── pipeline
 *    ├── fetch                  // sync app and pipeline to local config
+*    │   ├── app
+*    │   └── pipeline
 *    ├── status                 // show current Auth status
+*    ├── dashboard              // Open the kubero dashboard
     ├── config                  // print configurations
     │   ├── addons
     │   ├── buildpacks
