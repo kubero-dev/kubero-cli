@@ -15,9 +15,10 @@ var appName string
 
 // pipelineCmd represents the pipeline command
 var createPipelineCmd = &cobra.Command{
-	Use:   "pipeline",
-	Short: "Create a new pipeline",
-	Long:  `Create a new Pipeline`,
+	Use:     "pipeline",
+	Aliases: []string{"pl"},
+	Short:   "Create a new pipeline",
+	Long:    `Create a new Pipeline`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("create a new pipeline")
 

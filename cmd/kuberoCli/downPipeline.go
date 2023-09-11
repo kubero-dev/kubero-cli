@@ -9,9 +9,10 @@ import (
 
 // appCmd represents the app command
 var downPipelineCmd = &cobra.Command{
-	Use:   "pipeline",
-	Short: "Undeploy a pipeline from the cluster",
-	Long:  `Use the pipeline subcommand to undeploy your pipelines from the cluster`,
+	Use:     "pipeline",
+	Aliases: []string{"pl"},
+	Short:   "Undeploy a pipeline from the cluster",
+	Long:    `Use the pipeline subcommand to undeploy your pipelines from the cluster`,
 	Run: func(cmd *cobra.Command, args []string) {
 		downPipeline()
 	},

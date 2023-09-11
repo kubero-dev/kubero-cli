@@ -9,9 +9,10 @@ import (
 
 // pipelineCmd represents the pipeline command
 var upPipelineCmd = &cobra.Command{
-	Use:   "pipeline",
-	Short: "Deploy a pipeline to the cluster",
-	Long:  `Use the pipeline subcommand to deploy your pipelines to the cluster`,
+	Use:     "pipeline",
+	Aliases: []string{"pl"},
+	Short:   "Deploy a pipeline to the cluster",
+	Long:    `Use the pipeline subcommand to deploy your pipelines to the cluster`,
 	Run: func(cmd *cobra.Command, args []string) {
 		upPipeline()
 	},

@@ -28,6 +28,7 @@ func init() {
 	downCmd.Flags().StringVarP(&pipelineName, "pipeline", "p", "", "name of the pipeline")
 	downCmd.Flags().StringVarP(&stageName, "stage", "s", "", "Name of the stage [test|stage|production]")
 	downCmd.Flags().StringVarP(&appName, "app", "a", "", "name of the app")
+	downCmd.PersistentFlags().BoolVarP(&force, "force", "f", false, "Skip asking for confirmation")
 }
 
 func downPipeline() {
@@ -36,56 +37,33 @@ func downPipeline() {
 }
 
 func downPipelineByName(pipelineName string) {
-	confirmation := promptLine("Are you sure you want to undeploy the pipeline "+pipelineName+"?", "[y,n]", "y")
-	if confirmation == "y" {
-		cfmt.Println("{{Undeploying pipeline}}::yellow " + pipelineName)
+	confirmationLine("Are you sure you want to undeploy the pipeline '"+pipelineName+"'?", "y")
 
-		_, err := api.UnDeployPipeline(pipelineName)
-		if err != nil {
-			panic("Unable to undeploy Pipeline")
-		}
-
-	} else {
-		cfmt.Println("{{Aborted}}::red")
-		return
+	_, err := api.UnDeployPipeline(pipelineName)
+	if err != nil {
+		panic("Unable to undeploy Pipeline")
 	}
 }
 
 func downApp() {
 
 	ensurePipelineIsSet()
+	ensurePipelineIsSet()
+	ensureStageNameIsSet()
 
-	if stageName == "" {
-		cfmt.Println("{{Please specify a stage}}::red")
-		return
-	}
+	confirmationLine("Are you sure you want to undeploy the app "+appName+" from "+stageName+" in "+pipelineName+"?", "y")
+	cfmt.Println("{{Undeploying app}} " + appName + "::yellow")
 
-	confirmation := promptLine("Are you sure you want to undeploy the app "+appName+" from "+stageName+" in "+pipelineName+"?", "[y,n]", "y")
-	if confirmation == "y" {
-		cfmt.Println("{{Undeploying app}} " + appName + "::yellow")
-
-		_, err := client.Delete("/api/cli/pipelines/" + pipelineName + "/" + stageName + "/" + appName)
-		if err != nil {
-			panic("Unable to undeploy App")
-		}
-
-	} else {
-		cfmt.Println("{{Aborted}}::red")
-		return
+	_, err := client.Delete("/api/cli/pipelines/" + pipelineName + "/" + stageName + "/" + appName)
+	if err != nil {
+		panic("Unable to undeploy App")
 	}
 }
 
 func downAllPipelines() {
-	confirmation := promptLine("Are you sure you want to undeploy all pipelines?", "[y,n]", "n")
-	if confirmation == "y" {
-		cfmt.Println("{{Undeploying all pipelines}}::yellow")
-		pipelinesList := getAllLocalPipelines()
-		for _, pipeline := range pipelinesList {
-			downPipelineByName(pipeline)
-		}
-
-	} else {
-		cfmt.Println("{{Aborted}}::red")
-		return
+	confirmationLine("Are you sure you want to undeploy all pipelines?", "y")
+	pipelinesList := getAllLocalPipelines()
+	for _, pipeline := range pipelinesList {
+		downPipelineByName(pipeline)
 	}
 }

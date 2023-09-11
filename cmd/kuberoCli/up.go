@@ -47,7 +47,7 @@ func upApp() {
 
 func upAllPipelines() {
 
-	confirmationLine("Are you sure you want to deploy all pipelines?", "n")
+	confirmationLine("Are you sure you want to deploy all pipelines?", "y")
 	pipelinesConfigs := loadAllLocalPipelines()
 
 	cfmt.Println("{{Deploying all pipelines}}::yellow")

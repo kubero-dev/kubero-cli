@@ -111,7 +111,7 @@ func promptLine(question string, options string, def string) string {
 func confirmationLine(question string, def string) bool {
 	confirmation := promptLine(question, "[y,n]", def)
 	if confirmation != "y" {
-		cfmt.Println("{{\nX Aborted\n}}::red")
+		cfmt.Println("{{\n✗ Aborted\n}}::red")
 		os.Exit(0)
 		return false
 	} else {
@@ -222,6 +222,7 @@ func createFolder(path string) {
 	}
 }
 */
+
 func loadCLIConfig() {
 
 	gitdir := getGitdir()

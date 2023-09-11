@@ -152,43 +152,43 @@ func writePipelineYaml(pipeline kuberoApi.PipelineCRD) {
 
 func pipelinesForm() kuberoApi.PipelineCRD {
 
-	var cp kuberoApi.PipelineCRD
+	var pipelineCRD kuberoApi.PipelineCRD
 
-	cp.APIVersion = "application.kubero.dev/v1alpha1"
-	cp.Kind = "KuberoPipeline"
+	pipelineCRD.APIVersion = "application.kubero.dev/v1alpha1"
+	pipelineCRD.Kind = "KuberoPipeline"
 
 	selectedBuildpack := pipelineConfig.GetString("spec.buildpack.name")
-	cp.Spec.Buildpack.Name = promptLine("Buildpack ", fmt.Sprint(buildPacksSimpleList), selectedBuildpack)
+	pipelineCRD.Spec.Buildpack.Name = promptLine("Buildpack ", fmt.Sprint(buildPacksSimpleList), selectedBuildpack)
 
 	domain := pipelineConfig.GetString("spec.domain")
-	cp.Spec.Domain = promptLine("FQDN Domain ", "", domain)
+	pipelineCRD.Spec.Domain = promptLine("FQDN Domain ", "", domain)
 
 	// those fields are deprecated and may be removed in the future
-	cp.Spec.Dockerimage = ""
-	cp.Spec.Deploymentstrategy = "git"
+	pipelineCRD.Spec.Dockerimage = ""
+	pipelineCRD.Spec.Deploymentstrategy = "git"
 
 	gitconnection := promptLine("Connect pipeline to a Git repository (GitOps)", "[y,n]", "n")
 
 	if gitconnection == "y" {
 		gitPrivider := pipelineConfig.GetString("spec.git.repository.provider")
-		cp.Spec.Git.Repository.Provider = promptLine("Repository Provider", fmt.Sprint(repoSimpleList), gitPrivider)
+		pipelineCRD.Spec.Git.Repository.Provider = promptLine("Repository Provider", fmt.Sprint(repoSimpleList), gitPrivider)
 
 		gitURL := pipelineConfig.GetString("spec.git.repository.sshurl")
-		cp.Spec.Git.Repository.SSHURL = promptLine("Repository URL", "["+getGitRemote()+"]", gitURL)
+		pipelineCRD.Spec.Git.Repository.SSHURL = promptLine("Repository URL", "["+getGitRemote()+"]", gitURL)
 	}
 
 	phaseReview := promptLine("enable reviewapps", "[y,n]", "n")
 	if phaseReview == "y" {
-		cp.Spec.Reviewapps = true
+		pipelineCRD.Spec.Reviewapps = true
 		contextDefault := pipelineConfig.GetString("spec.phases.0.context")
-		cp.Spec.Phases = append(cp.Spec.Phases, kuberoApi.Phase{
+		pipelineCRD.Spec.Phases = append(pipelineCRD.Spec.Phases, kuberoApi.Phase{
 			Name:    "review",
 			Enabled: true,
 			Context: promptLine("Context for reviewapps", fmt.Sprint(contextSimpleList), contextDefault),
 		})
 	} else {
-		cp.Spec.Reviewapps = false
-		cp.Spec.Phases = append(cp.Spec.Phases, kuberoApi.Phase{
+		pipelineCRD.Spec.Reviewapps = false
+		pipelineCRD.Spec.Phases = append(pipelineCRD.Spec.Phases, kuberoApi.Phase{
 			Name:    "review",
 			Enabled: false,
 			Context: "",
@@ -198,13 +198,13 @@ func pipelinesForm() kuberoApi.PipelineCRD {
 	phaseTest := promptLine("enable test", "[y,n]", "n")
 	if phaseTest == "y" {
 		contextDefault := pipelineConfig.GetString("spec.phases.1.context")
-		cp.Spec.Phases = append(cp.Spec.Phases, kuberoApi.Phase{
+		pipelineCRD.Spec.Phases = append(pipelineCRD.Spec.Phases, kuberoApi.Phase{
 			Name:    "test",
 			Enabled: true,
 			Context: promptLine("Context for test", fmt.Sprint(contextSimpleList), contextDefault),
 		})
 	} else {
-		cp.Spec.Phases = append(cp.Spec.Phases, kuberoApi.Phase{
+		pipelineCRD.Spec.Phases = append(pipelineCRD.Spec.Phases, kuberoApi.Phase{
 			Name:    "test",
 			Enabled: false,
 			Context: "",
@@ -214,13 +214,13 @@ func pipelinesForm() kuberoApi.PipelineCRD {
 	phaseStage := promptLine("enable stage", "[y,n]", "n")
 	if phaseStage == "y" {
 		contextDefault := pipelineConfig.GetString("spec.phases.2.context")
-		cp.Spec.Phases = append(cp.Spec.Phases, kuberoApi.Phase{
+		pipelineCRD.Spec.Phases = append(pipelineCRD.Spec.Phases, kuberoApi.Phase{
 			Name:    "stage",
 			Enabled: true,
 			Context: promptLine("Context for stage", fmt.Sprint(contextSimpleList), contextDefault),
 		})
 	} else {
-		cp.Spec.Phases = append(cp.Spec.Phases, kuberoApi.Phase{
+		pipelineCRD.Spec.Phases = append(pipelineCRD.Spec.Phases, kuberoApi.Phase{
 			Name:    "stage",
 			Enabled: false,
 			Context: "",
@@ -231,18 +231,18 @@ func pipelinesForm() kuberoApi.PipelineCRD {
 	//var phaseProductionContext string = ""
 	if phaseProduction != "n" {
 		contextDefault := pipelineConfig.GetString("spec.phases.3.context")
-		cp.Spec.Phases = append(cp.Spec.Phases, kuberoApi.Phase{
+		pipelineCRD.Spec.Phases = append(pipelineCRD.Spec.Phases, kuberoApi.Phase{
 			Name:    "production",
 			Enabled: true,
 			Context: promptLine("Context for production ", fmt.Sprint(contextSimpleList), contextDefault),
 		})
 	} else {
-		cp.Spec.Phases = append(cp.Spec.Phases, kuberoApi.Phase{
+		pipelineCRD.Spec.Phases = append(pipelineCRD.Spec.Phases, kuberoApi.Phase{
 			Name:    "production",
 			Enabled: false,
 			Context: "",
 		})
 	}
 
-	return cp
+	return pipelineCRD
 }
