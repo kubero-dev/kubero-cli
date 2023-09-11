@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -177,11 +178,20 @@ func pipelinesForm() kuberoApi.PipelineCRD {
 
 	var pipelineCRD kuberoApi.PipelineCRD
 
+	if pipelineName == "" {
+		pipelineName = promptLine("Define a PipelineName name", "", "")
+	}
+	pipelineCRD.Spec.Name = pipelineName
+
 	pipelineCRD.APIVersion = "application.kubero.dev/v1alpha1"
 	pipelineCRD.Kind = "KuberoPipeline"
 
-	selectedBuildpack := pipelineConfig.GetString("spec.buildpack.name")
-	pipelineCRD.Spec.Buildpack.Name = promptLine("Buildpack ", fmt.Sprint(buildPacksSimpleList), selectedBuildpack)
+	fmt.Println("")
+	prompt := &survey.Select{
+		Message: "Select a buildpack",
+		Options: buildPacksSimpleList,
+	}
+	survey.AskOne(prompt, &pipelineCRD.Spec.Buildpack.Name)
 
 	domain := pipelineConfig.GetString("spec.domain")
 	pipelineCRD.Spec.Domain = promptLine("FQDN Domain ", "", domain)

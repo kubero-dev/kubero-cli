@@ -202,7 +202,7 @@ func loadConfigs(basePath string, pipelineName string) {
 
 	gitdir := getGitdir()
 	dir := gitdir + basePath + pipelineName
-	fmt.Println(dir)
+	//fmt.Println(dir)
 
 	pipelineConfig = viper.New()
 	pipelineConfig.SetConfigName("pipeline") // name of config file (without extension)
