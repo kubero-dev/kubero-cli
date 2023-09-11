@@ -215,12 +215,13 @@ func loadConfigs(basePath string, pipelineName string) {
 }
 
 // create recursive folder if not exists
+/*
 func createFolder(path string) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		os.MkdirAll(path, 0755)
 	}
 }
-
+*/
 func loadCLIConfig() {
 
 	gitdir := getGitdir()

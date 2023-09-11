@@ -788,7 +788,7 @@ func finalMessage() {
 
     Documentation:
     https://docs.kubero.dev
-`)
+    `)
 
 	if arg_domain != "" && arg_port != "" && arg_apiToken != "" && arg_adminPassword != "" {
 		cfmt.Println(`
@@ -798,7 +798,7 @@ func finalMessage() {
     Pass: ` + arg_adminPassword + `}}::lightBlue
 	`)
 	} else {
-		cfmt.Println("\n\n    {{Done - you can now login to your Kubero UI}}::lightGreen\n\n")
+		cfmt.Println("\n\n    {{Done - you can now login to your Kubero UI}}::lightGreen\n\n ")
 	}
 }
 
