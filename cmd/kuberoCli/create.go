@@ -45,45 +45,51 @@ func createPipelineAndApp() {
 
 func appForm() AppCRD {
 
-	var app AppCRD
+	var appCRD AppCRD
 
-	app.APIVersion = "application.kubero.dev/v1alpha1"
-	app.Kind = "KuberoApp"
+	appCRD.APIVersion = "application.kubero.dev/v1alpha1"
+	appCRD.Kind = "KuberoApp"
 
-	app.Spec.Name = appName
-	app.Spec.Pipeline = pipelineName
-	app.Spec.Phase = stageName
+	appCRD.Spec.Name = appName
+	appCRD.Spec.Pipeline = pipelineName
+	appCRD.Spec.Phase = stageName
 
-	app.Spec.Domain = promptLine("Domain", "", "")
+	appconfig := loadAppConfig(appCRD.Spec.Phase)
+
+	appCRD.Spec.Domain = promptLine("Domain", "", appconfig.GetString("spec.domain"))
 
 	gitURL := pipelineConfig.GetString("spec.git.repository.sshurl")
 	//ca.Spec.Gitrepo.SSHURL = promptLine("Git SSH URL", "["+getGitRemote()+"]", gitURL)
 
 	//ca.Spec.Gitrepo.SSHURL = pipelineConfig.GetString("spec.git.repository")
-	pipelineConfig.UnmarshalKey("spec.git.repository", &app.Spec.Gitrepo)
-	app.Spec.Branch = promptLine("Branch", gitURL+":", "")
+	pipelineConfig.UnmarshalKey("spec.git.repository", &appCRD.Spec.Gitrepo)
+	appCRD.Spec.Branch = promptLine("Branch", gitURL+":", appconfig.GetString("spec.branch"))
 
-	app.Spec.Buildpack = pipelineConfig.GetString("spec.buildpack.name")
+	appCRD.Spec.Buildpack = pipelineConfig.GetString("spec.buildpack.name")
 
-	autodeploy := promptLine("Autodeploy", "[y,n]", "n")
+	autodeployDefault := "n"
+	if !appconfig.GetBool("spec.autodeploy") {
+		autodeployDefault = "y"
+	}
+	autodeploy := promptLine("Autodeploy", "[y,n]", autodeployDefault)
 	if autodeploy == "Y" {
-		app.Spec.Autodeploy = true
+		appCRD.Spec.Autodeploy = true
 	} else {
-		app.Spec.Autodeploy = false
+		appCRD.Spec.Autodeploy = false
 	}
 
 	envCount, _ := strconv.Atoi(promptLine("Number of Env Vars", "", "0"))
 	for i := 0; i < envCount; i++ {
-		app.Spec.EnvVars = append(app.Spec.EnvVars, promptLine("Env Var", "", ""))
+		appCRD.Spec.EnvVars = append(appCRD.Spec.EnvVars, promptLine("Env Var", "", ""))
 	}
 
-	app.Spec.Image.ContainerPort, _ = strconv.Atoi(promptLine("Container Port", "8080", ""))
+	appCRD.Spec.Image.ContainerPort, _ = strconv.Atoi(promptLine("Container Port", "8080", appconfig.GetString("spec.image.containerport")))
 
-	app.Spec.Web.ReplicaCount, _ = strconv.Atoi(promptLine("Web Pods", "1", ""))
+	appCRD.Spec.Web.ReplicaCount, _ = strconv.Atoi(promptLine("Web Pods", "1", appconfig.GetString("spec.web.replicacount")))
 
-	app.Spec.Worker.ReplicaCount, _ = strconv.Atoi(promptLine("Worker Pods", "0", ""))
+	appCRD.Spec.Worker.ReplicaCount, _ = strconv.Atoi(promptLine("Worker Pods", "0", appconfig.GetString("spec.worker.replicacount")))
 
-	return app
+	return appCRD
 }
 
 func createApp() {
@@ -92,7 +98,24 @@ func createApp() {
 
 	writeAppYaml(app)
 
-	cfmt.Println("\n\n{{Created app.yaml}}::green")
+	cfmt.Println("\n\n{{Created appCRD.yaml}}::green")
+}
+
+func writeAppYaml(appCRD AppCRD) {
+	// write pipeline.yaml
+	yamlData, err := yaml.Marshal(&app)
+
+	if err != nil {
+		fmt.Printf("Error while Marshaling. %v", err)
+	}
+	//fmt.Println(string(yamlData))
+
+	fileName := ".kubero/" + appCRD.Spec.Pipeline + "/" + appCRD.Spec.Phase + "/" + appCRD.Spec.Name + ".yaml"
+	fmt.Println(fileName)
+	err = os.WriteFile(fileName, yamlData, 0644)
+	if err != nil {
+		panic("Unable to write data into the file")
+	}
 }
 
 func createPipeline() kuberoApi.PipelineCRD {

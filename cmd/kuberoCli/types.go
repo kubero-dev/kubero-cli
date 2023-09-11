@@ -1,12 +1,8 @@
 package kuberoCli
 
 import (
-	"fmt"
 	"kubero/pkg/kuberoApi"
-	"os"
 	"time"
-
-	"gopkg.in/yaml.v3"
 )
 
 type Pipeline struct {
@@ -317,23 +313,6 @@ type AppCRD struct {
 			ReplicaCount int `json:"replicaCount"`
 		} `json:"worker"`
 	} `json:"spec"`
-}
-
-func writeAppYaml(app AppCRD) {
-	// write pipeline.yaml
-	yamlData, err := yaml.Marshal(&app)
-
-	if err != nil {
-		fmt.Printf("Error while Marshaling. %v", err)
-	}
-	//fmt.Println(string(yamlData))
-
-	fileName := ".kubero/" + app.Spec.Pipeline + "/" + app.Spec.Phase + "/" + app.Spec.Name + ".yaml"
-	fmt.Println(fileName)
-	err = os.WriteFile(fileName, yamlData, 0644)
-	if err != nil {
-		panic("Unable to write data into the file")
-	}
 }
 
 type AddonsList []struct {

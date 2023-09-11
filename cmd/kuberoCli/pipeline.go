@@ -8,7 +8,6 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/go-resty/resty/v2"
 	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/olekukonko/tablewriter"
@@ -95,39 +94,6 @@ func printPipelinesList(r *resty.Response) {
 	}
 
 	printCLI(table, r)
-}
-
-func ensurePipelineIsSet() {
-	if pipelineName == "" {
-		fmt.Println("")
-		pipelinesList := getAllLocalPipelines()
-		prompt := &survey.Select{
-			Message: "Select a pipeline",
-			Options: pipelinesList,
-		}
-		survey.AskOne(prompt, &pipelineName)
-	}
-}
-
-func ensureAppNameIsSet() {
-	if appName == "" {
-		promptLine("Define a app name", "", appName)
-	}
-}
-
-func ensureStageNameIsSet() {
-	if stageName == "" {
-		fmt.Println("")
-
-		pipelineConfig := getPipelineConfig(pipelineName)
-		availablePhases := getPipelinePhases(pipelineConfig)
-
-		prompt := &survey.Select{
-			Message: "Select a stage",
-			Options: availablePhases,
-		}
-		survey.AskOne(prompt, &stageName)
-	}
 }
 
 func getAllLocalPipelines() []string {

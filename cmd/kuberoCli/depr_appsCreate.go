@@ -8,7 +8,6 @@ import (
 
 	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 )
 
@@ -240,19 +239,4 @@ func getPipelinePhasesDepr() []string {
 		}
 	}
 	return phases
-}
-
-func loadAppConfig(phase string) *viper.Viper {
-
-	appConfig := viper.New()
-	appConfig.SetConfigName("app." + phase) // name of config file (without extension)
-	appConfig.SetConfigType("yaml")         // REQUIRED if the config file does not have the extension in the name
-	appConfig.AddConfigPath(".")            // path to look for the config file in
-	appConfig.ReadInConfig()
-
-	//fmt.Println("Using config file:", viper.ConfigFileUsed())
-	//fmt.Println("Using config file:", pipelineConfig.ConfigFileUsed())
-
-	return appConfig
-
 }

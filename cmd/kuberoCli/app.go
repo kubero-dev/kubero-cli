@@ -7,6 +7,7 @@ import (
 
 	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/olekukonko/tablewriter"
+	"github.com/spf13/viper"
 )
 
 func appsList() {
@@ -47,4 +48,19 @@ func appsList() {
 
 		printCLI(table, pipelineResp)
 	}
+}
+
+func loadAppConfig(phase string) *viper.Viper {
+
+	appConfig := viper.New()
+	appConfig.SetConfigName("app." + phase) // name of config file (without extension)
+	appConfig.SetConfigType("yaml")         // REQUIRED if the config file does not have the extension in the name
+	appConfig.AddConfigPath(".")            // path to look for the config file in
+	appConfig.ReadInConfig()
+
+	//fmt.Println("Using config file:", viper.ConfigFileUsed())
+	//fmt.Println("Using config file:", pipelineConfig.ConfigFileUsed())
+
+	return appConfig
+
 }

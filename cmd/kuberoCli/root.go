@@ -11,6 +11,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/cache"
@@ -27,6 +28,7 @@ var force bool
 var repoSimpleList []string
 var client *resty.Request
 var api *kuberoApi.KuberoClient
+var contextSimpleList []string
 
 //go:embed VERSION
 var version string
@@ -146,8 +148,6 @@ func loadRepositories() {
 	}
 }
 
-var contextSimpleList []string
-
 func loadContexts() {
 
 	cont, _ := client.Get("/api/cli/config/k8s/context")
@@ -260,5 +260,38 @@ func boolToEmoji(b bool) string {
 		return "✅"
 	} else {
 		return "❌"
+	}
+}
+
+func ensurePipelineIsSet() {
+	if pipelineName == "" {
+		fmt.Println("")
+		pipelinesList := getAllLocalPipelines()
+		prompt := &survey.Select{
+			Message: "Select a pipeline",
+			Options: pipelinesList,
+		}
+		survey.AskOne(prompt, &pipelineName)
+	}
+}
+
+func ensureAppNameIsSet() {
+	if appName == "" {
+		promptLine("Define a app name", "", appName)
+	}
+}
+
+func ensureStageNameIsSet() {
+	if stageName == "" {
+		fmt.Println("")
+
+		pipelineConfig := getPipelineConfig(pipelineName)
+		availablePhases := getPipelinePhases(pipelineConfig)
+
+		prompt := &survey.Select{
+			Message: "Select a stage",
+			Options: availablePhases,
+		}
+		survey.AskOne(prompt, &stageName)
 	}
 }
