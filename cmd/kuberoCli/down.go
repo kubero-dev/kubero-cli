@@ -1,9 +1,6 @@
 package kuberoCli
 
 import (
-	"log"
-	"os"
-
 	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/spf13/cobra"
 )
@@ -34,10 +31,7 @@ func init() {
 }
 
 func downPipeline() {
-	if pipelineName == "" {
-		pipelineName = promptLine("Please define a pipeline ", "", "")
-		return
-	}
+	ensurePipelineIsSet()
 	downPipelineByName(pipelineName)
 }
 
@@ -59,10 +53,7 @@ func downPipelineByName(pipelineName string) {
 
 func downApp() {
 
-	if pipelineName == "" {
-		cfmt.Println("{{Please specify a pipeline}}::red")
-		return
-	}
+	ensurePipelineIsSet()
 
 	if stageName == "" {
 		cfmt.Println("{{Please specify a stage}}::red")
@@ -97,27 +88,4 @@ func downAllPipelines() {
 		cfmt.Println("{{Aborted}}::red")
 		return
 	}
-}
-
-func getAllLocalPipelines() []string {
-
-	basePath := "/.kubero/"
-	gitdir := getGitdir()
-	dir := gitdir + basePath + pipelineName
-
-	pipelineNames := []string{}
-	files, err := os.ReadDir(dir)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, f := range files {
-		if f.IsDir() {
-			if _, err := os.Stat(dir + "/" + f.Name() + "/pipeline.yaml"); err == nil {
-				pipelineNames = append(pipelineNames, f.Name())
-			}
-		}
-	}
-
-	return pipelineNames
 }

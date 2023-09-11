@@ -4,31 +4,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"kubero/pkg/kuberoApi"
+	"log"
 	"os"
+	"strconv"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/go-resty/resty/v2"
 	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/viper"
 )
 
-func listAllLocalPipelines() []string {
-	gitdir := getGitdir()
-	basePath := "/.kubero/" //TODO Make it dynamic
-	dir := gitdir + basePath
-
-	var pipelines []string
-	files, _ := os.ReadDir(dir)
-	for _, f := range files {
-		if f.IsDir() {
-			pipelines = append(pipelines, f.Name())
-		}
-	}
-	return pipelines
-}
-
 func loadAllLocalPipelines() pipelinesConfigsList {
-	pipelines := listAllLocalPipelines()
+	pipelines := getAllLocalPipelines()
 
 	//var pipelinesConfigsList pipelinesConfigsList
 	pipelinesConfigsList := make(pipelinesConfigsList)
@@ -39,26 +27,6 @@ func loadAllLocalPipelines() pipelinesConfigsList {
 
 	return pipelinesConfigsList
 
-}
-
-func loadLocalPipeline(pipelineName string) kuberoApi.PipelineCRD {
-
-	gitdir := getGitdir()
-	basePath := "/.kubero/" //TODO Make it dynamic
-	dir := gitdir + basePath + pipelineName
-	fmt.Println(dir)
-
-	pipelineConfig := viper.New()
-	pipelineConfig.SetConfigName("pipeline") // name of config file (without extension)
-	pipelineConfig.SetConfigType("yaml")     // REQUIRED if the config file does not have the extension in the name
-	pipelineConfig.AddConfigPath(dir)        // path to look for the config file in
-	pipelineConfig.ReadInConfig()
-
-	var pipelineCRD kuberoApi.PipelineCRD
-
-	pipelineConfig.Unmarshal(&pipelineCRD)
-
-	return pipelineCRD
 }
 
 func printPipeline(r *resty.Response) {
@@ -127,4 +95,103 @@ func printPipelinesList(r *resty.Response) {
 	}
 
 	printCLI(table, r)
+}
+
+func ensurePipelineIsSet() {
+	if pipelineName == "" {
+		fmt.Println("")
+		pipelinesList := getAllLocalPipelines()
+		prompt := &survey.Select{
+			Message: "Select a pipeline",
+			Options: pipelinesList,
+		}
+		survey.AskOne(prompt, &pipelineName)
+	}
+}
+
+func ensureAppNameIsSet() {
+	if appName == "" {
+		promptLine("Define a app name", "", appName)
+	}
+}
+
+func ensureStageNameIsSet() {
+	if stageName == "" {
+		fmt.Println("")
+
+		pipelineConfig := getPipelineConfig(pipelineName)
+		availablePhases := getPipelinePhases(pipelineConfig)
+
+		prompt := &survey.Select{
+			Message: "Select a stage",
+			Options: availablePhases,
+		}
+		survey.AskOne(prompt, &stageName)
+	}
+}
+
+func getAllLocalPipelines() []string {
+
+	basePath := "/.kubero/"
+	gitdir := getGitdir()
+	dir := gitdir + basePath + pipelineName
+
+	pipelineNames := []string{}
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, f := range files {
+		if f.IsDir() {
+			if _, err := os.Stat(dir + "/" + f.Name() + "/pipeline.yaml"); err == nil {
+				pipelineNames = append(pipelineNames, f.Name())
+			}
+		}
+	}
+
+	return pipelineNames
+}
+
+func getPipelinePhases(pipelineConfig *viper.Viper) []string {
+	var phases []string
+
+	//pipelineConfig := getPipelineConfig(pipelineName)
+
+	phasesList := pipelineConfig.GetStringSlice("spec.phases")
+
+	for p := range phasesList {
+		enabled := pipelineConfig.GetBool("spec.phases." + strconv.Itoa(p) + ".enabled")
+		if enabled {
+			phases = append(phases, pipelineConfig.GetString("spec.phases."+strconv.Itoa(p)+".name"))
+		}
+	}
+	return phases
+}
+
+func getPipelineConfig(pipelineName string) *viper.Viper {
+
+	basePath := "/.kubero/"
+	gitdir := getGitdir()
+	dir := gitdir + basePath + pipelineName
+	//fmt.Println(dir)
+
+	pipelineConfig := viper.New()
+	pipelineConfig.SetConfigName("pipeline") // name of config file (without extension)
+	pipelineConfig.SetConfigType("yaml")     // REQUIRED if the config file does not have the extension in the name
+	pipelineConfig.AddConfigPath(dir)        // path to look for the config file in
+	pipelineConfig.ReadInConfig()
+
+	return pipelineConfig
+}
+
+func loadLocalPipeline(pipelineName string) kuberoApi.PipelineCRD {
+
+	pipelineConfig := getPipelineConfig(pipelineName)
+
+	var pipelineCRD kuberoApi.PipelineCRD
+
+	pipelineConfig.Unmarshal(&pipelineCRD)
+
+	return pipelineCRD
 }

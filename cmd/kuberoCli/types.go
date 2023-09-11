@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"kubero/pkg/kuberoApi"
 	"os"
-	"strconv"
 	"time"
 
-	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 )
 
@@ -336,38 +334,6 @@ func writeAppYaml(app AppCRD) {
 	if err != nil {
 		panic("Unable to write data into the file")
 	}
-}
-
-func getPipelinePhases(pipelineConfig *viper.Viper) []string {
-	var phases []string
-
-	//pipelineConfig := getPipelineConfig(pipelineName)
-
-	phasesList := pipelineConfig.GetStringSlice("spec.phases")
-
-	for p := range phasesList {
-		enabled := pipelineConfig.GetBool("spec.phases." + strconv.Itoa(p) + ".enabled")
-		if enabled {
-			phases = append(phases, pipelineConfig.GetString("spec.phases."+strconv.Itoa(p)+".name"))
-		}
-	}
-	return phases
-}
-
-func getPipelineConfig(pipelineName string) *viper.Viper {
-
-	basePath := ".kubero/"
-	gitdir := getGitdir()
-	dir := gitdir + basePath + pipelineName
-	fmt.Println(dir)
-
-	pipelineConfig := viper.New()
-	pipelineConfig.SetConfigName("pipeline") // name of config file (without extension)
-	pipelineConfig.SetConfigType("yaml")     // REQUIRED if the config file does not have the extension in the name
-	pipelineConfig.AddConfigPath(dir)        // path to look for the config file in
-	pipelineConfig.ReadInConfig()
-
-	return pipelineConfig
 }
 
 type AddonsList []struct {

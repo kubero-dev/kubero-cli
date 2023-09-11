@@ -22,7 +22,6 @@ var createCmd = &cobra.Command{
 	Long:    `Initiate a new pipeline and app in your current repository.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		createPipelineAndApp()
-		fmt.Println("create called")
 	},
 }
 
@@ -35,38 +34,25 @@ func createPipelineAndApp() {
 	createPipelineAndApp := promptLine("Create a new pipeline", "[y,n]", "y")
 	if createPipelineAndApp == "y" {
 		createPipeline()
-	} else {
-		fmt.Println("TODO : Load existing pipelines to select one") //TODO
 	}
+
+	ensurePipelineIsSet()
+	ensureStageNameIsSet()
+	ensureAppNameIsSet()
+	createApp()
 
 }
 
-func appForm(AppName string, pipelineName string) AppCRD {
+func appForm() AppCRD {
 
 	var app AppCRD
 
 	app.APIVersion = "application.kubero.dev/v1alpha1"
 	app.Kind = "KuberoApp"
 
-	if appName == "" {
-		app.Spec.Name = promptLine("App Name", "", appName)
-	} else {
-		app.Spec.Name = appName
-	}
-
-	if pipelineName == "" {
-		app.Spec.Pipeline = promptLine("Pipeline Name", "", pipelineName)
-	} else {
-		app.Spec.Pipeline = pipelineName
-	}
-
-	pipelineConfig := getPipelineConfig(pipelineName)
-	availablePhases := getPipelinePhases(pipelineConfig)
-	if stageName == "" {
-		app.Spec.Phase = promptLine("Phase", fmt.Sprint(availablePhases), stageName)
-	} else {
-		app.Spec.Phase = stageName
-	}
+	app.Spec.Name = appName
+	app.Spec.Pipeline = pipelineName
+	app.Spec.Phase = stageName
 
 	app.Spec.Domain = promptLine("Domain", "", "")
 
@@ -100,25 +86,30 @@ func appForm(AppName string, pipelineName string) AppCRD {
 	return app
 }
 
-func createPipeline() kuberoApi.PipelineCRD {
+func createApp() {
 
-	if pipelineName == "" {
-		pipelineName = promptLine("Pipeline Name", "", "")
-	}
+	app := appForm()
+
+	writeAppYaml(app)
+
+	cfmt.Println("\n\n{{Created app.yaml}}::green")
+}
+
+func createPipeline() kuberoApi.PipelineCRD {
 
 	loadConfigs("/.kubero/", pipelineName)
 
 	loadRepositories()
 	loadContexts()
 	loadBuildpacks()
-	pipelineYaml := pipelinesForm()
+	pipelineCRD := pipelinesForm()
 
-	writePipelineYaml(pipelineYaml)
+	writePipelineYaml(pipelineCRD)
 
 	cfmt.Println("\n\n{{Created pipeline.yaml}}::green")
 	cfmt.Println(pipelineName)
 
-	return pipelineYaml
+	return pipelineCRD
 }
 
 func writePipelineYaml(pipeline kuberoApi.PipelineCRD) {
