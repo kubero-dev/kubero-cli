@@ -277,7 +277,7 @@ func ensurePipelineIsSet() {
 
 func ensureAppNameIsSet() {
 	if appName == "" {
-		promptLine("Define a app name", "", appName)
+		appName = promptLine("Define a app name", "", appName)
 	}
 }
 

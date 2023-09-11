@@ -48,15 +48,15 @@ func appForm() AppCRD {
 
 	var appCRD AppCRD
 
+	appconfig := loadAppConfig(stageName)
+	pipelineConfig := loadPipelineConfig(pipelineName)
+
 	appCRD.APIVersion = "application.kubero.dev/v1alpha1"
 	appCRD.Kind = "KuberoApp"
 
 	appCRD.Spec.Name = appName
 	appCRD.Spec.Pipeline = pipelineName
 	appCRD.Spec.Phase = stageName
-
-	appconfig := loadAppConfig(appCRD.Spec.Phase)
-	pipelineConfig := loadPipelineConfig(pipelineName)
 
 	appCRD.Spec.Domain = promptLine("Domain", "", appconfig.GetString("spec.domain"))
 
@@ -97,24 +97,23 @@ func appForm() AppCRD {
 
 func createApp() {
 
-	app := appForm()
+	appCRD := appForm()
 
-	writeAppYaml(app)
+	writeAppYaml(appCRD)
 
 	cfmt.Println("\n\n{{Created appCRD.yaml}}::green")
 }
 
 func writeAppYaml(appCRD AppCRD) {
 	// write pipeline.yaml
-	yamlData, err := yaml.Marshal(&app)
+	yamlData, err := yaml.Marshal(&appCRD)
 
-	if err != nil {
-		fmt.Printf("Error while Marshaling. %v", err)
+	if err != nil || appCRD.Spec.Name == "" {
+		panic("Unable to write data into the file")
 	}
-	//fmt.Println(string(yamlData))
 
 	fileName := ".kubero/" + appCRD.Spec.Pipeline + "/" + appCRD.Spec.Phase + "/" + appCRD.Spec.Name + ".yaml"
-	fmt.Println(fileName)
+
 	err = os.WriteFile(fileName, yamlData, 0644)
 	if err != nil {
 		panic("Unable to write data into the file")
