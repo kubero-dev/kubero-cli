@@ -29,7 +29,7 @@ Subcommands:
 func init() {
 	rootCmd.AddCommand(downCmd)
 	downCmd.Flags().StringVarP(&pipelineName, "pipeline", "p", "", "name of the pipeline")
-	//downCmd.MarkFlagRequired("pipeline")
+	downCmd.Flags().StringVarP(&stageName, "stage", "s", "", "Name of the stage [test|stage|production]")
 	downCmd.Flags().StringVarP(&appName, "app", "a", "", "name of the app")
 }
 

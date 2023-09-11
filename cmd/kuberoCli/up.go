@@ -1,6 +1,7 @@
 package kuberoCli
 
 import (
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/spf13/cobra"
 )
@@ -24,16 +25,23 @@ var upCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(upCmd)
 	upCmd.Flags().StringVarP(&pipelineName, "pipeline", "p", "", "name of the pipeline")
+	upCmd.Flags().StringVarP(&stageName, "stage", "s", "", "Name of the stage [test|stage|production]")
 	upCmd.Flags().StringVarP(&appName, "app", "a", "", "name of the app")
+	upCmd.PersistentFlags().BoolVarP(&force, "force", "f", false, "Skip asking for confirmation")
 }
 
 func upPipeline() {
-	confirmation := promptLine("Are you sure you want to deploy the pipeline "+pipelineName+"?", "[y,n]", "y")
-	if confirmation != "y" {
-		cfmt.Println("{{Aborted}}::red")
+
+	pipelinesList := listAllLocalPipelines()
+	if pipelineName == "" {
+		prompt := &survey.Select{
+			Message: "Select a pipeline",
+			Options: pipelinesList,
+		}
+		survey.AskOne(prompt, &pipelineName)
 	}
 
-	cfmt.Println("{{Deploying pipeline}}::yellow " + pipelineName)
+	confirmationLine("Are you sure you want to deploy the pipeline '"+pipelineName+"'?", "y")
 
 	pipeline := loadLocalPipeline(pipelineName)
 	api.DeployPipeline(pipeline)
@@ -46,13 +54,8 @@ func upApp() {
 		return
 	}
 
-	confirmation := promptLine("Are you sure you want to deploy the app "+appName+" to "+pipelineName+"?", "[y,n]", "y")
-	if confirmation == "y" {
-		cfmt.Println("{{Deploying app}}::yellow " + appName + " to " + pipelineName)
-	} else {
-		cfmt.Println("{{Aborted}}::red")
-		return
-	}
+	confirmationLine("Are you sure you want to deploy the app "+appName+" to "+pipelineName+"?", "y")
+	// TODO: implement app deployment
 }
 
 func upAllPipelines() {

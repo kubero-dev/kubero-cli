@@ -76,7 +76,7 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "table", "output format [table, json]")
+	//rootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "table", "output format [table, json]")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -95,17 +95,27 @@ func printCLI(table *tablewriter.Table, r *resty.Response) {
 // question, options/example, default
 func promptLine(question string, options string, def string) string {
 	if def != "" && force {
-		cfmt.Printf("\n  %s %s : {{%s}}::green\n", question, options, def)
+		cfmt.Printf("\n{{?}}::green %s %s : {{%s}}::green\n", question, options, def)
 		return def
 	}
 	reader := bufio.NewReader(os.Stdin)
-	cfmt.Printf("\n  %s %s {{%s}}::green : ", question, options, def)
+	cfmt.Printf("\n{{?}}::green %s %s {{%s}}::green : ", question, options, def)
 	text, _ := reader.ReadString('\n')
 	text = strings.Replace(text, "\n", "", -1)
 	if text == "" {
 		text = def
 	}
 	return text
+}
+
+func confirmationLine(question string, def string) bool {
+	confirmation := promptLine(question, "[y,n]", def)
+	if confirmation != "y" {
+		cfmt.Println("{{X Aborted}}::red")
+		return false
+	} else {
+		return true
+	}
 }
 
 func loadRepositories() {

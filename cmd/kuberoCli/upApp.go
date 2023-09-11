@@ -20,5 +20,6 @@ var upAppCmd = &cobra.Command{
 func init() {
 	upCmd.AddCommand(upAppCmd)
 	upAppCmd.Flags().StringVarP(&pipelineName, "pipeline", "p", "", "name of the pipeline")
+	upAppCmd.Flags().StringVarP(&stageName, "stage", "s", "", "Name of the stage [test|stage|production]")
 	upAppCmd.Flags().StringVarP(&appName, "app", "a", "", "name of the app")
 }
