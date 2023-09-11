@@ -1,6 +1,6 @@
 # kubero-cli
 A CLI for kubero. The simplest PaaS for Kubernetes.
-The main repository is [here](https://github.com/kubero-dev/kubero).
+The main repository is [here](https://github.com/kubero-dev/kubero). Please use the main repository to open issues. 
 
 ## Installation
 
