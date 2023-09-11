@@ -285,7 +285,7 @@ func ensureStageNameIsSet() {
 	if stageName == "" {
 		fmt.Println("")
 
-		pipelineConfig := getPipelineConfig(pipelineName)
+		pipelineConfig := loadPipelineConfig(pipelineName)
 		availablePhases := getPipelinePhases(pipelineConfig)
 
 		prompt := &survey.Select{

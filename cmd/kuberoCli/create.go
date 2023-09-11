@@ -56,14 +56,16 @@ func appForm() AppCRD {
 	appCRD.Spec.Phase = stageName
 
 	appconfig := loadAppConfig(appCRD.Spec.Phase)
+	pipelineConfig := loadPipelineConfig(pipelineName)
 
 	appCRD.Spec.Domain = promptLine("Domain", "", appconfig.GetString("spec.domain"))
+
+	pipelineConfig.UnmarshalKey("spec.git.repository", &appCRD.Spec.Gitrepo)
 
 	gitURL := pipelineConfig.GetString("spec.git.repository.sshurl")
 	//ca.Spec.Gitrepo.SSHURL = promptLine("Git SSH URL", "["+getGitRemote()+"]", gitURL)
 
 	//ca.Spec.Gitrepo.SSHURL = pipelineConfig.GetString("spec.git.repository")
-	pipelineConfig.UnmarshalKey("spec.git.repository", &appCRD.Spec.Gitrepo)
 	appCRD.Spec.Branch = promptLine("Branch", gitURL+":", appconfig.GetString("spec.branch"))
 
 	appCRD.Spec.Buildpack = pipelineConfig.GetString("spec.buildpack.name")

@@ -135,7 +135,7 @@ func getPipelinePhases(pipelineConfig *viper.Viper) []string {
 	return phases
 }
 
-func getPipelineConfig(pipelineName string) *viper.Viper {
+func loadPipelineConfig(pipelineName string) *viper.Viper {
 
 	basePath := "/.kubero/"
 	gitdir := getGitdir()
@@ -153,7 +153,7 @@ func getPipelineConfig(pipelineName string) *viper.Viper {
 
 func loadLocalPipeline(pipelineName string) kuberoApi.PipelineCRD {
 
-	pipelineConfig := getPipelineConfig(pipelineName)
+	pipelineConfig := loadPipelineConfig(pipelineName)
 
 	var pipelineCRD kuberoApi.PipelineCRD
 
