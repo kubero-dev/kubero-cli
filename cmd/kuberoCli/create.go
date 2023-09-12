@@ -44,9 +44,9 @@ func createPipelineAndApp() {
 
 }
 
-func appForm() AppCRD {
+func appForm() kuberoApi.AppCRD {
 
-	var appCRD AppCRD
+	var appCRD kuberoApi.AppCRD
 
 	appconfig := loadAppConfig(stageName)
 	pipelineConfig := loadPipelineConfig(pipelineName)
@@ -104,7 +104,7 @@ func createApp() {
 	cfmt.Println("\n\n{{Created appCRD.yaml}}::green")
 }
 
-func writeAppYaml(appCRD AppCRD) {
+func writeAppYaml(appCRD kuberoApi.AppCRD) {
 	// write pipeline.yaml
 	yamlData, err := yaml.Marshal(&appCRD)
 

@@ -44,21 +44,21 @@ Command map
 ```
     kubero
     ├── install                 // create kubernetes cluster and install kubero with all required components
-*    ├── login                  // login to kubero, write credentials file
+    ├── login                  // login to kubero, write credentials file
 *    ├── logout                 // logout from kubero
-*    ├── create                 // create a new pipeline and app config
-*    │   ├── app
-*    │   └── pipeline
-*    ├── list                   // list all running pipelines and apps
-*    ├── up                     // deploy app and pipeline
-*    │   ├── app
-*    │   └── pipeline
-*    ├── down                   // delete app and pipeline
-*    │   ├── app
-*    │   └── pipeline
-*    ├── fetch                  // sync app and pipeline to local config
-*    │   ├── app
-*    │   └── pipeline
+    ├── create                 // create a new pipeline and app config
+    │   ├── app
+    │   └── pipeline
+    ├── list                   // list all running pipelines and apps
+    ├── up                     // deploy app and pipeline
+    │   ├── app
+    │   └── pipeline
+    ├── down                   // delete app and pipeline
+    │   ├── app
+    │   └── pipeline
+    ├── fetch                  // sync app and pipeline to local config
+    │   ├── app
+    │   └── pipeline
 *    ├── status                 // show current Auth status
 *    ├── dashboard              // Open the kubero dashboard
     ├── config                  // print configurations

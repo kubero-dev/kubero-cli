@@ -20,9 +20,7 @@ var fetchCmd = &cobra.Command{
 		if pipelineName != "" && appName == "" {
 			fetchPipeline(pipelineName)
 		} else if pipelineName != "" && appName != "" {
-			if stageName == "" {
-				stageName = promptLine("Phase", "[test,stage,production]", stage)
-			}
+			ensureStageNameIsSet()
 			fetchPipeline(pipelineName)
 			fetchApp(appName, stageName, pipelineName)
 		} else {
@@ -79,13 +77,28 @@ func fetchApp(appName string, stageName string, pipelineName string) {
 		return
 	}
 
-	var app CreateApp
+	var app kuberoApi.AppCRD
 	app.APIVersion = "application.kubero.dev/v1alpha1"
 	app.Kind = "KuberoApp"
 
 	app.Spec.Pipeline = pipelineName
 	app.Spec.Phase = stageName
 	app.Spec.Name = appName
+
+	a, appErr := api.GetApp(pipelineName, stageName, appName)
+
+	if appErr != nil {
+		if a.StatusCode() == 404 {
+			cfmt.Println("{{ERROR:}}::red App '" + appName + "' not found ")
+			os.Exit(1)
+		}
+		fmt.Println(appErr)
+		os.Exit(1)
+	}
+
+	json.Unmarshal(a.Body(), &app.Spec)
+
+	writeAppYaml(app)
 
 }
 

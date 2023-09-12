@@ -56,3 +56,9 @@ func (k *KuberoClient) UnDeployApp(pipelineName string, stageName string, appNam
 
 	return res, err
 }
+
+func (k *KuberoClient) GetApp(pipelineName string, stageName string, appName string) (*resty.Response, error) {
+	res, err := k.client.Get("/api/cli/pipelines/" + pipelineName + "/" + stageName + "/" + appName)
+
+	return res, err
+}
