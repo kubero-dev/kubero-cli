@@ -6,8 +6,9 @@ import (
 
 // downCmd represents the down command
 var downCmd = &cobra.Command{
-	Use:   "down",
-	Short: "Undeploy your pipelines and apps from the cluster",
+	Use:     "down",
+	Aliases: []string{"undeploy", "dn"},
+	Short:   "Undeploy your pipelines and apps from the cluster",
 	Long: `Use the pipeline or app subcommand to undeploy your pipelines and apps from the cluster
 Subcommands:
   kubero down [pipeline|app]`,

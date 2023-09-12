@@ -7,9 +7,10 @@ import (
 
 // upCmd represents the up command
 var upCmd = &cobra.Command{
-	Use:   "up",
-	Short: "Deploy your pipelines and apps to the cluster",
-	Long:  ``,
+	Use:     "up",
+	Aliases: []string{"deploy", "dp"},
+	Short:   "Deploy your pipelines and apps to the cluster",
+	Long:    ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		if pipelineName != "" && appName == "" {
 			upPipeline()

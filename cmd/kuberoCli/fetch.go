@@ -12,9 +12,10 @@ import (
 
 // fetchCmd represents the fetch command
 var fetchCmd = &cobra.Command{
-	Use:   "fetch",
-	Short: "Sync youre remote pipelines and apps to your local repository",
-	Long:  `Use the pipeline or app subcommand to sync your pipelines and apps to your local repository`,
+	Use:     "fetch",
+	Aliases: []string{"pull", "fe"},
+	Short:   "Sync youre remote pipelines and apps to your local repository",
+	Long:    `Use the pipeline or app subcommand to sync your pipelines and apps to your local repository`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if pipelineName != "" && appName == "" {
 			fetchPipeline(pipelineName)
