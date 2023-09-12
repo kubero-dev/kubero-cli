@@ -49,7 +49,7 @@ func fetchPipeline(pipelineName string) {
 		pipeline.Kind = "KuberoPipeline"
 		pipeline.Spec.Name = pipelineName
 
-		p, pipelineErr := client.Get("/api/cli/pipelines/" + pipeline.Spec.Name)
+		p, pipelineErr := api.GetPipeline(pipelineName)
 
 		if pipelineErr != nil {
 			if p.StatusCode() == 404 {
