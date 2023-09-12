@@ -1,7 +1,6 @@
 package kuberoCli
 
 import (
-	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/spf13/cobra"
 )
 
@@ -52,9 +51,8 @@ func downApp() {
 	ensureStageNameIsSet()
 
 	confirmationLine("Are you sure you want to undeploy the app "+appName+" from "+stageName+" in "+pipelineName+"?", "y")
-	cfmt.Println("{{Undeploying app}} " + appName + "::yellow")
 
-	_, err := client.Delete("/api/cli/pipelines/" + pipelineName + "/" + stageName + "/" + appName)
+	_, err := api.UnDeployApp(pipelineName, stageName, appName)
 	if err != nil {
 		panic("Unable to undeploy App")
 	}
