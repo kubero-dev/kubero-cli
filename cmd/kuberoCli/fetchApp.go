@@ -4,6 +4,9 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package kuberoCli
 
 import (
+	"os"
+
+	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/spf13/cobra"
 )
 
@@ -13,8 +16,24 @@ var fetchAppCmd = &cobra.Command{
 	Short: "Fetch an app",
 	Long:  `Fetch an app`,
 	Run: func(cmd *cobra.Command, args []string) {
+
+		pipelinesList := getAllRemotePipelines()
+		if len(pipelinesList) == 0 {
+			cfmt.Println("\n{{ERROR:}}::red No pipelines found")
+			os.Exit(1)
+		}
+		ensurePipelineIsSet(pipelinesList)
 		ensureStageNameIsSet()
 		fetchPipeline(pipelineName)
+
+		appsList := getAllRemoteApps()
+		if len(appsList) == 0 {
+			cfmt.Println("\n{{ERROR:}}::red No apps found in pipeline '" + pipelineName + "'")
+			os.Exit(1)
+		}
+
+		ensureAppNameIsSelected(appsList)
+		ensureAppNameIsSet()
 		fetchApp(appName, stageName, pipelineName)
 	},
 }

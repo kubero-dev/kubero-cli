@@ -37,7 +37,7 @@ func init() {
 }
 
 func fetchPipeline(pipelineName string) {
-	confirmation := promptLine("Are you sure you want to fetch the pipeline "+pipelineName+"?", "[y,n]", "y")
+	confirmation := promptLine("Do you want to fetch the pipeline '"+pipelineName+"'?", "[y,n]", "y")
 	if confirmation == "y" {
 		cfmt.Println("{{Fetching pipeline}}::yellow " + pipelineName)
 
@@ -62,14 +62,13 @@ func fetchPipeline(pipelineName string) {
 		writePipelineYaml(pipeline)
 
 	} else {
-		cfmt.Println("{{Aborted}}::red")
 		return
 	}
 }
 
 func fetchApp(appName string, stageName string, pipelineName string) {
 
-	confirmation := promptLine("Are you sure you want to fetch the app "+appName+" from "+pipelineName+"?", "[y,n]", "y")
+	confirmation := promptLine("Are you sure you want to fetch the app '"+appName+"' from '"+pipelineName+"'?", "[y,n]", "y")
 	if confirmation == "y" {
 		cfmt.Println("{{Fetching app}}::yellow " + appName + "")
 	} else {

@@ -32,7 +32,8 @@ func init() {
 }
 
 func downPipeline() {
-	ensurePipelineIsSet()
+	pipelinesList := getAllRemotePipelines()
+	ensurePipelineIsSet(pipelinesList)
 	downPipelineByName(pipelineName)
 }
 
@@ -47,9 +48,11 @@ func downPipelineByName(pipelineName string) {
 
 func downApp() {
 
-	ensurePipelineIsSet()
-	ensurePipelineIsSet()
+	pipelinesList := getAllRemotePipelines()
+	ensurePipelineIsSet(pipelinesList)
+
 	ensureStageNameIsSet()
+	ensureAppNameIsSet()
 
 	confirmationLine("Are you sure you want to undeploy the app "+appName+" from "+stageName+" in "+pipelineName+"?", "y")
 

@@ -37,7 +37,8 @@ func createPipelineAndApp() {
 		createPipeline()
 	}
 
-	ensurePipelineIsSet()
+	pipelinesList := getAllLocalPipelines()
+	ensurePipelineIsSet(pipelinesList)
 	ensureStageNameIsSet()
 	ensureAppNameIsSet()
 	createApp()

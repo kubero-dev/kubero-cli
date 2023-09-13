@@ -13,7 +13,8 @@ var createAppCmd = &cobra.Command{
 If called without arguments, it will ask for all the required information`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		ensurePipelineIsSet()
+		pipelinesList := getAllLocalPipelines()
+		ensurePipelineIsSet(pipelinesList)
 		ensureStageNameIsSet()
 		ensureAppNameIsSet()
 		createApp()

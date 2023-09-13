@@ -62,3 +62,15 @@ func (k *KuberoClient) GetApp(pipelineName string, stageName string, appName str
 
 	return res, err
 }
+
+func (k *KuberoClient) GetApps() (*resty.Response, error) {
+	res, err := k.client.Get("/api/cli/apps")
+
+	return res, err
+}
+
+func (k *KuberoClient) GetPipelines() (*resty.Response, error) {
+	res, err := k.client.Get("/api/cli/pipelines")
+
+	return res, err
+}

@@ -32,7 +32,8 @@ func init() {
 
 func upPipeline() {
 
-	ensurePipelineIsSet()
+	pipelinesList := getAllLocalPipelines()
+	ensurePipelineIsSet(pipelinesList)
 	confirmationLine("Are you sure you want to deploy the pipeline '"+pipelineName+"'?", "y")
 
 	pipeline := loadLocalPipeline(pipelineName)
@@ -41,7 +42,8 @@ func upPipeline() {
 
 func upApp() {
 
-	ensurePipelineIsSet()
+	pipelinesList := getAllLocalPipelines()
+	ensurePipelineIsSet(pipelinesList)
 	confirmationLine("Are you sure you want to deploy the app "+appName+" to "+pipelineName+"?", "y")
 	// TODO: implement app deployment
 }

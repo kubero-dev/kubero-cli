@@ -263,10 +263,10 @@ func boolToEmoji(b bool) string {
 	}
 }
 
-func ensurePipelineIsSet() {
+// pipelinesList := getAllLocalPipelines()
+func ensurePipelineIsSet(pipelinesList []string) {
 	if pipelineName == "" {
 		fmt.Println("")
-		pipelinesList := getAllLocalPipelines()
 		prompt := &survey.Select{
 			Message: "Select a pipeline",
 			Options: pipelinesList,
@@ -294,4 +294,35 @@ func ensureStageNameIsSet() {
 		}
 		survey.AskOne(prompt, &stageName)
 	}
+}
+
+func ensureAppNameIsSelected(availableApps []string) {
+
+	prompt := &survey.Select{
+		Message: "Select a app",
+		Options: availableApps,
+	}
+	survey.AskOne(prompt, &appName)
+}
+
+func getAllRemoteApps() []string {
+	apps, _ := api.GetApps()
+	var appShortList []appShort
+	json.Unmarshal(apps.Body(), &appShortList)
+
+	var appsList []string
+	for _, app := range appShortList {
+		if pipelineName != "" && app.Pipeline != pipelineName {
+			continue
+		}
+		if stageName != "" && app.Phase != stageName {
+			continue
+		}
+		if appName != "" && app.Name != appName {
+			continue
+		}
+		appsList = append(appsList, app.Name)
+	}
+
+	return appsList
 }

@@ -14,7 +14,8 @@ var fetchPipelineCmd = &cobra.Command{
 	Short:   "Fetch a pipeline",
 	Long:    `Fetch a pipeline`,
 	Run: func(cmd *cobra.Command, args []string) {
-		ensurePipelineIsSet()
+		pipelinesList := getAllRemotePipelines()
+		ensurePipelineIsSet(pipelinesList)
 		fetchPipeline(pipelineName)
 	},
 }

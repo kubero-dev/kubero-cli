@@ -257,3 +257,9 @@ type PodsizeList []struct {
 }
 
 type pipelinesConfigsList map[string]kuberoApi.PipelineCRD
+
+type appShort struct {
+	Name     string `json:"name"`
+	Phase    string `json:"phase"`
+	Pipeline string `json:"pipeline"`
+}

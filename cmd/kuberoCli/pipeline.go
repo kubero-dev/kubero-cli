@@ -96,6 +96,27 @@ func printPipelinesList(r *resty.Response) {
 	printCLI(table, r)
 }
 
+func getAllRemotePipelines() []string {
+	var pipelinesList PipelinesList
+
+	res, err := api.GetPipelines()
+	if err != nil {
+		fmt.Println("Error: ", "Unable to load pipelines")
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	json.Unmarshal(res.Body(), &pipelinesList)
+
+	pipelines := []string{}
+
+	for _, pipeline := range pipelinesList.Items {
+		pipelines = append(pipelines, pipeline.Name)
+	}
+
+	return pipelines
+}
+
 func getAllLocalPipelines() []string {
 
 	basePath := "/.kubero/"
