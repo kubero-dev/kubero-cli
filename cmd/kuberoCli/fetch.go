@@ -68,7 +68,7 @@ func fetchPipeline(pipelineName string) {
 
 func fetchApp(appName string, stageName string, pipelineName string) {
 
-	confirmation := promptLine("Are you sure you want to fetch the app '"+appName+"' from '"+pipelineName+"'?", "[y,n]", "y")
+	confirmation := promptLine("Do you want to fetch the app '"+appName+"' from '"+pipelineName+"'?", "[y,n]", "y")
 	if confirmation == "y" {
 		cfmt.Println("{{Fetching app}}::yellow " + appName + "")
 	} else {
@@ -95,7 +95,7 @@ func fetchApp(appName string, stageName string, pipelineName string) {
 		os.Exit(1)
 	}
 
-	json.Unmarshal(a.Body(), &app.Spec)
+	json.Unmarshal(a.Body(), &app)
 
 	writeAppYaml(app)
 
