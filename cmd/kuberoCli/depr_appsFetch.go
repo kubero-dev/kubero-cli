@@ -55,7 +55,7 @@ func appsFetchForm() CreateApp {
 	ca.Spec.Phase = promptLine("Phase", "[review,test,stage,production]", stage)
 
 	if app == "" {
-		appconfig := loadAppConfig(ca.Spec.Phase)
+		appconfig := loadAppConfigDepr(ca.Spec.Phase)
 		app = appconfig.GetString("spec.name")
 	}
 	ca.Spec.Name = promptLine("Name", "", app)

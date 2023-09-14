@@ -2,6 +2,8 @@ package kuberoCli
 
 import (
 	"encoding/json"
+	"kubero/pkg/kuberoApi"
+	"log"
 	"os"
 	"strings"
 
@@ -50,17 +52,71 @@ func appsList() {
 	}
 }
 
-func loadAppConfig(phase string) *viper.Viper {
+func getAllRemoteApps() []string {
+	apps, _ := api.GetApps()
+	var appShortList []appShort
+	json.Unmarshal(apps.Body(), &appShortList)
 
-	appConfig := viper.New()
-	appConfig.SetConfigName("app." + phase) // name of config file (without extension)
-	appConfig.SetConfigType("yaml")         // REQUIRED if the config file does not have the extension in the name
-	appConfig.AddConfigPath(".")            // path to look for the config file in
-	appConfig.ReadInConfig()
+	var appsList []string
+	for _, app := range appShortList {
+		if pipelineName != "" && app.Pipeline != pipelineName {
+			continue
+		}
+		if stageName != "" && app.Phase != stageName {
+			continue
+		}
+		if appName != "" && app.Name != appName {
+			continue
+		}
+		appsList = append(appsList, app.Name)
+	}
 
-	//fmt.Println("Using config file:", viper.ConfigFileUsed())
-	//fmt.Println("Using config file:", pipelineConfig.ConfigFileUsed())
+	return appsList
+}
 
-	return appConfig
+func getAllLocalApps() []string {
+	basePath := "/.kubero/"
+	gitdir := getGitdir()
+	dir := gitdir + basePath + pipelineName + "/" + stageName
 
+	var appsList []string
+	apps, err := os.ReadDir(dir)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, app := range apps {
+		a := loadLocalApp(pipelineName, stageName, app.Name())
+		if a.Kind == "KuberoApp" && a.Spec.Name != "" {
+			appsList = append(appsList, a.Spec.Name)
+		}
+	}
+	return appsList
+}
+
+func loadLocalApp(pipelineName string, stageName string, appName string) kuberoApi.AppCRD {
+
+	appConfig := loadAppConfig(pipelineName, stageName, appName)
+
+	var appCRD kuberoApi.AppCRD
+
+	appConfig.Unmarshal(&appCRD)
+
+	return appCRD
+}
+
+func loadAppConfig(pipelineName string, stageName string, appName string) *viper.Viper {
+
+	basePath := "/.kubero/"
+	gitdir := getGitdir()
+	dir := gitdir + basePath + pipelineName + "/" + stageName
+	//fmt.Println(dir)
+
+	pipelineConfig := viper.New()
+	pipelineConfig.SetConfigName(appName) // name of config file (without extension)
+	pipelineConfig.SetConfigType("yaml")  // REQUIRED if the config file does not have the extension in the name
+	pipelineConfig.AddConfigPath(dir)     // path to look for the config file in
+	pipelineConfig.ReadInConfig()
+
+	return pipelineConfig
 }

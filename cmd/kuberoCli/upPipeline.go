@@ -14,6 +14,9 @@ var upPipelineCmd = &cobra.Command{
 	Short:   "Deploy a pipeline to the cluster",
 	Long:    `Use the pipeline subcommand to deploy your pipelines to the cluster`,
 	Run: func(cmd *cobra.Command, args []string) {
+
+		pipelinesList := getAllLocalPipelines()
+		ensurePipelineIsSet(pipelinesList)
 		upPipeline()
 	},
 }

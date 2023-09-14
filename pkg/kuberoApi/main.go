@@ -74,3 +74,10 @@ func (k *KuberoClient) GetPipelines() (*resty.Response, error) {
 
 	return res, err
 }
+
+func (k *KuberoClient) DeployApp(app AppCRD) (*resty.Response, error) {
+	k.client.SetBody(app.Spec)
+	res, err := k.client.Post("/api/cli/apps")
+
+	return res, err
+}

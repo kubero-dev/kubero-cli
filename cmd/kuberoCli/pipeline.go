@@ -121,7 +121,8 @@ func getAllLocalPipelines() []string {
 
 	basePath := "/.kubero/"
 	gitdir := getGitdir()
-	dir := gitdir + basePath + pipelineName
+	//dir := gitdir + basePath + pipelineName // TODO: it does not make any sense to use pipelineName here
+	dir := gitdir + basePath
 
 	pipelineNames := []string{}
 	files, err := os.ReadDir(dir)

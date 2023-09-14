@@ -298,31 +298,13 @@ func ensureStageNameIsSet() {
 
 func ensureAppNameIsSelected(availableApps []string) {
 
-	prompt := &survey.Select{
-		Message: "Select a app",
-		Options: availableApps,
+	if appName == "" {
+		fmt.Println("")
+
+		prompt := &survey.Select{
+			Message: "Select an app",
+			Options: availableApps,
+		}
+		survey.AskOne(prompt, &appName)
 	}
-	survey.AskOne(prompt, &appName)
-}
-
-func getAllRemoteApps() []string {
-	apps, _ := api.GetApps()
-	var appShortList []appShort
-	json.Unmarshal(apps.Body(), &appShortList)
-
-	var appsList []string
-	for _, app := range appShortList {
-		if pipelineName != "" && app.Pipeline != pipelineName {
-			continue
-		}
-		if stageName != "" && app.Phase != stageName {
-			continue
-		}
-		if appName != "" && app.Name != appName {
-			continue
-		}
-		appsList = append(appsList, app.Name)
-	}
-
-	return appsList
 }

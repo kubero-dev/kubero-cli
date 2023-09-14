@@ -49,7 +49,7 @@ func appForm() kuberoApi.AppCRD {
 
 	var appCRD kuberoApi.AppCRD
 
-	appconfig := loadAppConfig(stageName)
+	appconfig := loadAppConfig(pipelineName, stageName, appName)
 	pipelineConfig := loadPipelineConfig(pipelineName)
 
 	appCRD.APIVersion = "application.kubero.dev/v1alpha1"

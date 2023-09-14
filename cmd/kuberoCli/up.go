@@ -13,8 +13,14 @@ var upCmd = &cobra.Command{
 	Long:    ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		if pipelineName != "" && appName == "" {
+
+			pipelinesList := getAllLocalPipelines()
+			ensurePipelineIsSet(pipelinesList)
 			upPipeline()
 		} else if appName != "" {
+
+			pipelinesList := getAllLocalPipelines()
+			ensurePipelineIsSet(pipelinesList)
 			upApp()
 		} else {
 			upAllPipelines()
@@ -31,9 +37,6 @@ func init() {
 }
 
 func upPipeline() {
-
-	pipelinesList := getAllLocalPipelines()
-	ensurePipelineIsSet(pipelinesList)
 	confirmationLine("Are you sure you want to deploy the pipeline '"+pipelineName+"'?", "y")
 
 	pipeline := loadLocalPipeline(pipelineName)
@@ -41,11 +44,9 @@ func upPipeline() {
 }
 
 func upApp() {
-
-	pipelinesList := getAllLocalPipelines()
-	ensurePipelineIsSet(pipelinesList)
 	confirmationLine("Are you sure you want to deploy the app "+appName+" to "+pipelineName+"?", "y")
-	// TODO: implement app deployment
+	app := loadLocalApp(pipelineName, stageName, appName)
+	api.DeployApp(app)
 }
 
 func upAllPipelines() {
