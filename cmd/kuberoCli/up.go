@@ -46,6 +46,9 @@ func upPipeline() {
 func upApp() {
 	confirmationLine("Are you sure you want to deploy the app "+appName+" to "+pipelineName+"?", "y")
 	app := loadLocalApp(pipelineName, stageName, appName)
+	app.Spec.Pipeline = pipelineName             // ensure pipeline is set
+	app.Spec.Phase = stageName                   // ensure stage is set
+	app.Spec.Security.VulnerabilityScans = false // TODO: ask for this
 	api.DeployApp(app)
 }
 
@@ -55,7 +58,7 @@ func upAllPipelines() {
 	pipelinesConfigs := loadAllLocalPipelines()
 
 	cfmt.Println("{{Deploying all pipelines}}::yellow")
-	//iterate over pipelinesConfigs
+
 	for _, pipelineCRD := range pipelinesConfigs {
 		cfmt.Println("{{Deploying pipeline}}::yellow " + pipelineCRD.Spec.Name + "")
 		api.DeployPipeline(pipelineCRD)

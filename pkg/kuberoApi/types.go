@@ -3,7 +3,7 @@ package kuberoApi
 import "time"
 
 type PipelineCRD struct {
-	APIVersion string `json:"apiVersion"`
+	APIVersion string `json:"apiVersion" yaml:"apiVersion"`
 	Kind       string `json:"kind"`
 	Spec       struct {
 		Buildpack struct {
@@ -79,7 +79,7 @@ type Phase struct {
 }
 
 type AppCRD struct {
-	APIVersion string `json:"apiVersion"`
+	APIVersion string `json:"apiVersion" yaml:"apiVersion"`
 	Kind       string `json:"kind"`
 	Metadata   struct {
 	} `json:"metadata"`
@@ -190,5 +190,8 @@ type AppCRD struct {
 			} `json:"autoscaling"`
 			ReplicaCount int `json:"replicaCount"`
 		} `json:"worker"`
+		Security struct {
+			VulnerabilityScans bool `json:"vulnerabilityScans,omitempty"`
+		} `json:"security,omitempty"`
 	} `json:"spec"`
 }
