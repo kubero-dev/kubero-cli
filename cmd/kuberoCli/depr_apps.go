@@ -21,7 +21,7 @@ An App runs allways in a Pipeline.`,
 }
 
 func init() {
-	rootCmd.AddCommand(appsCmd)
+	//rootCmd.AddCommand(appsCmd)
 
 	// Here you will define your flags and configuration settings.
 

@@ -24,9 +24,9 @@ import (
 // installCmd represents the install command
 var installCmd = &cobra.Command{
 	Use:   "install",
-	Short: "Install all required components for kubero",
-	Long: `This command will try to install all required components for kubero on a kubernetes cluster.
-It is allso possible to install a local kind cluster.
+	Short: "Create a Kubernetes cluster and install all required components for kubero",
+	Long: `This command will create a kubernetes cluster and install all required components 
+for kubero on any kubernetes cluster.
 
 required binaries:
  - kubectl

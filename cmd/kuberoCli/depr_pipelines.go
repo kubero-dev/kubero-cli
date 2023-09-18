@@ -13,6 +13,6 @@ An App runs allways in a Pipeline. A Pipeline is a collection of Apps.`,
 }
 
 func init() {
-	rootCmd.AddCommand(pipelinesCmd)
+	//rootCmd.AddCommand(pipelinesCmd)
 	pipelinesCmd.PersistentFlags().StringVarP(&pipelineName, "pipeline", "p", "", "name of the pipeline")
 }
