@@ -52,7 +52,9 @@ func downApp() {
 	ensurePipelineIsSet(pipelinesList)
 
 	ensureStageNameIsSet()
-	ensureAppNameIsSet()
+
+	appsList := getAllRemoteApps()
+	ensureAppNameIsSelected(appsList)
 
 	confirmationLine("Are you sure you want to undeploy the app "+appName+" from "+stageName+" in "+pipelineName+"?", "y")
 
