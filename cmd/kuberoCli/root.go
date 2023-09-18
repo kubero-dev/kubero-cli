@@ -94,6 +94,20 @@ func printCLI(table *tablewriter.Table, r *resty.Response) {
 	}
 }
 
+func promptWarning(msg string) {
+	cfmt.Println("{{\n⚠️   " + msg + ".\n}}::yellow")
+}
+
+// promptBanner("✖ ERROR ..... do something")
+func promptBanner(msg string) {
+	cfmt.Printf(`
+    {{                                                                            }}::bgRed
+    {{  %-72s  }}::bgRed|#ffffff
+    {{                                                                            }}::bgRed
+	
+	`, msg)
+}
+
 // question, options/example, default
 func promptLine(question string, options string, def string) string {
 	if def != "" && force {
