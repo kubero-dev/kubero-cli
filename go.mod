@@ -18,6 +18,7 @@ require (
 require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
+	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
 )
 
 require (
