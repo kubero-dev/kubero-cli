@@ -61,6 +61,7 @@ Command map
     │   └── pipeline
 *    ├── status                 // show current Auth status
 *    ├── dashboard              // Open the kubero dashboard
+*    ├── tunnel                 // Open a tunnel to a natted cluster
     ├── config                  // print configurations
     │   ├── addons
     │   ├── buildpacks

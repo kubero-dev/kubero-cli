@@ -46,6 +46,7 @@ func fetchPipeline(pipelineName string) {
 		pipeline.APIVersion = "application.kubero.dev/v1alpha1"
 		pipeline.Kind = "KuberoPipeline"
 		pipeline.Spec.Name = pipelineName
+		pipeline.Metadata.Name = appName
 
 		p, pipelineErr := api.GetPipeline(pipelineName)
 
@@ -83,6 +84,7 @@ func fetchApp(appName string, stageName string, pipelineName string) {
 	app.Spec.Pipeline = pipelineName
 	app.Spec.Phase = stageName
 	app.Spec.Name = appName
+	app.Metadata.Name = appName
 
 	a, appErr := api.GetApp(pipelineName, stageName, appName)
 

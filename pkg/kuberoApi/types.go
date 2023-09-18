@@ -3,8 +3,9 @@ package kuberoApi
 import "time"
 
 type PipelineCRD struct {
-	APIVersion string `json:"apiVersion" yaml:"apiVersion"`
-	Kind       string `json:"kind"`
+	APIVersion string   `json:"apiVersion" yaml:"apiVersion"`
+	Kind       string   `json:"kind"`
+	Metadata   metadata `json:"metadata,omitempty" yaml:"metadata,omitempty"`
 	Spec       struct {
 		Buildpack struct {
 			Build struct {
@@ -26,7 +27,7 @@ type PipelineCRD struct {
 		} `json:"buildpack"`
 		Deploymentstrategy string `json:"deploymentstrategy"`
 		Domain             string `json:"domain"`
-		Dockerimage        string `json:"dockerimage,omitempty"`
+		Dockerimage        string `json:"dockerimage,omitempty" yaml:"dockerimage,omitempty"`
 		Git                struct {
 			Keys struct {
 				CreatedAt time.Time `json:"created_at"`
@@ -48,7 +49,7 @@ type PipelineCRD struct {
 				ID            int    `json:"id"`
 				Language      string `json:"language"`
 				Name          string `json:"name"`
-				NodeID        string `json:"node_id"`
+				NodeID        string `json:"node_id" yaml:"node_id"`
 				Owner         string `json:"owner"`
 				Private       bool   `json:"private"`
 				Push          bool   `json:"push"`
@@ -63,10 +64,10 @@ type PipelineCRD struct {
 				Insecure  string    `json:"insecure"`
 				URL       string    `json:"url"`
 			} `json:"webhook"`
-			Webhooks struct {
+			Webhooks struct { //TODO: This might be a typo
 			} `json:"webhooks"`
-		} `json:"git,omitempty"`
-		Name       string  `json:"pipelineName"`
+		} `json:"git,omitempty" yaml:"git,omitempty"`
+		Name       string  `json:"pipelineName" yaml:"pipelineName"`
 		Phases     []Phase `json:"phases"`
 		Reviewapps bool    `json:"reviewapps"`
 	} `json:"spec"`
@@ -79,11 +80,10 @@ type Phase struct {
 }
 
 type AppCRD struct {
-	APIVersion string `json:"apiVersion" yaml:"apiVersion"`
-	Kind       string `json:"kind"`
-	Metadata   struct {
-	} `json:"metadata"`
-	Spec struct {
+	APIVersion string   `json:"apiVersion" yaml:"apiVersion"`
+	Kind       string   `json:"kind"`
+	Metadata   metadata `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+	Spec       struct {
 		Addons   []interface{} `json:"addons"`
 		Affinity struct {
 		} `json:"affinity"`
@@ -97,7 +97,7 @@ type AppCRD struct {
 		Cronjobs         []interface{} `json:"cronjobs"`
 		Domain           string        `json:"domain"`
 		EnvVars          []interface{} `json:"envvars"`
-		FullnameOverride string        `json:"fullnameOverride"`
+		FullnameOverride string        `json:"fullnameOverride" yaml:"fullnameOverride"`
 		Gitrepo          struct {
 			Admin         bool   `json:"admin"`
 			CloneURL      string `json:"clone_url"`
@@ -130,11 +130,11 @@ type AppCRD struct {
 				Tag        string `json:"tag"`
 			} `json:"run"`
 			ContainerPort int    `json:"containerPort"`
-			PullPolicy    string `json:"pullPolicy"`
+			PullPolicy    string `json:"pullPolicy" yaml:"pullPolicy"`
 			Repository    string `json:"repository"`
 			Tag           string `json:"tag"`
 		} `json:"image"`
-		ImagePullSecrets []interface{} `json:"imagePullSecrets"`
+		ImagePullSecrets []interface{} `json:"imagePullSecrets" yaml:"imagePullSecrets"`
 		Ingress          struct {
 			Annotations struct {
 			} `json:"annotations"`
@@ -144,23 +144,23 @@ type AppCRD struct {
 				Host  string `json:"host"`
 				Paths []struct {
 					Path     string `json:"path"`
-					PathType string `json:"pathType"`
+					PathType string `json:"pathType" yaml:"pathType"`
 				} `json:"paths"`
 			} `json:"hosts"`
 			TLS []interface{} `json:"tls"`
 		} `json:"ingress"`
-		Name         string `json:"appname"`
-		NameOverride string `json:"nameOverride"`
+		Name         string `json:"appname" yaml:"appname"`
+		NameOverride string `json:"nameOverride" yaml:"nameOverride"`
 		NodeSelector struct {
-		} `json:"nodeSelector"`
+		} `json:"nodeSelector" yaml:"NodeSelector"`
 		Phase          string `json:"phase"`
 		Pipeline       string `json:"pipeline"`
 		PodAnnotations struct {
-		} `json:"podAnnotations"`
+		} `json:"podAnnotations" yaml:"podAnnotations"`
 		PodSecurityContext struct {
-		} `json:"podSecurityContext"`
+		} `json:"podSecurityContext" yaml:"podSecurityContext"`
 		Podsize      string `json:"podsize"`
-		ReplicaCount int    `json:"replicaCount"`
+		ReplicaCount int    `json:"replicaCount" yaml:"replicaCount"`
 		Service      struct {
 			Port int    `json:"port"`
 			Type string `json:"type"`
@@ -170,28 +170,34 @@ type AppCRD struct {
 			} `json:"annotations"`
 			Create bool   `json:"create"`
 			Name   string `json:"name"`
-		} `json:"serviceAccount"`
+		} `json:"serviceAccount" yaml:"serviceAccount"`
 		Tolerations []interface{} `json:"tolerations"`
 		Web         struct {
 			Autoscaling struct {
-				MaxReplicas                       int `json:"maxReplicas"`
-				MinReplicas                       int `json:"minReplicas"`
-				TargetCPUUtilizationPercentage    int `json:"targetCPUUtilizationPercentage"`
-				TargetMemoryUtilizationPercentage int `json:"targetMemoryUtilizationPercentage"`
+				MaxReplicas                       int `json:"maxReplicas" yaml:"maxReplicas"`
+				MinReplicas                       int `json:"minReplicas" yaml:"minReplicas"`
+				TargetCPUUtilizationPercentage    int `json:"targetCPUUtilizationPercentage" yaml:"targetCPUUtilizationPercentage"`
+				TargetMemoryUtilizationPercentage int `json:"targetMemoryUtilizationPercentage" yaml:"targetMemoryUtilizationPercentage"`
 			} `json:"autoscaling"`
-			ReplicaCount int `json:"replicaCount"`
+			ReplicaCount int `json:"replicaCount yaml:pathType"`
 		} `json:"web"`
 		Worker struct {
 			Autoscaling struct {
-				MaxReplicas                       int `json:"maxReplicas"`
-				MinReplicas                       int `json:"minReplicas"`
-				TargetCPUUtilizationPercentage    int `json:"targetCPUUtilizationPercentage"`
-				TargetMemoryUtilizationPercentage int `json:"targetMemoryUtilizationPercentage"`
+				MaxReplicas                       int `json:"maxReplicas" yaml:"maxReplicas"`
+				MinReplicas                       int `json:"minReplicas" yaml:"minReplicas"`
+				TargetCPUUtilizationPercentage    int `json:"targetCPUUtilizationPercentage" yaml:"targetCPUUtilizationPercentage"`
+				TargetMemoryUtilizationPercentage int `json:"targetMemoryUtilizationPercentage" yaml:"targetMemoryUtilizationPercentage"`
 			} `json:"autoscaling"`
-			ReplicaCount int `json:"replicaCount"`
+			ReplicaCount int `json:"replicaCount yaml:pathType"`
 		} `json:"worker"`
 		Security struct {
-			VulnerabilityScans bool `json:"vulnerabilityScans,omitempty"`
-		} `json:"security,omitempty"`
+			VulnerabilityScans bool `json:"vulnerabilityScans,omitempty" yaml:"vulnerabilityScans,omitempty"`
+		} `json:"security,omitempty" yaml:"security,omitempty"`
 	} `json:"spec"`
+}
+
+type metadata struct {
+	Name string `json:"name,omitempty" yaml:"name,omitempty"`
+	//Namespace string      `json:"namespace,omitempty" yaml:"namespace,omitempty"` // we want to left this empty
+	Labels interface{} `json:"labels,omitempty" yaml:"labels,omitempty"`
 }
