@@ -465,20 +465,20 @@ func installKuberoUi() {
 		cfmt.Println("{{✓ Kubero Secret exists}}::lightGreen")
 	} else {
 
-		webhookSecret := promptLine("Random string for your webhook secret", "", generatePassword(20))
+		webhookSecret := promptLine("Random string for your webhook secret", "", generateRandomString(20, ""))
 
-		sessionKey := promptLine("Random string for your session key", "", generatePassword(20))
+		sessionKey := promptLine("Random string for your session key", "", generateRandomString(20, ""))
 
 		if arg_adminUser == "" {
 			arg_adminUser = promptLine("Admin User", "", "admin")
 		}
 
 		if arg_adminPassword == "" {
-			arg_adminPassword = promptLine("Admin Password", "", generatePassword(12))
+			arg_adminPassword = promptLine("Admin Password", "", generateRandomString(12, ""))
 		}
 
 		if arg_apiToken == "" {
-			arg_apiToken = promptLine("Random string for admin API token", "", generatePassword(20))
+			arg_apiToken = promptLine("Random string for admin API token", "", generateRandomString(20, ""))
 		}
 
 		var userDB []User
@@ -802,9 +802,14 @@ func finalMessage() {
 	}
 }
 
-func generatePassword(length int) string {
-	var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!+?._-%")
+func generateRandomString(length int, chars string) string {
+	if chars == "" {
+		chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!+?._-%"
+	}
+	var letterRunes = []rune(chars)
+
 	b := make([]rune, length)
+	rand.Seed(time.Now().UnixNano())
 	for i := range b {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
 	}

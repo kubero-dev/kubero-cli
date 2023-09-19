@@ -10,6 +10,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/jonasfj/go-localtunnel"
+	"github.com/leaanthony/spinner"
 
 	"github.com/spf13/cobra"
 )
@@ -32,7 +33,7 @@ var tunnelCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(tunnelCmd)
 	tunnelCmd.Flags().StringVarP(&tunnelHost, "host", "H", "localhost", "Hostname")
-	tunnelCmd.Flags().IntVarP(&tunnelPort, "port", "p", 2000, "Port to use")
+	tunnelCmd.Flags().IntVarP(&tunnelPort, "port", "p", 80, "Port to use")
 	tunnelCmd.Flags().StringVarP(&tunnelDuration, "timeout", "t", "1h", "Timeout for the tunnel")
 
 	tunnelCmd.Flags().StringVarP(&tunnelSubdomain, "subdomain", "s", "", "Subdomain to use")
@@ -43,7 +44,11 @@ func startTunnel() {
 	promptWarning("WARNING: your traffic will routed thru localtunnel.me")
 
 	if tunnelSubdomain == "" {
-		tunnelSubdomain = promptLine("Subdomain", "", "kubero")
+		tunnelSubdomain = promptLine("Subdomain", "", "kubero-"+generateRandomString(13, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"))
+	}
+
+	if tunnelSubdomain == "-" {
+		tunnelSubdomain = ""
 	}
 
 	ipclient := resty.New().R()
@@ -52,7 +57,10 @@ func startTunnel() {
 		cfmt.Println("{{✖}}::red Error getting your IP")
 		os.Exit(1)
 	}
-	cfmt.Println("  Your IP is {{" + ipres.String() + "}}::cyan")
+	cfmt.Print("\n  Your 'Endpoint IP' is {{" + ipres.String() + "}}::cyan\n\n")
+
+	spinner := spinner.New()
+	spinner.Start("Waiting for tunnel to be ready")
 
 	tunnel, err := localtunnel.New(
 		tunnelPort,
@@ -64,19 +72,21 @@ func startTunnel() {
 		},
 	)
 	if err != nil {
-		panic(err)
+		spinner.Error("Error creating tunnel : " + err.Error())
+		//cfmt.Println("{{✖}}::red Error creating tunnel : " + err.Error() + "")
+		os.Exit(1)
 	}
+	defer tunnel.Close()
 
-	cfmt.Println("{{✔}}::green Tunnel created at {{" + tunnel.URL() + "}}::cyan.")
+	spinner.UpdateMessage(cfmt.Sprint("Tunnel active at {{" + tunnel.URL() + "}}::cyan with an expiration of {{" + tunnelDuration + "}}::cyan"))
+	//cfmt.Println("{{✔}}::green Tunnel created at {{" + tunnel.URL() + "}}::cyan with an expiration of {{" + tunnelDuration + "}}::cyan")
 
 	tunnelTimeout, err := time.ParseDuration(tunnelDuration)
 	if err != nil {
-		cfmt.Println("{{✖}}::red Error parsing timeout")
+		cfmt.Println("{{✗}}::red Error parsing timeout")
 		os.Exit(1)
-		//panic(err)
 	}
 
 	time.Sleep(tunnelTimeout * time.Second)
-	defer tunnel.Close()
 
 }
