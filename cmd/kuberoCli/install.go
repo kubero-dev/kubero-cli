@@ -12,6 +12,7 @@ import (
 
 	"encoding/json"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/go-resty/resty/v2"
 	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/leaanthony/spinner"
@@ -92,7 +93,8 @@ var arg_component string
 var install_olm bool
 var ingressControllerVersion = "v1.7.0" // https://github.com/kubernetes/ingress-nginx/tags -> controller-v1.5.1
 
-var clusterTypeSelection = "[scaleway,linode,gke,digitalocean,kind]"
+// var clusterTypeSelection = "[scaleway,linode,gke,digitalocean,kind]"
+var clusterTypeList = []string{"kind", "linode", "scaleway", "gke", "digitalocean"}
 
 func init() {
 	installCmd.Flags().StringVarP(&arg_component, "component", "c", "", "install component (kubernetes,olm,ingress,metrics,certmanager,kubero-operator,kubero-ui,all)")
@@ -154,7 +156,11 @@ func installKubernetes() {
 		return
 	}
 
-	clusterType = promptLine("Select a cluster type", clusterTypeSelection, "kind")
+	prompt := &survey.Select{
+		Message: "Select a pipeline",
+		Options: clusterTypeList,
+	}
+	survey.AskOne(prompt, &clusterType)
 
 	switch clusterType {
 	case "scaleway":
@@ -346,7 +352,11 @@ func installIngress() {
 	} else {
 
 		if clusterType == "" {
-			clusterType = promptLine("Which cluster type have you insalled?", clusterTypeSelection, "")
+			prompt := &survey.Select{
+				Message: "Which cluster type have you insalled?",
+				Options: clusterTypeList,
+			}
+			survey.AskOne(prompt, &clusterType)
 		}
 
 		prefill := "baremetal"
@@ -572,7 +582,12 @@ func installKuberoUi() {
 		kuberiUIConfig.Spec.Kubero.WebhookURL = webhookURL
 
 		if clusterType == "" {
-			clusterType = promptLine("Which cluster type have you insalled?", clusterTypeSelection, "")
+			prompt := &survey.Select{
+				Message: "Which cluster type have you insalled?",
+				Options: clusterTypeList,
+			}
+			survey.AskOne(prompt, &clusterType)
+
 		}
 
 		if clusterType == "linode" ||

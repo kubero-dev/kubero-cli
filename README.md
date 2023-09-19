@@ -44,9 +44,11 @@ Command map
 ```
     kubero
     ├── install                 // create kubernetes cluster and install kubero with all required components
-    ├── login                  // login to kubero, safe instance to credentials file
+*    ├── login                  // login to kubero, safe instance to credentials file
 *    ├── logout                 // logout from kubero, remove instance from credentials file
 *    ├── instance               // print current kubero instance
+*    │   ├── create             // create a configuration to a kubero instance
+*    │   ├── delete             // delete a configuration to a kubero instance
 *    │   ├── select             // select a kubero instance
     ├── create                 // create a new pipeline and app config
     │   ├── app
@@ -65,8 +67,8 @@ Command map
     │   ├── addons
     │   ├── buildpacks
     │   └── podsizes
-*    ├── dashboard              // Open the kubero dashboard
-*    ├── tunnel                 // Open a tunnel to a natted cluster
+    ├── dashboard               // Open the kubero dashboard
+    ├── tunnel                  // Open a tunnel to a natted cluster
     └── help                    // Help about any command   
 ```
 
