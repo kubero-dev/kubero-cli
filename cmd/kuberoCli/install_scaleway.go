@@ -7,7 +7,6 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -26,8 +25,8 @@ func installScaleway() {
 	// get the kubeconfig
 	// https://api.scaleway.com/k8s/v1/regions/{region}/clusters/{cluster_id}/kubeconfig
 
-	cfmt.Println("{{⚠ Installing Kubernetes on Scaleway is currently beta state in kubero-cli}}::yellow")
-	cfmt.Println("{{  Please report if you run into errors}}::yellow")
+	// cfmt.Println("{{⚠ Installing Kubernetes on Scaleway is currently beta state in kubero-cli}}::yellow")
+	// cfmt.Println("{{  Please report if you run into errors}}::yellow")
 
 	var cluster ScalewayCreate
 	/*
@@ -53,10 +52,12 @@ func installScaleway() {
 		SetBaseURL("https://api.scaleway.com/k8s/v1/regions")
 
 	cluster.Name = promptLine("Kubernetes Cluster Name", "", "kubero-"+strconv.Itoa(rand.Intn(1000)))
-	region := promptLine("Cluster Region", "[fr-par,nl-ams,pl-waw]", "nl-ams")
+
+	regionsList := []string{"fr-par", "nl-ams", "pl-waw"}
+	region := selectFromList("Cluster Region", regionsList, "")
 
 	versions := getScalewayVersions(api, region)
-	cluster.Version = promptLine("Kubernetes Version", "["+strings.Join(versions, ",")+"]", versions[0])
+	cluster.Version = selectFromList("Kubernetes Version", versions, "")
 
 	// TODO lets make this configurable if needed in the future
 	cluster.Cni = "unknown_cni"

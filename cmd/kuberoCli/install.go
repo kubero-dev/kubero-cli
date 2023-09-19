@@ -12,7 +12,6 @@ import (
 
 	"encoding/json"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/go-resty/resty/v2"
 	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/leaanthony/spinner"
@@ -156,11 +155,7 @@ func installKubernetes() {
 		return
 	}
 
-	prompt := &survey.Select{
-		Message: "Select a pipeline",
-		Options: clusterTypeList,
-	}
-	survey.AskOne(prompt, &clusterType)
+	clusterType = selectFromList("Select a Kubernetes provider", clusterTypeList, "")
 
 	switch clusterType {
 	case "scaleway":
@@ -352,11 +347,7 @@ func installIngress() {
 	} else {
 
 		if clusterType == "" {
-			prompt := &survey.Select{
-				Message: "Which cluster type have you insalled?",
-				Options: clusterTypeList,
-			}
-			survey.AskOne(prompt, &clusterType)
+			clusterType = selectFromList("Which cluster type have you insalled?", clusterTypeList, "")
 		}
 
 		prefill := "baremetal"
@@ -373,7 +364,9 @@ func installIngress() {
 			prefill = "do"
 		}
 
-		ingressProvider := promptLine("Provider", "[kind,aws,baremetal,cloud(Azure,Google,Oracle,Linode),do(digital ocean),exoscale,scw(scaleway)]", prefill)
+		ingressProviderList := []string{"kind", "aws", "baremetal", "cloud", "do", "exoscale", "scw"}
+		ingressProvider := selectFromList("Provider [kind, aws, baremetal, cloud(Azure,Google,Oracle,Linode), do(digital ocean), exoscale, scw(scaleway)]", ingressProviderList, prefill)
+
 		ingressSpinner := spinner.New("Install Ingress")
 		URL := "https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-" + ingressControllerVersion + "/deploy/static/provider/" + ingressProvider + "/deploy.yaml"
 		ingressSpinner.Start("run command : kubectl apply -f " + URL)
@@ -389,7 +382,7 @@ func installIngress() {
 
 func installKuberoOperator() {
 
-	cfmt.Println("\n  6) Install Kubero Operator")
+	cfmt.Println("\n  {{6) Install Kubero Operator}}::bold")
 
 	kuberoInstalled, _ := exec.Command("kubectl", "get", "operator", "kubero-operator.operators").Output()
 	if len(kuberoInstalled) > 0 {
@@ -582,12 +575,7 @@ func installKuberoUi() {
 		kuberiUIConfig.Spec.Kubero.WebhookURL = webhookURL
 
 		if clusterType == "" {
-			prompt := &survey.Select{
-				Message: "Which cluster type have you insalled?",
-				Options: clusterTypeList,
-			}
-			survey.AskOne(prompt, &clusterType)
-
+			clusterType = selectFromList("Which cluster type have you insalled?", clusterTypeList, "")
 		}
 
 		if clusterType == "linode" ||

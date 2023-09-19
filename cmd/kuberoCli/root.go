@@ -125,6 +125,7 @@ func promptLine(question string, options string, def string) string {
 }
 
 func selectFromList(question string, options []string, def string) string {
+	cfmt.Println("")
 	if def != "" && force {
 		cfmt.Printf("\n{{?}}::green %s : {{%s}}::cyan\n", question, def)
 		return def
