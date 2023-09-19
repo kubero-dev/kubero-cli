@@ -66,7 +66,7 @@ type DigitalOcean struct {
 	} `json:"kubernetes_cluster"`
 }
 
-type DigitaloceanVersionsResponse struct {
+type DigitaloceanOptions struct {
 	Options struct {
 		Regions []struct {
 			Name string `json:"name"`

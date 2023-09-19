@@ -124,6 +124,19 @@ func promptLine(question string, options string, def string) string {
 	return text
 }
 
+func selectFromList(question string, options []string, def string) string {
+	if def != "" && force {
+		cfmt.Printf("\n{{?}}::green %s : {{%s}}::cyan\n", question, def)
+		return def
+	}
+	prompt := &survey.Select{
+		Message: question,
+		Options: options,
+	}
+	survey.AskOne(prompt, &def)
+	return def
+}
+
 func confirmationLine(question string, def string) bool {
 	confirmation := promptLine(question, "[y,n]", def)
 	if confirmation != "y" {
