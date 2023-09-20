@@ -5,6 +5,7 @@ package kuberoCli
 
 import (
 	"os"
+	"regexp"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -45,6 +46,13 @@ func startTunnel() {
 
 	if tunnelSubdomain == "" {
 		tunnelSubdomain = promptLine("Subdomain", "", "kubero-"+generateRandomString(10, "abcdefghijklmnopqrstuvwxyz0123456789"))
+	}
+
+	// Check if subdomain is valid
+	// localtunnel.me allows only lowercasae letters, numbers and dashes
+	if !regexp.MustCompile(`^[a-z0-9-]+$`).MatchString(tunnelSubdomain) {
+		cfmt.Println("{{✖}}::red Subdomain can only contain lowercase letters, numbers and dashes")
+		os.Exit(1)
 	}
 
 	if tunnelSubdomain == "-" {
