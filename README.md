@@ -12,31 +12,10 @@ Download the latest release [here](https://github.com/kubero-dev/kubero-cli/rele
 - Digital Ocean
 - Google GKE
 - Kind (localhost)
-- Oracle Cloud OCI/OKE
+- Vultr (soon)
+- Oracle Cloud OCI/OKE (soon)
 - Exoscale (soon)
-
-## Usage
-Command map
-```
-    kubero
-    ├── apps
-    │   ├── create
-    │   ├── fetch
-    │   ├── list
-    │   └── delete
-    ├── config
-    │   ├── addons
-    │   ├── buildpacks
-    │   └── podsizes
-    ├── help
-    ├── init
-    ├── install
-    └── pipelines
-        ├── create
-        ├── fetch
-        ├── list
-        └── delete
-```
+- Swissflow (soon)
 
 
 ## Usage
