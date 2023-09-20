@@ -44,7 +44,7 @@ func startTunnel() {
 	promptWarning("WARNING: your traffic will routed thru localtunnel.me")
 
 	if tunnelSubdomain == "" {
-		tunnelSubdomain = promptLine("Subdomain", "", "kubero-"+generateRandomString(13, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"))
+		tunnelSubdomain = promptLine("Subdomain", "", "kubero-"+generateRandomString(10, "abcdefghijklmnopqrstuvwxyz0123456789"))
 	}
 
 	if tunnelSubdomain == "-" {
