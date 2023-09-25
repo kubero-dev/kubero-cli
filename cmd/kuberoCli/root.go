@@ -70,9 +70,9 @@ func Execute() {
 	loadCLIConfig()
 	loadCredentials()
 	api = new(kuberoApi.KuberoClient)
-	client = api.Init(viper.GetString("api.url"), viper.GetString("api.token"))
 
-	//client = kuberoApi.Init(viper.GetString("api.url"), viper.GetString("api.token"))
+	client = api.Init(currentInstance.Apiurl, credentialsConfig.GetString(currentInstanceName))
+
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
@@ -227,13 +227,13 @@ func getIACBaseDir() string {
 	basepath := "."
 
 	if currentInstance.IacBaseDir == "" {
-		currentInstance.IacBaseDir = "/.kubero"
-		basepath = basepath + currentInstance.IacBaseDir
+		currentInstance.IacBaseDir = ".kubero"
+		basepath = basepath + "/" + currentInstance.IacBaseDir
 	}
 
 	gitdir := getGitdir()
 	if gitdir != "" {
-		basepath = gitdir + currentInstance.IacBaseDir
+		basepath = gitdir + "/" + currentInstance.IacBaseDir
 	}
 
 	if _, err := os.Stat(basepath); os.IsNotExist(err) {
