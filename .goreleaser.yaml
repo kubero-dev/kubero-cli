@@ -6,7 +6,7 @@ before:
     - go mod tidy
 builds:
   -
-    main: pkg/kubero.go
+    main: cmd/main.go
     binary: kubero
     env:
       - CGO_ENABLED=0
@@ -26,6 +26,8 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
+      - '^templates:'
+      - '^.github:'
 #brews:
 #  -
 #    tap:
