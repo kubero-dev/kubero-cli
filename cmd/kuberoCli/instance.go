@@ -41,7 +41,8 @@ func init() {
 type Instance struct {
 	Name       string `json:"name" yaml:"name"`
 	Apiurl     string `json:"apiurl" yaml:"apiurl"`
-	ConfigPath string `json:"configpath" yaml:"configpath"`
+	IacBaseDir string `json:"iacBaseDir,omitempty" yaml:"iacBaseDir,omitempty"`
+	ConfigPath string `json:"omitempty" yaml:"omitempty"`
 	Tunnel     struct {
 		Subdomain string `json:"subdomain" yaml:"subdomain"`
 		Port      int    `json:"port" yaml:"port"`
@@ -51,7 +52,7 @@ type Instance struct {
 
 func printInstanceList() {
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Active", "Token", "Name", "API URL", "Path"})
+	table.SetHeader([]string{"Active", "Token", "Name", "API URL", "Path", "IAC Base Dir"})
 	table.SetAutoWrapText(false)
 	table.SetAutoFormatHeaders(true)
 	//table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
@@ -73,10 +74,17 @@ func printInstanceList() {
 
 		// check if instanceName is in credentialsConfig
 		if credentialsConfig.GetString(instanceName) != "" {
-			token = cfmt.Sprintf("   {{✔}}::green")
+			token = cfmt.Sprintf("  {{✔}}::green")
 		}
 
-		table.Append([]string{active, token, instanceName, instanceList[instanceName].Apiurl, instanceList[instanceName].ConfigPath})
+		table.Append([]string{
+			active,
+			token,
+			instanceName,
+			instanceList[instanceName].Apiurl,
+			instanceList[instanceName].ConfigPath,
+			instanceList[instanceName].IacBaseDir,
+		})
 	}
 	table.Render()
 }
