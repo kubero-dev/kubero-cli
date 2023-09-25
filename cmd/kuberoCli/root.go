@@ -30,10 +30,16 @@ var client *resty.Request
 var api *kuberoApi.KuberoClient
 var contextSimpleList []string
 
+var currentInstanceName string
+var instanceList map[string]Instance
+var instanceNameList []string
+var currentInstance Instance = Instance{}
+
 //go:embed VERSION
 var version string
 
 var pipelineConfig *viper.Viper
+var credentialsConfig *viper.Viper
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -62,6 +68,7 @@ Documentation:
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	loadCLIConfig()
+	loadCredentials()
 	api = new(kuberoApi.KuberoClient)
 	client = api.Init(viper.GetString("api.url"), viper.GetString("api.token"))
 
@@ -74,16 +81,6 @@ func Execute() {
 
 func init() {
 	rootCmd.CompletionOptions.HiddenDefaultCmd = true
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	//rootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "table", "output format [table, json]")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	//rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
 }
 
 func printCLI(table *tablewriter.Table, r *resty.Response) {
@@ -253,26 +250,26 @@ func createFolder(path string) {
 
 func loadCLIConfig() {
 
+	//load a personal config from the user's home directory
+
 	gitdir := getGitdir()
-	basePath := "/.kubero/" //TODO Make it dynamic
-	dir := gitdir + basePath
+	dir := gitdir
+
+	repoConfig := viper.New()
+	repoConfig.SetConfigName("kubero") // name of config file (without extension)
+	repoConfig.SetConfigType("yaml")   // REQUIRED if the config file does not have the extension in the name
+	repoConfig.AddConfigPath(dir)      // TODO this should search for the git repo root
+	repoConfig.ConfigFileUsed()
+	errCred := repoConfig.ReadInConfig()
 
 	//load a default config from the current local git repository
-	viper.SetDefault("api.url", "http://localhost:2000")
-	viper.SetConfigName("kubero") // name of config file (without extension)
-	viper.SetConfigType("yaml")   // REQUIRED if the config file does not have the extension in the name
-	viper.AddConfigPath(dir)      // TODO this should search for the git repo root
+	viper.SetDefault("api.url", "http://default:2000")
+	viper.SetConfigName("kubero")         // name of config file (without extension)
+	viper.SetConfigType("yaml")           // REQUIRED if the config file does not have the extension in the name
+	viper.AddConfigPath("/etc/kubero/")   // path to look for the config file in
+	viper.AddConfigPath("$HOME/.kubero/") // call multiple times to add many search paths
 	err := viper.ReadInConfig()
 
-	//load a personal config from the user's home directory
-	personal := viper.New()
-	personal.SetConfigName("kubero")        // name of config file (without extension)
-	personal.SetConfigType("yaml")          // REQUIRED if the config file does not have the extension in the name
-	personal.AddConfigPath("/etc/kubero/")  // path to look for the config file in
-	personal.AddConfigPath("$HOME/.kubero") // call multiple times to add many search paths
-	errCred := personal.ReadInConfig()
-
-	viper.MergeConfigMap(personal.AllSettings())
 	if err != nil && errCred != nil {
 
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
@@ -281,6 +278,52 @@ func loadCLIConfig() {
 			fmt.Printf("Error while loading config files: %v \n\n\n%v", err, errCred)
 		}
 	}
+
+	viper.UnmarshalKey("instances", &instanceList)
+
+	// iterate over all instances and and set the config path
+	for instanceName, instance := range instanceList {
+		instance.Name = instanceName
+		instance.ConfigPath = viper.ConfigFileUsed()
+		instanceList[instanceName] = instance
+	}
+
+	var repoInstancesList map[string]Instance
+	repoConfig.UnmarshalKey("instances", &repoInstancesList)
+
+	for instanceName, repoInstance := range repoInstancesList {
+		repoInstance.Name = instanceName
+		repoInstance.ConfigPath = repoConfig.ConfigFileUsed()
+		instanceList[instanceName] = repoInstance
+	}
+
+	currentInstanceName = viper.GetString("currentInstance")
+
+	// iterate over all instances and find the current one
+	for instanceName, instance := range instanceList {
+		instance.Name = instanceName
+		instanceNameList = append(instanceNameList, instanceName)
+		if instanceName == currentInstanceName {
+			currentInstance = instance
+		}
+	}
+
+}
+
+func loadCredentials() {
+
+	//load a personal config from the user's home directory
+	credentialsConfig = viper.New()
+	credentialsConfig.SetConfigName("credentials")    // name of config file (without extension)
+	credentialsConfig.SetConfigType("yaml")           // REQUIRED if the config file does not have the extension in the name
+	credentialsConfig.AddConfigPath("/etc/kubero/")   // path to look for the config file in
+	credentialsConfig.AddConfigPath("$HOME/.kubero/") // call multiple times to add many search paths
+	err := credentialsConfig.ReadInConfig()
+
+	if err != nil {
+		fmt.Println("Error while loading credentialsConfig file:", err)
+	}
+
 }
 
 func boolToEmoji(b bool) string {

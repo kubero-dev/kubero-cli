@@ -10,6 +10,7 @@ require (
 	github.com/jonasfj/go-localtunnel v0.0.0-20170326223115-8a804488f275
 	github.com/leaanthony/spinner v0.5.4
 	github.com/olekukonko/tablewriter v0.0.5
+	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.13.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -18,7 +19,6 @@ require (
 require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
-	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
 )
 
 require (

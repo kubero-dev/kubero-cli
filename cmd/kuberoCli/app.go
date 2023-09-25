@@ -112,11 +112,11 @@ func loadAppConfig(pipelineName string, stageName string, appName string) *viper
 	dir := gitdir + basePath + pipelineName + "/" + stageName
 	//fmt.Println(dir)
 
-	pipelineConfig := viper.New()
-	pipelineConfig.SetConfigName(appName) // name of config file (without extension)
-	pipelineConfig.SetConfigType("yaml")  // REQUIRED if the config file does not have the extension in the name
-	pipelineConfig.AddConfigPath(dir)     // path to look for the config file in
-	pipelineConfig.ReadInConfig()
+	appConfig := viper.New()
+	appConfig.SetConfigName(appName) // name of config file (without extension)
+	appConfig.SetConfigType("yaml")  // REQUIRED if the config file does not have the extension in the name
+	appConfig.AddConfigPath(dir)     // path to look for the config file in
+	appConfig.ReadInConfig()
 
-	return pipelineConfig
+	return appConfig
 }

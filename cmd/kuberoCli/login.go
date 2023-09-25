@@ -1,10 +1,7 @@
 package kuberoCli
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 type Config struct {
@@ -27,31 +24,57 @@ var loginCmd = &cobra.Command{
 		to quickly create a Cobra application.`,
 	*/
 	Run: func(cmd *cobra.Command, args []string) {
+		/*
+			fmt.Println("Initializing kubero-cli")
+			url := promptLine("Kubero Host adress", viper.GetString("api.url"), viper.GetString("api.url"))
+			viper.Set("api.url", url)
 
-		fmt.Println("Initializing kubero-cli")
-		url := promptLine("Kubero Host adress", viper.GetString("api.url"), viper.GetString("api.url"))
-		viper.Set("api.url", url)
+			token := promptLine("Kubero Token", viper.GetString("api.token"), viper.GetString("api.token"))
+			viper.Set("api.token", token)
 
-		token := promptLine("Kubero Token", viper.GetString("api.token"), viper.GetString("api.token"))
-		viper.Set("api.token", token)
-
-		var config Config
-		if err := viper.Unmarshal(&config); err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		repoAuth := promptLine("Create authentication file in this repository", "[y,n]", "n")
-		if repoAuth == "y" {
-			viper.WriteConfigAs(".kubero/kubero.yaml") //TODO: make .kubero path configurable
-			if err := viper.WriteConfig(); err != nil {
+			var config Config
+			if err := viper.Unmarshal(&config); err != nil {
 				fmt.Println(err)
 				return
 			}
-		}
+
+			repoAuth := promptLine("Create authentication file in this repository", "[y,n]", "n")
+			if repoAuth == "y" {
+				viper.WriteConfigAs(".kubero/kubero.yaml") //TODO: make .kubero path configurable
+				if err := viper.WriteConfig(); err != nil {
+					fmt.Println(err)
+					return
+				}
+			}
+		*/
+		ensureIntanceOrCreate()
+		setKuberoCredentials("")
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(loginCmd)
+}
+
+func ensureIntanceOrCreate() {
+
+	instanceNameList = append(instanceNameList, "<create new>")
+
+	instanceName := selectFromList("Select an instance", instanceNameList, currentInstanceName)
+	if instanceName == "<create new>" {
+		createInstanceForm()
+	} else {
+		setCurrentInstance(instanceName)
+	}
+
+}
+
+func setKuberoCredentials(token string) {
+
+	if token == "" {
+		token = promptLine("Kubero Token", "", "")
+	}
+
+	credentialsConfig.Set(currentInstanceName, token)
+	credentialsConfig.WriteConfig()
 }
