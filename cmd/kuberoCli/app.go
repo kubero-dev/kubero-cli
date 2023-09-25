@@ -75,9 +75,9 @@ func getAllRemoteApps() []string {
 }
 
 func getAllLocalApps() []string {
-	basePath := "/.kubero/"
-	gitdir := getGitdir()
-	dir := gitdir + basePath + pipelineName + "/" + stageName
+
+	baseDir := getIACBaseDir()
+	dir := baseDir + "/" + pipelineName + "/" + stageName
 
 	var appsList []string
 	apps, err := os.ReadDir(dir)
@@ -107,15 +107,13 @@ func loadLocalApp(pipelineName string, stageName string, appName string) kuberoA
 
 func loadAppConfig(pipelineName string, stageName string, appName string) *viper.Viper {
 
-	basePath := "/.kubero/"
-	gitdir := getGitdir()
-	dir := gitdir + basePath + pipelineName + "/" + stageName
-	//fmt.Println(dir)
+	baseDir := getIACBaseDir()
+	dir := baseDir + "/" + pipelineName + "/" + stageName
 
 	appConfig := viper.New()
-	appConfig.SetConfigName(appName) // name of config file (without extension)
-	appConfig.SetConfigType("yaml")  // REQUIRED if the config file does not have the extension in the name
-	appConfig.AddConfigPath(dir)     // path to look for the config file in
+	appConfig.SetConfigName(appName)
+	appConfig.SetConfigType("yaml")
+	appConfig.AddConfigPath(dir)
 	appConfig.ReadInConfig()
 
 	return appConfig

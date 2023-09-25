@@ -223,10 +223,31 @@ func getGitdir() string {
 	return ""
 }
 
-func loadConfigs(basePath string, pipelineName string) {
+func getIACBaseDir() string {
+	basepath := "."
+
+	if currentInstance.IacBaseDir == "" {
+		currentInstance.IacBaseDir = "/.kubero"
+		basepath = basepath + currentInstance.IacBaseDir
+	}
 
 	gitdir := getGitdir()
-	dir := gitdir + basePath + pipelineName
+	if gitdir != "" {
+		basepath = gitdir + currentInstance.IacBaseDir
+	}
+
+	if _, err := os.Stat(basepath); os.IsNotExist(err) {
+		cfmt.Println("{{Creating directory}}::yellow " + basepath)
+		os.MkdirAll(basepath, 0755)
+	}
+
+	return basepath
+}
+
+func loadConfigs(basePath string, pipelineName string) {
+
+	baseDir := getIACBaseDir()
+	dir := baseDir + "/" + pipelineName
 
 	pipelineConfig = viper.New()
 	pipelineConfig.SetConfigName("pipeline")
@@ -247,11 +268,8 @@ func createFolder(path string) {
 
 func loadCLIConfig() {
 
-	//load a personal config from the user's home directory
-
-	gitdir := getGitdir()
-	dir := gitdir
-
+	//load a default config from the current local git repository
+	dir := getGitdir()
 	repoConfig := viper.New()
 	repoConfig.SetConfigName("kubero")
 	repoConfig.SetConfigType("yaml")
@@ -259,7 +277,7 @@ func loadCLIConfig() {
 	repoConfig.ConfigFileUsed()
 	errCred := repoConfig.ReadInConfig()
 
-	//load a default config from the current local git repository
+	//load a personal config from the user's home directory
 	viper.SetDefault("api.url", "http://default:2000")
 	viper.SetConfigName("kubero")
 	viper.SetConfigType("yaml")

@@ -119,10 +119,8 @@ func getAllRemotePipelines() []string {
 
 func getAllLocalPipelines() []string {
 
-	basePath := "/.kubero/"
-	gitdir := getGitdir()
-	//dir := gitdir + basePath + pipelineName // TODO: it does not make any sense to use pipelineName here
-	dir := gitdir + basePath
+	baseDir := getIACBaseDir()
+	dir := baseDir + "/" + pipelineName
 
 	pipelineNames := []string{}
 	files, err := os.ReadDir(dir)
@@ -159,10 +157,8 @@ func getPipelinePhases(pipelineConfig *viper.Viper) []string {
 
 func loadPipelineConfig(pipelineName string) *viper.Viper {
 
-	basePath := "/.kubero/"
-	gitdir := getGitdir()
-	dir := gitdir + basePath + pipelineName
-	//fmt.Println(dir)
+	baseDir := getIACBaseDir()
+	dir := baseDir + "/" + pipelineName
 
 	pipelineConfig := viper.New()
 	pipelineConfig.SetConfigName("pipeline") // name of config file (without extension)
