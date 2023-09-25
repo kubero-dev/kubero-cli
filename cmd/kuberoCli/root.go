@@ -227,16 +227,13 @@ func loadConfigs(basePath string, pipelineName string) {
 
 	gitdir := getGitdir()
 	dir := gitdir + basePath + pipelineName
-	//fmt.Println(dir)
 
 	pipelineConfig = viper.New()
-	pipelineConfig.SetConfigName("pipeline") // name of config file (without extension)
-	pipelineConfig.SetConfigType("yaml")     // REQUIRED if the config file does not have the extension in the name
-	pipelineConfig.AddConfigPath(dir)        // path to look for the config file in
+	pipelineConfig.SetConfigName("pipeline")
+	pipelineConfig.SetConfigType("yaml")
+	pipelineConfig.AddConfigPath(dir)
 	pipelineConfig.ReadInConfig()
 
-	//fmt.Println("Using config file:", viper.ConfigFileUsed())
-	//fmt.Println("Using config file:", pipelineConfig.ConfigFileUsed())
 }
 
 // create recursive folder if not exists
@@ -256,18 +253,18 @@ func loadCLIConfig() {
 	dir := gitdir
 
 	repoConfig := viper.New()
-	repoConfig.SetConfigName("kubero") // name of config file (without extension)
-	repoConfig.SetConfigType("yaml")   // REQUIRED if the config file does not have the extension in the name
-	repoConfig.AddConfigPath(dir)      // TODO this should search for the git repo root
+	repoConfig.SetConfigName("kubero")
+	repoConfig.SetConfigType("yaml")
+	repoConfig.AddConfigPath(dir)
 	repoConfig.ConfigFileUsed()
 	errCred := repoConfig.ReadInConfig()
 
 	//load a default config from the current local git repository
 	viper.SetDefault("api.url", "http://default:2000")
-	viper.SetConfigName("kubero")         // name of config file (without extension)
-	viper.SetConfigType("yaml")           // REQUIRED if the config file does not have the extension in the name
-	viper.AddConfigPath("/etc/kubero/")   // path to look for the config file in
-	viper.AddConfigPath("$HOME/.kubero/") // call multiple times to add many search paths
+	viper.SetConfigName("kubero")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath("/etc/kubero/")
+	viper.AddConfigPath("$HOME/.kubero/")
 	err := viper.ReadInConfig()
 
 	if err != nil && errCred != nil {
@@ -312,12 +309,12 @@ func loadCLIConfig() {
 
 func loadCredentials() {
 
-	//load a personal config from the user's home directory
+	//load a personal credentials from the user's home directory
 	credentialsConfig = viper.New()
-	credentialsConfig.SetConfigName("credentials")    // name of config file (without extension)
-	credentialsConfig.SetConfigType("yaml")           // REQUIRED if the config file does not have the extension in the name
-	credentialsConfig.AddConfigPath("/etc/kubero/")   // path to look for the config file in
-	credentialsConfig.AddConfigPath("$HOME/.kubero/") // call multiple times to add many search paths
+	credentialsConfig.SetConfigName("credentials")
+	credentialsConfig.SetConfigType("yaml")
+	credentialsConfig.AddConfigPath("/etc/kubero/")
+	credentialsConfig.AddConfigPath("$HOME/.kubero/")
 	err := credentialsConfig.ReadInConfig()
 
 	if err != nil {
