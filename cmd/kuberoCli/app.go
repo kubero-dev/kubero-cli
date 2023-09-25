@@ -80,15 +80,19 @@ func getAllLocalApps() []string {
 	dir := baseDir + "/" + pipelineName + "/" + stageName
 
 	var appsList []string
-	apps, err := os.ReadDir(dir)
+	appFiles, err := os.ReadDir(dir)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	for _, app := range apps {
-		a := loadLocalApp(pipelineName, stageName, app.Name())
-		if a.Kind == "KuberoApp" && a.Spec.Name != "" {
-			appsList = append(appsList, a.Spec.Name)
+	for _, appFileName := range appFiles {
+
+		// remove the .yaml extension
+		appName := strings.TrimSuffix(appFileName.Name(), ".yaml")
+
+		a := loadLocalApp(pipelineName, stageName, appName)
+		if a.Kind == "KuberoApp" && a.Metadata.Name != "" {
+			appsList = append(appsList, a.Metadata.Name)
 		}
 	}
 	return appsList
