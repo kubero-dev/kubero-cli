@@ -15,7 +15,8 @@ var dashboardCmd = &cobra.Command{
 	Short:   "Opens the Kubero dashboard in your browser",
 	Long:    `Use the dashboard subcommand to open the Kubero dashboard in your browser.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		browser.OpenURL("http://localhost:2000")
+		url := currentInstance.Apiurl
+		browser.OpenURL(url)
 	},
 }
 
