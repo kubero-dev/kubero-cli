@@ -39,10 +39,10 @@ func init() {
 }
 
 type Instance struct {
-	Name       string `json:"name" yaml:"name"`
+	Name       string `json:"-" yaml:"-"`
 	Apiurl     string `json:"apiurl" yaml:"apiurl"`
 	IacBaseDir string `json:"iacBaseDir,omitempty" yaml:"iacBaseDir,omitempty"`
-	ConfigPath string `json:"omitempty" yaml:"omitempty"`
+	ConfigPath string `json:"-" yaml:"-"`
 	Tunnel     struct {
 		Subdomain string `json:"subdomain" yaml:"subdomain"`
 		Port      int    `json:"port" yaml:"port"`
@@ -96,13 +96,15 @@ func createInstanceForm() {
 	instanceApiurl := promptLine("Enter the API URL of the instance", "", "http://localhost:80")
 	instancePath := viper.ConfigFileUsed()
 
-	instanceList[instanceName] = Instance{
+	personalInstanceList := viper.GetStringMap("instances")
+
+	personalInstanceList[instanceName] = Instance{
 		Name:       instanceName,
 		Apiurl:     instanceApiurl,
 		ConfigPath: instancePath,
 	}
 
-	viper.Set("instances", instanceList)
+	viper.Set("instances", personalInstanceList)
 
 	instanceNameList = append(instanceNameList, instanceName)
 
