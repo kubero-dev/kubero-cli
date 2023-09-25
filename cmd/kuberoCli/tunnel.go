@@ -6,6 +6,7 @@ package kuberoCli
 import (
 	"os"
 	"regexp"
+	"strconv"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -37,7 +38,7 @@ func init() {
 	tunnelCmd.Flags().IntVarP(&tunnelPort, "port", "p", 80, "Port to use")
 	tunnelCmd.Flags().StringVarP(&tunnelDuration, "timeout", "t", "1h", "Timeout for the tunnel")
 
-	tunnelCmd.Flags().StringVarP(&tunnelSubdomain, "subdomain", "s", "", "Subdomain to use")
+	tunnelCmd.Flags().StringVarP(&tunnelSubdomain, "subdomain", "s", "", "Subdomain to use ('-' to generate a random one)")
 }
 
 func startTunnel() {
@@ -45,16 +46,25 @@ func startTunnel() {
 	promptWarning("WARNING: your traffic will routed thru localtunnel.me")
 
 	if tunnelSubdomain == "" {
-		tunnelSubdomain = promptLine("Subdomain", "", "kubero-"+generateRandomString(10, "abcdefghijklmnopqrstuvwxyz0123456789"))
+		tunnelSubdomainSugestion := "kubero-" + generateRandomString(10, "abcdefghijklmnopqrstuvwxyz0123456789")
+
+		if currentInstance.Tunnel.Subdomain != "" {
+			tunnelSubdomainSugestion = currentInstance.Tunnel.Subdomain
+		} else if currentInstance.Name != "" {
+			tunnelSubdomainSugestion = "kubero-" + currentInstance.Name
+		}
+
+		tunnelSubdomain = promptLine("Subdomain", "", tunnelSubdomainSugestion)
 	}
 
 	// Check if subdomain is valid
 	// localtunnel.me allows only lowercasae letters, numbers and dashes
 	if !regexp.MustCompile(`^[a-z0-9-]+$`).MatchString(tunnelSubdomain) {
-		cfmt.Println("{{✖}}::red Subdomain can only contain lowercase letters, numbers and dashes")
+		cfmt.Println("{{✖}}::red Subdomain {{" + tunnelSubdomain + "}}::yellow can only contain lowercase letters, numbers and dashes")
 		os.Exit(1)
 	}
 
+	// genereate a subdomain if the user entered "-"
 	if tunnelSubdomain == "-" {
 		tunnelSubdomain = ""
 	}
@@ -65,7 +75,10 @@ func startTunnel() {
 		cfmt.Println("{{✖}}::red Error getting your IP")
 		os.Exit(1)
 	}
-	cfmt.Print("\n  Your 'Endpoint IP' is {{" + ipres.String() + "}}::cyan\n\n")
+	cfmt.Println()
+	cfmt.Println("  Endpoint IP      : {{" + ipres.String() + "}}::cyan")
+	cfmt.Println("  Destination Host : {{" + tunnelHost + "}}::cyan")
+	cfmt.Println("  Destination Port : {{" + strconv.Itoa(tunnelPort) + "}}::cyan\n\n")
 
 	spinner := spinner.New()
 	spinner.Start("Waiting for tunnel to be ready")
