@@ -4,7 +4,7 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package kuberoCli
 
 import (
-	"github.com/i582/cfmt/cmd/cfmt"
+	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
 )
 
@@ -16,12 +16,9 @@ var dashboardCmd = &cobra.Command{
 	Long:    `Use the dashboard subcommand to open the Kubero dashboard in your browser.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		ooo := getIACBaseDir()
-		cfmt.Println(ooo)
-		/*
-			url := currentInstance.Apiurl
-			browser.OpenURL(url)
-		*/
+		url := currentInstance.Apiurl
+		browser.OpenURL(url)
+
 	},
 }
 
