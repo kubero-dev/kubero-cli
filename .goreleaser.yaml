@@ -28,11 +28,12 @@ changelog:
       - '^test:'
       - '^templates:'
       - '^.github:'
-#brews:
-#  -
-#    tap:
-#      owner: kubero-dev
-#      name: homebrew-kubero
-#    homepage: "https://www.kubero.dev"
-#    description: "manage your kubero applications
-#      system "#{bin}/kubero", "--version"
+brews:
+  -
+    tap:
+      owner: kubero-dev
+      name: homebrew-kubero
+    homepage: "https://www.kubero.dev"
+    description: "manage your kubero applications with the CLI"
+    test: |
+      system "#{bin}/kubero", "--version"
