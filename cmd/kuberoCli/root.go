@@ -37,7 +37,7 @@ var instanceNameList []string
 var currentInstance Instance = Instance{}
 
 //go:embed VERSION
-var version string
+var kuberoCliVersion string
 
 var pipelineConfig *viper.Viper
 var credentialsConfig *viper.Viper
@@ -45,7 +45,7 @@ var credentialsConfig *viper.Viper
 var rootCmd = &cobra.Command{
 	Use:     "kubero",
 	Short:   "Kubero is a platform as a service (PaaS) that enables developers to build, run, and operate applications on Kubernetes.",
-	Version: version,
+	Version: kuberoCliVersion,
 	Long: `
 
 	,--. ,--.        ,--.

@@ -34,7 +34,7 @@ func installLinode() {
 		SetAuthToken(token).
 		SetHeader("Accept", "application/json").
 		SetHeader("Content-Type", "application/json").
-		SetHeader("User-Agent", "kubero-cli/0.0.1").
+		SetHeader("User-Agent", "kubero-cli/"+kuberoCliVersion).
 		SetBaseURL("https://api.linode.com/v4/lke/clusters")
 
 	var clusterConfig LinodeCreateClusterRequest

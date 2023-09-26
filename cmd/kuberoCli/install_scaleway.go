@@ -48,7 +48,7 @@ func installScaleway() {
 		SetHeader("X-Auth-Token", token).
 		SetHeader("Accept", "application/json").
 		SetHeader("Content-Type", "application/json").
-		SetHeader("User-Agent", "kubero-cli/0.0.1").
+		SetHeader("User-Agent", "kubero-cli/"+kuberoCliVersion).
 		SetBaseURL("https://api.scaleway.com/k8s/v1/regions")
 
 	cluster.Name = promptLine("Kubernetes Cluster Name", "", "kubero-"+strconv.Itoa(rand.Intn(1000)))

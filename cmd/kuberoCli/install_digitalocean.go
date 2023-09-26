@@ -31,7 +31,7 @@ func installDigitalOcean() {
 		SetAuthToken(token).
 		SetHeader("Accept", "application/json").
 		SetHeader("Content-Type", "application/json").
-		SetHeader("User-Agent", "kubero-cli/0.0.1"). //TODO dynamic version
+		SetHeader("User-Agent", "kubero-cli/"+kuberoCliVersion).
 		SetBaseURL("https://api.digitalocean.com")
 
 	var doConfig DigitalOceanKubernetesConfig
