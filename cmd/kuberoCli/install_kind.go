@@ -21,14 +21,25 @@ func installKind() {
 
 	installer := resty.New()
 
+	// get kind.yaml
 	installer.SetBaseURL("https://raw.githubusercontent.com")
 	kf, _ := installer.R().Get("/kubero-dev/kubero/main/kind.yaml")
 
 	var kindConfig KindConfig
 	yaml.Unmarshal(kf.Body(), &kindConfig)
 
+	// set cluster name
 	kindConfig.Name = promptLine("Kind Cluster Name", "", "kubero-"+strconv.Itoa(rand.Intn(1000)))
-	kindConfig.Nodes[0].Image = "kindest/node:v1.26.3" //TODO make configurable version
+
+	// select Kubernetes version
+	kv, _ := installer.R().Get("/kubero-dev/kubero-cli/main/templates/kindVersions.yaml")
+	var kindDefaults struct {
+		AvailableKubernetesVersions []string `yaml:"availableKubernetesVersions"`
+	}
+	yaml.Unmarshal(kv.Body(), &kindDefaults)
+	version := selectFromList("Kubernetes Version", kindDefaults.AvailableKubernetesVersions, "")
+
+	kindConfig.Nodes[0].Image = "kindest/node:" + version
 
 	if arg_port == "" {
 		arg_port = promptLine("Local HTTP Port", "", "80")
