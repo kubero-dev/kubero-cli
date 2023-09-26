@@ -14,7 +14,7 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
-kubero
+/kubero
 kubero.yaml
 credentials.yaml
 
@@ -24,3 +24,5 @@ app.*.yaml
 kind.yaml
 
 cmd/VERSION
+
+.kubero
