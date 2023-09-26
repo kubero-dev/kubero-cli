@@ -81,3 +81,39 @@ func (k *KuberoClient) DeployApp(app AppCRD) (*resty.Response, error) {
 
 	return res, err
 }
+
+func (k *KuberoClient) GetPipelineApps(pipelineName string) (*resty.Response, error) {
+	res, err := k.client.Get("/api/cli/pipelines/" + pipelineName + "/apps")
+
+	return res, err
+}
+
+func (k *KuberoClient) GetAddons() (*resty.Response, error) {
+	res, err := k.client.Get("/api/cli/addons")
+
+	return res, err
+}
+
+func (k *KuberoClient) GetBuildpacks() (*resty.Response, error) {
+	res, err := k.client.Get("/api/cli/config/buildpacks")
+
+	return res, err
+}
+
+func (k *KuberoClient) GetPodsize() (*resty.Response, error) {
+	res, err := k.client.Get("/api/cli/config/podsize")
+
+	return res, err
+}
+
+func (k *KuberoClient) GetRepositories() (*resty.Response, error) {
+	res, err := k.client.Get("/api/cli/config/repositories")
+
+	return res, err
+}
+
+func (k *KuberoClient) GetContexts() (*resty.Response, error) {
+	res, err := k.client.Get("/api/cli/config/k8s/context")
+
+	return res, err
+}

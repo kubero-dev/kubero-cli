@@ -15,7 +15,7 @@ var addonsCmd = &cobra.Command{
 	Use:   "addons",
 	Short: "A brief description of your command",
 	Run: func(cmd *cobra.Command, args []string) {
-		resp, _ := client.Get("/api/cli/addons")
+		resp, _ := api.GetAddons()
 		//fmt.Println(resp)
 		printAddons(resp)
 	},

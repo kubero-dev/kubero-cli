@@ -26,7 +26,8 @@ import (
 var outputFormat string
 var force bool
 var repoSimpleList []string
-var client *resty.Request
+
+var client *resty.Request // TODO DEPRECATED: remove this global variable since we want to use the api variable instead
 var api *kuberoApi.KuberoClient
 var contextSimpleList []string
 
@@ -41,7 +42,6 @@ var version string
 var pipelineConfig *viper.Viper
 var credentialsConfig *viper.Viper
 
-// rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:     "kubero",
 	Short:   "Kubero is a platform as a service (PaaS) that enables developers to build, run, and operate applications on Kubernetes.",
@@ -58,14 +58,8 @@ var rootCmd = &cobra.Command{
 Documentation:
   https://docs.kubero.dev
 `,
-
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	loadCLIConfig()
 	loadCredentials()
@@ -148,7 +142,7 @@ func confirmationLine(question string, def string) bool {
 
 func loadRepositories() {
 
-	res, err := client.Get("/api/cli/config/repositories")
+	res, err := api.GetRepositories()
 	if res.StatusCode() != 200 {
 		fmt.Println("Error: ", res.StatusCode(), "Can't reach Kubero API. Make sure, you are logged in.")
 		os.Exit(1)
@@ -175,7 +169,7 @@ func loadRepositories() {
 
 func loadContexts() {
 
-	cont, _ := client.Get("/api/cli/config/k8s/context")
+	cont, _ := api.GetContexts()
 
 	var contexts Contexts
 	json.Unmarshal(cont.Body(), &contexts)

@@ -14,7 +14,7 @@ var buildpacksCmd = &cobra.Command{
 	Use:   "buildpacks",
 	Short: "List the available buildpacks",
 	Run: func(cmd *cobra.Command, args []string) {
-		resp, _ := client.Get("/api/cli/config/buildpacks")
+		resp, _ := api.GetBuildpacks()
 		printBuildpacks(resp)
 	},
 }
@@ -27,7 +27,7 @@ var buildPacksSimpleList []string
 
 func loadBuildpacks() {
 
-	b, _ := client.Get("/api/cli/config/buildpacks")
+	b, _ := api.GetBuildpacks()
 
 	var buildPacks buildPacks
 	json.Unmarshal(b.Body(), &buildPacks)

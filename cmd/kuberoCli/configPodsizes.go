@@ -14,7 +14,7 @@ var podsizesCmd = &cobra.Command{
 	Use:   "podsizes",
 	Short: "List the available pod sizes",
 	Run: func(cmd *cobra.Command, args []string) {
-		resp, _ := client.Get("/api/cli/config/podsize")
+		resp, _ := api.GetPodsize()
 		printPodsizes(resp)
 	},
 }

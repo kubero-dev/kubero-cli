@@ -14,7 +14,7 @@ import (
 
 func appsList() {
 
-	pipelineResp, _ := client.Get("/api/cli/pipelines/" + pipelineName + "/apps")
+	pipelineResp, _ := api.GetPipelineApps(pipelineName)
 
 	var pl Pipeline
 	json.Unmarshal(pipelineResp.Body(), &pl)
