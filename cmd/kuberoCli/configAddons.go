@@ -33,7 +33,7 @@ func printAddons(r *resty.Response) {
 	table.SetRowLine(true)
 	//table.SetBorder(false)
 
-	var addonsList AddonsList
+	var addonsList []Addon
 	json.Unmarshal(r.Body(), &addonsList)
 
 	for _, addon := range addonsList {

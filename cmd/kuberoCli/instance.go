@@ -38,18 +38,6 @@ func init() {
 	rootCmd.AddCommand(instanceCmd)
 }
 
-type Instance struct {
-	Name       string `json:"-" yaml:"-"`
-	Apiurl     string `json:"apiurl" yaml:"apiurl"`
-	IacBaseDir string `json:"iacBaseDir,omitempty" yaml:"iacBaseDir,omitempty"`
-	ConfigPath string `json:"-" yaml:"-"`
-	Tunnel     struct {
-		Subdomain string `json:"subdomain" yaml:"subdomain"`
-		Port      int    `json:"port" yaml:"port"`
-		Host      string `json:"host" yaml:"host"`
-	} `json:"tunnel,omitempty" yaml:"tunnel,omitempty"`
-}
-
 func printInstanceList() {
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"Active", "Token", "Name", "API URL", "Path", "IAC Base Dir"})

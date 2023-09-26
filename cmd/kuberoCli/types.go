@@ -200,7 +200,7 @@ type App struct {
 	} `json:"worker"`
 }
 
-type AddonsList []struct {
+type Addon struct {
 	ID      string `json:"id"`
 	Enabled bool   `json:"enabled"`
 	Version struct {
@@ -239,7 +239,7 @@ type buildPacks []struct {
 	} `json:"run,omitempty"`
 }
 
-type PodsizeList []struct {
+type Podsize struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Default     bool   `json:"default,omitempty"`
@@ -262,4 +262,23 @@ type appShort struct {
 	Name     string `json:"name"`
 	Phase    string `json:"phase"`
 	Pipeline string `json:"pipeline"`
+}
+
+type Instance struct {
+	Name       string `json:"-" yaml:"-"`
+	Apiurl     string `json:"apiurl" yaml:"apiurl"`
+	IacBaseDir string `json:"iacBaseDir,omitempty" yaml:"iacBaseDir,omitempty"`
+	ConfigPath string `json:"-" yaml:"-"`
+	Tunnel     struct {
+		Subdomain string `json:"subdomain" yaml:"subdomain"`
+		Port      int    `json:"port" yaml:"port"`
+		Host      string `json:"host" yaml:"host"`
+	} `json:"tunnel,omitempty" yaml:"tunnel,omitempty"`
+}
+
+type Config struct {
+	Api struct {
+		Url   string `json:"url" yaml:"url"`
+		Token string `json:"token" yaml:"token"`
+	} `json:"api" yaml:"api"`
 }

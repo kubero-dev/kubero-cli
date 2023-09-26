@@ -4,13 +4,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type Config struct {
-	Api struct {
-		Url   string `json:"url" yaml:"url"`
-		Token string `json:"token" yaml:"token"`
-	} `json:"api" yaml:"api"`
-}
-
 // loginCmd represents the login command
 var loginCmd = &cobra.Command{
 	Use:   "login",
