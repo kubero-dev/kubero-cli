@@ -37,6 +37,6 @@ brews:
       owner: kubero-dev
       name: homebrew-kubero
     homepage: "https://www.kubero.dev"
-    description: "manage your kubero applications with the CLI"
+    description: "Manage your kubero applications with the CLI"
     test: |
       system "#{bin}/kubero", "--version"
