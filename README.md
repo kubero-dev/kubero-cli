@@ -6,6 +6,12 @@ The main repository is [here](https://github.com/kubero-dev/kubero). Please use 
 
 Download the latest release [here](https://github.com/kubero-dev/kubero-cli/releases/latest) and extract the binary.
 
+### Brew (MacOS, Linux)
+```
+brew tap kubero-dev/kubero
+brew install kubero-cli
+```
+
 ## Supported installer
 - Scaleway
 - Linode
@@ -75,8 +81,8 @@ export DIGITALOCEAN_ACCESS_TOKEN=xxx
 export GOOGLE_API_KEY=xxx
 ```
 
-### Development
+## Development
 Create a dev VERSION File
 ```
-echo "dev" > cmd/VERSION
+echo "dev" > cmd/kuberoCli/VERSION
 ```
