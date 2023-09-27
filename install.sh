@@ -57,6 +57,7 @@ if [ -f "/usr/local/bin/kubero" ]; then
 
     if [ "$replaceBinary" != "y" ]; then
         echo "Aborting installation."
+        echo $replaceBinary
         rm -rf "$temp_dir"
         exit 1
     fi
