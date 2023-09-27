@@ -9,6 +9,10 @@
 # Source: https://github.com/kubero-dev/kubero-cli                             #
 # Binary Release: https://github.com/kubero-dev/kubero-cli/releases/latest     #
 # License: Apache License 2.0                                                  #
+# Usage:                                                                       #
+#   curl -fsSL get.kubero.dev | bash                                           #
+#   curl -fsSL get.kubero.dev | bash -s -- v1.10.0                             #
+#   bash <(curl -fsSL get.kubero.dev) v1.9.2                                   #
 ################################################################################
 
 
@@ -55,9 +59,8 @@ if [ -f "/usr/local/bin/kubero" ]; then
     read -p "Do you want to replace it? [y/n] " replaceBinary
     echo
 
-    if [ "$replaceBinary" != "y" ]; then
+    if [ "$replaceBinary" != "y" ] && [ "$replaceBinary" != "" ]; then
         echo "Aborting installation."
-        echo $replaceBinary
         rm -rf "$temp_dir"
         exit 1
     fi
@@ -109,5 +112,6 @@ fi
 # Clean up the temporary directory
 rm -rf "$temp_dir"
 
+echo 
 echo "Kubero has been successfully installed."
 echo "Run 'kubero install' to create a kubernetes cluster."
