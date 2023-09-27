@@ -6,6 +6,11 @@ The main repository is [here](https://github.com/kubero-dev/kubero). Please use 
 
 Download the latest release [here](https://github.com/kubero-dev/kubero-cli/releases/latest) and extract the binary.
 
+### Shortcut (MacOS, Linux)
+```
+curl -fsSL get.kubero.dev | bash
+```
+
 ### Brew (MacOS, Linux)
 ```
 brew tap kubero-dev/kubero
