@@ -23,6 +23,6 @@ pipeline.yaml
 app.*.yaml
 kind.yaml
 
-cmd/VERSION
+cmd/kuberoCli/VERSION
 
 .kubero
