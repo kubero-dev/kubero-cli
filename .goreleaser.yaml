@@ -35,7 +35,8 @@ brews:
   -
     repository:
       owner: kubero-dev
-      name: kubero-cli
+      name: homebrew-kubero
+      token: $GORELEASER_GITHUB_TOKEN
     homepage: "https://www.kubero.dev"
     description: "Manage your kubero applications with the CLI"
     test: |
