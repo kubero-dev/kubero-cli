@@ -35,7 +35,7 @@ brews:
   -
     repository:
       owner: kubero-dev
-      name: homebrew-kubero
+      name: kubero-cli
     homepage: "https://www.kubero.dev"
     description: "Manage your kubero applications with the CLI"
     test: |
