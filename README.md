@@ -22,13 +22,13 @@ Download the latest release [here](https://github.com/kubero-dev/kubero-cli/rele
 Command map
 ```
     kubero
-    ├── install                 // create kubernetes cluster and install kubero with all required components
-*    ├── login                  // login to kubero, safe instance to credentials file
-*    ├── logout                 // logout from kubero, remove instance from credentials file
-*    ├── instance               // print current kubero instance
-*    │   ├── create             // create a configuration to a kubero instance
-*    │   ├── delete             // delete a configuration to a kubero instance
-*    │   ├── select             // select a kubero instance
+    ├── install                // create kubernetes cluster and install kubero with all required components
+    ├── login                  // login to kubero, safe instance to credentials file
+    ├── logout                 // logout from kubero, remove instance from credentials file
+    ├── instance               // print current kubero instance
+    │   ├── create             // create a configuration to a kubero instance
+    │   ├── delete             // delete a configuration to a kubero instance
+    │   ├── select             // select a kubero instance
     ├── create                 // create a new pipeline and app config
     │   ├── app
     │   └── pipeline
@@ -42,13 +42,13 @@ Command map
     ├── fetch                  // sync app and pipeline to local config
     │   ├── app
     │   └── pipeline
-    ├── config                  // print configurations
+    ├── config                 // print configurations
     │   ├── addons
     │   ├── buildpacks
     │   └── podsizes
-    ├── dashboard               // Open the kubero dashboard
-    ├── tunnel                  // Open a tunnel to a natted cluster
-    └── help                    // Help about any command   
+    ├── dashboard              // Open the kubero dashboard
+    ├── tunnel                 // Open a tunnel to a natted cluster
+    └── help                   // Help about any command   
 ```
 
 
