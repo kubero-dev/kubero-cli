@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
-set -eo pipefail
+
+
 ################################################################################
 # This Script is used to install kubero-cli binaries.                          #
-# Supported OS: Linux, macOS ---> Windows(not supported)                       #  
+#                                                                              #
+# Supported OS: Linux, macOS ---> Windows(not supported)                       #
 # Supported Architecture: amd64, arm64                                         #
 # Source: https://github.com/kubero-dev/kubero-cli                             #
 # Binary Release: https://github.com/kubero-dev/kubero-cli/releases/latest     #
 # License: Apache License 2.0                                                  #
 ################################################################################
+
+
+set -eo pipefail
+[[ $TRACE ]] && set -x
 
 # Function to detect the operating system
 get_os() {
@@ -46,8 +52,14 @@ fi
 # Check if there is already a binary installed
 if [ -f "/usr/local/bin/kubero" ]; then
     echo "There is already a binary installed in /usr/local/bin/kubero ."
-    rm -rf "$temp_dir"
-    exit 1
+    read -p "Do you want to replace it? [y/n] " replaceBinary
+    echo
+
+    if [ "$replaceBinary" != "y" ]; then
+        echo "Aborting installation."
+        rm -rf "$temp_dir"
+        exit 1
+    fi
 fi
 
 # Define the release URL
