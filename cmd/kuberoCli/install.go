@@ -573,6 +573,19 @@ func installKuberoUi() {
 		webhookURL := promptLine("URL to which the webhooks should be sent", "", "https://"+arg_domain+"/api/repo/webhooks")
 		kuberiUIConfig.Spec.Kubero.WebhookURL = webhookURL
 
+		kuberoUIssl := promptLine("Enable SSL for the Kubero UI", "[y/n]", "y")
+		if kuberoUIssl == "y" {
+			kuberiUIConfig.Spec.Ingress.Annotations.KubernetesIoIngressClass = "letsencrypt-prod"
+			kuberiUIConfig.Spec.Ingress.Annotations.KubernetesIoTLSacme = "true"
+
+			kuberiUIConfig.Spec.Ingress.TLS = []KuberoUItls{
+				{
+					Hosts:      []string{arg_domain},
+					SecretName: "kubero-tls",
+				},
+			}
+		}
+
 		if clusterType == "" {
 			clusterType = selectFromList("Which cluster type have you insalled?", clusterTypeList, "")
 		}
