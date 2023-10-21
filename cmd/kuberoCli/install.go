@@ -652,10 +652,12 @@ func installCertManagerSlim() {
 	}
 
 	certManagerSpinner := spinner.New("Install Cert Manager")
-	certManagerSpinner.Start("run command : kubectl create -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml")
-	_, certManagerErr := exec.Command("kubectl", "create", "-f", "https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml").Output()
+	//certmanagerUrl := "https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml"
+	certmanagerUrl := "https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml"
+	certManagerSpinner.Start("run command : kubectl create -f " + certmanagerUrl)
+	_, certManagerErr := exec.Command("kubectl", "create", "-f", certmanagerUrl).Output()
 	if certManagerErr != nil {
-		certManagerSpinner.Error("Failed to run command. Try runnig this command manually: kubectl create -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml")
+		certManagerSpinner.Error("Failed to run command. Try runnig this command manually: kubectl create -f " + certmanagerUrl)
 		log.Fatal(certManagerErr)
 	}
 
