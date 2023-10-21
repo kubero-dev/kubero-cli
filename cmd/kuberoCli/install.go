@@ -60,7 +60,6 @@ required binaries:
 			installKubernetes()
 			checkCluster()
 			return
-		case "all":
 		case "":
 			printInstallSteps()
 			installKubernetes()
@@ -96,7 +95,7 @@ var ingressControllerVersion = "v1.7.0" // https://github.com/kubernetes/ingress
 var clusterTypeList = []string{"kind", "linode", "scaleway", "gke", "digitalocean"}
 
 func init() {
-	installCmd.Flags().StringVarP(&arg_component, "component", "c", "", "install component (kubernetes,olm,ingress,metrics,certmanager,kubero-operator,kubero-ui,all)")
+	installCmd.Flags().StringVarP(&arg_component, "component", "c", "", "install component (kubernetes,olm,ingress,metrics,certmanager,kubero-operator,kubero-ui)")
 	installCmd.Flags().StringVarP(&arg_adminUser, "user", "u", "", "Admin username for the kubero UI")
 	installCmd.Flags().StringVarP(&arg_adminPassword, "user-password", "U", "", "Password for the admin user")
 	installCmd.Flags().StringVarP(&arg_apiToken, "apitoken", "a", "", "API token for the admin user")
