@@ -68,6 +68,11 @@ func printKubernetesVersion() {
 func checkKuberoOperator() {
 	cmdOut, _ := exec.Command("kubectl", "get", "deployments.apps", "-n", "kubero-operator-system").Output()
 	cfmt.Print(string(cmdOut))
+
+	cfmt.Println("{{\nKubero Operator Image}}::bold")
+	cmdOut, _ = exec.Command("kubectl", "get", "deployment", "kubero-operator-controller-manager", "-o=jsonpath={$.spec.template.spec.containers[:1].image}", "-n", "kubero-operator-system").Output()
+	cfmt.Print(string(cmdOut))
+	cfmt.Println("")
 }
 
 func checkKuberoUI() {
@@ -81,6 +86,11 @@ func checkKuberoUI() {
 	cfmt.Println("{{\nKubero UI Secrets}}::bold")
 	cmdOut, _ = exec.Command("kubectl", "get", "secrets", "-n", "kubero").Output()
 	cfmt.Print(string(cmdOut))
+
+	cfmt.Println("{{\nKubero UI Image}}::bold")
+	cmdOut, _ = exec.Command("kubectl", "get", "deployment", "kubero", "-o=jsonpath={$.spec.template.spec.containers[:1].image}", "-n", "kubero").Output()
+	cfmt.Print(string(cmdOut))
+	cfmt.Println("")
 }
 
 func checkCertManager() {
