@@ -179,7 +179,7 @@ func tellAChucknorrisJoke() {
 	jokesapi := resty.New().
 		SetHeader("Accept", "application/json").
 		SetHeader("Content-Type", "application/json").
-		SetHeader("User-Agent", "kubero-cli/0.0.1").
+		SetHeader("User-Agent", "kubero-cli/"+kuberoCliVersion).
 		SetBaseURL("https://api.chucknorris.io/jokes/random")
 
 	joke, _ := jokesapi.R().Get("?category=dev")
