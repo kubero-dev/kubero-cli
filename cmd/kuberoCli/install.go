@@ -562,16 +562,29 @@ func installKuberoUi() {
 		installer.SetBaseURL("https://raw.githubusercontent.com")
 		kf, _ := installer.R().Get("kubero-dev/kubero-operator/main/config/samples/application_v1alpha1_kubero.yaml")
 
-		var kuberiUIConfig KuberoUIConfig
-		yaml.Unmarshal(kf.Body(), &kuberiUIConfig)
+		var kuberoUIConfig KuberoUIConfig
+		yaml.Unmarshal(kf.Body(), &kuberoUIConfig)
 
 		if arg_domain == "" {
 			arg_domain = promptLine("Kuberi UI Domain", "", "kubero.lacolhost.com")
 		}
-		kuberiUIConfig.Spec.Ingress.Hosts[0].Host = arg_domain
+		kuberoUIConfig.Spec.Ingress.Hosts[0].Host = arg_domain
 
 		webhookURL := promptLine("URL to which the webhooks should be sent", "", "https://"+arg_domain+"/api/repo/webhooks")
-		kuberiUIConfig.Spec.Kubero.WebhookURL = webhookURL
+		kuberoUIConfig.Spec.Kubero.WebhookURL = webhookURL
+
+		kuberoUIssl := promptLine("Enable SSL for the Kubero UI", "[y/n]", "y")
+		if kuberoUIssl == "y" {
+			kuberoUIConfig.Spec.Ingress.Annotations.KubernetesIoIngressClass = "letsencrypt-prod"
+			kuberoUIConfig.Spec.Ingress.Annotations.KubernetesIoTLSacme = "true"
+
+			kuberoUIConfig.Spec.Ingress.TLS = []KuberoUItls{
+				{
+					Hosts:      []string{arg_domain},
+					SecretName: "kubero-tls",
+				},
+			}
+		}
 
 		if clusterType == "" {
 			clusterType = selectFromList("Which cluster type have you insalled?", clusterTypeList, "")
@@ -581,10 +594,10 @@ func installKuberoUi() {
 			clusterType == "digitalocean" ||
 			clusterType == "scaleway" ||
 			clusterType == "gke" {
-			kuberiUIConfig.Spec.Ingress.ClassName = "nginx"
+			kuberoUIConfig.Spec.Ingress.ClassName = "nginx"
 		}
 
-		kuberiUIYaml, _ := yaml.Marshal(kuberiUIConfig)
+		kuberiUIYaml, _ := yaml.Marshal(kuberoUIConfig)
 		kuberiUIErr := os.WriteFile("kuberoUI.yaml", kuberiUIYaml, 0644)
 		if kuberiUIErr != nil {
 			fmt.Println(kuberiUIErr)

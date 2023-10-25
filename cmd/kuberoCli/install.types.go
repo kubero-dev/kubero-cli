@@ -131,6 +131,8 @@ type KuberoUIConfig struct {
 		ImagePullSecrets []interface{} `yaml:"imagePullSecrets"`
 		Ingress          struct {
 			Annotations struct {
+				KubernetesIoIngressClass string `yaml:"cert-manager.io/cluster-issuer,omitempty"`
+				KubernetesIoTLSacme      string `yaml:"kubernetes.io/tls-acme,omitempty"`
 			} `yaml:"annotations"`
 			ClassName string `yaml:"className"`
 			Enabled   bool   `yaml:"enabled"`
@@ -141,7 +143,7 @@ type KuberoUIConfig struct {
 					PathType string `yaml:"pathType"`
 				} `yaml:"paths"`
 			} `yaml:"hosts"`
-			TLS []interface{} `yaml:"tls"`
+			TLS []KuberoUItls `yaml:"tls"`
 		} `yaml:"ingress"`
 		NameOverride string `yaml:"nameOverride"`
 		NodeSelector struct {
@@ -193,6 +195,10 @@ type KuberoUIConfig struct {
 			Config string `yaml:"config"`
 		} `yaml:"kubero"`
 	} `yaml:"spec"`
+}
+type KuberoUItls struct {
+	SecretName string   `yaml:"secretName"`
+	Hosts      []string `yaml:"hosts"`
 }
 
 // https://developers.scaleway.com/en/products/k8s/api/#post-612200
