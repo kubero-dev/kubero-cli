@@ -152,6 +152,19 @@ type KuberoUIConfig struct {
 		} `yaml:"podAnnotations"`
 		PodSecurityContext struct {
 		} `yaml:"podSecurityContext"`
+		Registry struct {
+			Enabled bool   `yaml:"enabled"`
+			Create  bool   `yaml:"create"`
+			Host    string `yaml:"host"`
+			Account struct {
+				Username string `yaml:"username"`
+				Password string `yaml:"password"`
+				Hash     string `yaml:"hash"`
+			} `yaml:"account"`
+			Port             int         `yaml:"port"`
+			Storage          string      `yaml:"storage"`
+			StorageClassName interface{} `yaml:"storageClassName"`
+		} `yaml:"registry"`
 		ReplicaCount int `yaml:"replicaCount"`
 		Resources    struct {
 		} `yaml:"resources"`

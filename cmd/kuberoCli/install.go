@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"strconv"
 	"time"
 
 	"encoding/json"
@@ -17,6 +18,7 @@ import (
 	"github.com/leaanthony/spinner"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/yaml.v3"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -586,6 +588,39 @@ func installKuberoUi() {
 			}
 		}
 
+		kuberoUIRegistry := promptLine("Enable Buildpipeline for Kubero (BETA)", "[y/n]", "n")
+		if kuberoUIRegistry == "y" {
+			kuberoUIConfig.Spec.Registry.Enabled = true
+
+			kuberoUICreateRegistry := promptLine("Create a local Registry for Kubero", "[y/n]", "n")
+			if kuberoUICreateRegistry == "y" {
+				kuberoUIConfig.Spec.Registry.Create = true
+			}
+
+			kuberoUIRegistryPort := promptLine("Registry port", "", "443")
+			kuberoUIConfig.Spec.Registry.Port, _ = strconv.Atoi(kuberoUIRegistryPort)
+
+			kuberoUIRegistryHost := promptLine("Registry domain", "", "registry."+arg_domain)
+			kuberoUIConfig.Spec.Registry.Host = kuberoUIRegistryHost
+
+			kuberoUIRegistryUsername := promptLine("Registry username", "", "admin")
+			kuberoUIConfig.Spec.Registry.Account.Username = kuberoUIRegistryUsername
+
+			kuberoUIRegistryPassword := promptLine("Registry password", "", generateRandomString(12, ""))
+			kuberoUIConfig.Spec.Registry.Account.Password = kuberoUIRegistryPassword
+
+			kuberoUIRegistryPasswordBytes, _ := bcrypt.GenerateFromPassword([]byte(kuberoUIRegistryPassword), 14)
+			kuberoUIConfig.Spec.Registry.Account.Hash = string(kuberoUIRegistryPasswordBytes)
+
+			kuberoUIRegistryStorage := promptLine("Registry storage size", "", "10Gi")
+			kuberoUIConfig.Spec.Registry.Storage = kuberoUIRegistryStorage
+
+			storageClassList := getAvailableStorageClasses()
+
+			kuberoUIRegistryStorageClassName := selectFromList("Registry storage class", storageClassList, "")
+			kuberoUIConfig.Spec.Registry.StorageClassName = kuberoUIRegistryStorageClassName
+		}
+
 		if clusterType == "" {
 			clusterType = selectFromList("Which cluster type have you insalled?", clusterTypeList, "")
 		}
@@ -831,4 +866,41 @@ func generateRandomString(length int, chars string) string {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
 	}
 	return string(b)
+}
+
+func getAvailableStorageClasses() []string {
+	var storageClasses []string
+	storageClassesRaw, _ := exec.Command("kubectl", "get", "storageclasses", "-o", "json").Output()
+	var storageClassesList StorageClassesList
+	json.Unmarshal(storageClassesRaw, &storageClassesList)
+	for _, storageClass := range storageClassesList.Items {
+		storageClasses = append(storageClasses, storageClass.Metadata.Name)
+	}
+	return storageClasses
+}
+
+type StorageClassesList struct {
+	APIVersion string `json:"apiVersion"`
+	Items      []struct {
+		APIVersion string `json:"apiVersion"`
+		Kind       string `json:"kind"`
+		Metadata   struct {
+			Annotations struct {
+				KubectlKubernetesIoLastAppliedConfiguration string `json:"kubectl.kubernetes.io/last-applied-configuration"`
+				StorageclassKubernetesIoIsDefaultClass      string `json:"storageclass.kubernetes.io/is-default-class"`
+			} `json:"annotations"`
+			CreationTimestamp time.Time `json:"creationTimestamp"`
+			Name              string    `json:"name"`
+			ResourceVersion   string    `json:"resourceVersion"`
+			UID               string    `json:"uid"`
+		} `json:"metadata"`
+		Provisioner       string `json:"provisioner"`
+		ReclaimPolicy     string `json:"reclaimPolicy"`
+		VolumeBindingMode string `json:"volumeBindingMode"`
+	} `json:"items"`
+	Kind     string `json:"kind"`
+	Metadata struct {
+		ResourceVersion string `json:"resourceVersion"`
+		SelfLink        string `json:"selfLink"`
+	} `json:"metadata"`
 }
