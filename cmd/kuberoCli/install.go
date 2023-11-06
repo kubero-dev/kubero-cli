@@ -426,7 +426,7 @@ func installIngress() {
 	} else {
 		ingressInstall = promptLine("3) Install Ingress", "[y,n]", "y") == "y"
 	}
-	if !ingressInstall {
+	if !ingressInstall || len(ingressReadyLabel) == 0 {
 		return
 	} else {
 
