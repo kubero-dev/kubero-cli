@@ -343,7 +343,7 @@ func installOLM() {
 	if len(olmCRDInstalled) > 0 {
 		cfmt.Println("{{✓ OLM CRD's already installed}}::lightGreen")
 	} else {
-		olmSpinner.Start("run command : kubectl create -f " + olmURL + "/olm.yaml")
+		olmSpinner.Start("run command : kubectl create -f " + olmURL + "/crds.yaml")
 		_, olmCRDErr := exec.Command("kubectl", "create", "-f", olmURL+"/crds.yaml").Output()
 		if olmCRDErr != nil {
 			fmt.Println("")
@@ -929,7 +929,7 @@ func installOLMCertManager() {
 
 	certManagerInstalled, _ := exec.Command("kubectl", "get", "deployment", "cert-manager-webhook", "-n", "operators").Output()
 	if len(certManagerInstalled) > 0 {
-		cfmt.Println("{{✓ Cert Manager allready installed}}::lightGreen")
+		cfmt.Println("{{✓ Cert Manager already installed}}::lightGreen")
 		return
 	}
 
