@@ -148,7 +148,7 @@ type KuberoConfig struct {
 			Local            bool   `yaml:"local" default:"false"`
 			Host             string `yaml:"host"`
 			Port             string `yaml:"port" default:"443"`
-			Username         string `yaml:"username"`
+			Username         string `yaml:"username" default:"admin"`
 			Password         string `yaml:"password"`
 			StorageSize      string `yaml:"storageSize" default:"10Gi"`
 			StorageClassName string `yaml:"storageClassName" default:""`

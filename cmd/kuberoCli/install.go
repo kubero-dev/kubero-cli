@@ -142,6 +142,11 @@ func init() {
 func writeInstallCLIConfig() {
 	if arg_generate_config {
 		// Write config file
+		kuberoConfig.KuberoUI.WebhookSecret = generateRandomString(20, "")
+		kuberoConfig.KuberoUI.SessionKey = generateRandomString(20, "")
+		kuberoConfig.KuberoUI.Registry.Password = generateRandomString(20, "")
+		kuberoConfig.KuberoUI.AdminPassword = generateRandomString(12, "")
+		kuberoConfig.KuberoUI.ApiToken = generateRandomString(20, "")
 		kuberoConfigYaml, _ := yaml.Marshal(kuberoConfig)
 		kuberoConfigErr := os.WriteFile("kuberoInstallConfigSample.yaml", kuberoConfigYaml, 0644)
 		if kuberoConfigErr != nil {
@@ -409,7 +414,7 @@ func installMetrics() {
 
 func installIngress() {
 	// TODO: is this check correct? The ingress-nginx yaml contains this selector by default which blocks the install when no nodes have this label
-	ingressReadyLabel, _ := exec.Command("kubectl", "get", "nodes", "--selector=ingress-nginx=true", "-o", "jsonpath='{.items[*].metadata.name}'").Output()
+	ingressReadyLabel, _ := exec.Command("kubectl", "get", "nodes", "--selector=ingress-ready=true", "-o", "jsonpath='{.items[*].metadata.name}'").Output()
 	if len(ingressReadyLabel) == 0 {
 		cfmt.Println("{{✗ Ingress: no nodes with label ingress-ready=true found}}::red")
 	}
@@ -565,12 +570,9 @@ func installKuberoUi() {
 		if kuberoConfig.configLoaded {
 			webhookSecret = kuberoConfig.KuberoUI.WebhookSecret
 			sessionKey = kuberoConfig.KuberoUI.SessionKey
-			arg_adminUser = "admin"
-			arg_adminPassword = generateRandomString(12, "")
-			arg_apiToken = generateRandomString(20, "")
-			if kuberoConfig.KuberoUI.AdminUser != "" {
-				arg_adminUser = kuberoConfig.KuberoUI.AdminUser
-			}
+			arg_adminUser = kuberoConfig.KuberoUI.AdminUser
+			arg_adminPassword = kuberoConfig.KuberoUI.AdminPassword
+			arg_apiToken = kuberoConfig.KuberoUI.ApiToken
 		} else {
 			webhookSecret = promptLine("Random string for your webhook secret", "", webhookSecret)
 			sessionKey = promptLine("Random string for your session key", "", sessionKey)
