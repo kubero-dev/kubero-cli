@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
+	"github.com/creasty/defaults"
+	"k8s.io/utils/strings/slices"
 	"log"
 	"math/rand"
 	"os"
@@ -23,6 +25,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+var kuberoConfig KuberoConfig
+
 // installCmd represents the install command
 var installCmd = &cobra.Command{
 	Use:   "install",
@@ -37,7 +41,29 @@ required binaries:
 
 		rand.Seed(time.Now().UnixNano())
 
+		if err := defaults.Set(&kuberoConfig); err != nil {
+			panic(err)
+		}
+
+		if arg_generate_config {
+			writeInstallCLIConfig()
+			return
+		}
+
 		checkAllBinaries()
+
+		// Check config file
+		if arg_config != "" {
+			// Read yaml
+			yamlFile, err := os.ReadFile(arg_config)
+			if err != nil {
+				log.Fatal(err)
+			}
+			yaml.Unmarshal(yamlFile, &kuberoConfig)
+			kuberoConfig.configLoaded = true
+			clusterType = kuberoConfig.ClusterType
+			cfmt.Println("{{✓ Kubero install config loaded}}::lightGreen")
+		}
 
 		switch arg_component {
 		case "metrics":
@@ -89,6 +115,8 @@ var arg_apiToken string
 var arg_port string
 var arg_portSecure string
 var clusterType string
+var arg_config string
+var arg_generate_config bool
 var arg_component string
 var install_olm bool
 var ingressControllerVersion = "v1.7.0" // https://github.com/kubernetes/ingress-nginx/tags -> controller-v1.5.1
@@ -97,6 +125,8 @@ var ingressControllerVersion = "v1.7.0" // https://github.com/kubernetes/ingress
 var clusterTypeList = []string{"kind", "linode", "scaleway", "gke", "digitalocean"}
 
 func init() {
+	installCmd.Flags().StringVar(&arg_config, "config", "", "config file yaml to propmtless install kubero")
+	installCmd.Flags().BoolVar(&arg_generate_config, "generate-config", false, "generate config file yaml to propmtless install kubero")
 	installCmd.Flags().StringVarP(&arg_component, "component", "c", "", "install component (kubernetes,olm,ingress,metrics,certmanager,kubero-operator,kubero-ui)")
 	installCmd.Flags().StringVarP(&arg_adminUser, "user", "u", "", "Admin username for the kubero UI")
 	installCmd.Flags().StringVarP(&arg_adminPassword, "user-password", "U", "", "Password for the admin user")
@@ -107,6 +137,19 @@ func init() {
 	rootCmd.AddCommand(installCmd)
 
 	install_olm = false
+}
+
+func writeInstallCLIConfig() {
+	if arg_generate_config {
+		// Write config file
+		kuberoConfigYaml, _ := yaml.Marshal(kuberoConfig)
+		kuberoConfigErr := os.WriteFile("kuberoInstallConfigSample.yaml", kuberoConfigYaml, 0644)
+		if kuberoConfigErr != nil {
+			fmt.Println(kuberoConfigErr)
+			return
+		}
+		cfmt.Println("{{✓ Kubero install config file generated to kuberoInstallConfigSample.yaml - make a copy to avoid being overwritten}}::lightGreen")
+	}
 }
 
 func checkAllBinaries() {
@@ -151,12 +194,18 @@ func checkBinary(binary string) bool {
 }
 
 func installKubernetes() {
-	kubernetesInstall := promptLine("1) Create a kubernetes cluster", "[y,n]", "y")
-	if kubernetesInstall != "y" {
-		return
-	}
+	if kuberoConfig.configLoaded {
+		if !kuberoConfig.Install.Kubernetes {
+			return
+		}
+	} else {
+		kubernetesInstall := promptLine("1) Create a kubernetes cluster", "[y,n]", "y")
+		if kubernetesInstall != "y" {
+			return
+		}
 
-	clusterType = selectFromList("Select a Kubernetes provider", clusterTypeList, "")
+		clusterType = selectFromList("Select a Kubernetes provider", clusterTypeList, "")
+	}
 
 	switch clusterType {
 	case "scaleway":
@@ -232,6 +281,10 @@ func checkCluster() {
 	out, _ := exec.Command("kubectl", "config", "get-contexts").Output()
 	fmt.Println(string(out))
 
+	if kuberoConfig.configLoaded {
+		return
+	}
+
 	clusterselect := promptLine("Is the CURRENT cluster the one you wish to install Kubero?", "[y,n]", "y")
 	if clusterselect == "n" {
 		os.Exit(0)
@@ -242,7 +295,7 @@ func installOLM() {
 
 	openshiftInstalled, _ := exec.Command("kubectl", "get", "deployment", "olm-operator", "-n", "openshift-operator-lifecycle-manager").Output()
 	if len(openshiftInstalled) > 0 {
-		cfmt.Println("{{✓ OLM is allredy installed}}::lightGreen")
+		cfmt.Println("{{✓ OLM is already installed}}::lightGreen")
 		return
 	}
 
@@ -250,26 +303,40 @@ func installOLM() {
 	namespace := "olm"
 	olmInstalled, _ := exec.Command("kubectl", "get", "deployment", "olm-operator", "-n", namespace).Output()
 	if len(olmInstalled) > 0 {
-		cfmt.Println("{{✓ OLM is allredy installed}}::lightGreen")
+		cfmt.Println("{{✓ OLM is already installed}}::lightGreen")
 		return
 	}
 
-	olmInstall := promptLine("2) Install OLM", "[y,n]", "n")
-	if olmInstall != "y" {
-		install_olm = false
-		return
+	olmRelease := "0.23.1"
+
+	if kuberoConfig.configLoaded {
+		install_olm = kuberoConfig.Install.OLM
+		if !install_olm {
+			return
+		}
+
+		if kuberoConfig.OLMRelease != "" {
+			olmRelease = kuberoConfig.OLMRelease
+		}
 	} else {
-		install_olm = true
+		olmInstall := promptLine("2) Install OLM", "[y,n]", "n")
+		if olmInstall != "y" {
+			install_olm = false
+			return
+		} else {
+			install_olm = true
+		}
+
+		olmRelease = promptLine("Install OLM from which release?", "[0.20.0,0.21.0,0.22.0,0.23.1]", "0.23.1")
 	}
 
-	olmRelease := promptLine("Install OLM from which release?", "[0.20.0,0.21.0,0.22.0,0.23.1]", "0.23.1")
 	olmURL := "https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v" + olmRelease
 
 	olmSpinner := spinner.New("Install OLM")
 
 	olmCRDInstalled, _ := exec.Command("kubectl", "get", "crd", "subscriptions.operators.coreos.com").Output()
 	if len(olmCRDInstalled) > 0 {
-		cfmt.Println("{{✓ OLM CRD's allredy installed}}::lightGreen")
+		cfmt.Println("{{✓ OLM CRD's already installed}}::lightGreen")
 	} else {
 		olmSpinner.Start("run command : kubectl create -f " + olmURL + "/olm.yaml")
 		_, olmCRDErr := exec.Command("kubectl", "create", "-f", olmURL+"/crds.yaml").Output()
@@ -315,12 +382,18 @@ func installMetrics() {
 
 	installed, _ := exec.Command("kubectl", "get", "deployments.apps", "metrics-server", "-n", "kube-system").Output()
 	if len(installed) > 0 {
-		cfmt.Println("{{✓ Metrics is allredy enabled}}::lightGreen")
+		cfmt.Println("{{✓ Metrics is already enabled}}::lightGreen")
 		return
 	}
-	install := promptLine("4) Install Kubernetes internal metrics service (required for HPA and stats)", "[y,n]", "y")
-	if install != "y" {
-		return
+	if kuberoConfig.configLoaded {
+		if !kuberoConfig.Install.Metrics {
+			return
+		}
+	} else {
+		install := promptLine("4) Install Kubernetes internal metrics service (required for HPA and stats)", "[y,n]", "y")
+		if install != "y" {
+			return
+		}
 	}
 
 	//components := "https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml"
@@ -335,15 +408,24 @@ func installMetrics() {
 }
 
 func installIngress() {
+	ingressReadyLabel, _ := exec.Command("kubectl", "get", "nodes", "--selector=ingress-ready=true", "-o", "jsonpath='{.items[*].metadata.name}'").Output()
+	if len(ingressReadyLabel) == 0 {
+		cfmt.Println("{{✗ Ingress: no nodes with label ingress-ready=true found}}::red")
+	}
 
 	ingressInstalled, _ := exec.Command("kubectl", "get", "ns", "ingress-nginx").Output()
 	if len(ingressInstalled) > 0 {
-		cfmt.Println("{{✓ Ingress is allredy installed}}::lightGreen")
+		cfmt.Println("{{✓ Ingress is already installed}}::lightGreen")
 		return
 	}
 
-	ingressInstall := promptLine("3) Install Ingress", "[y,n]", "y")
-	if ingressInstall != "y" {
+	ingressInstall := true
+	if kuberoConfig.configLoaded {
+		ingressInstall = kuberoConfig.Install.Ingress
+	} else {
+		ingressInstall = promptLine("3) Install Ingress", "[y,n]", "y") == "y"
+	}
+	if !ingressInstall {
 		return
 	} else {
 
@@ -364,9 +446,13 @@ func installIngress() {
 		case "digitalocean":
 			prefill = "do"
 		}
-
-		ingressProviderList := []string{"kind", "aws", "baremetal", "cloud", "do", "exoscale", "scw"}
-		ingressProvider := selectFromList("Provider [kind, aws, baremetal, cloud(Azure,Google,Oracle,Linode), do(digital ocean), exoscale, scw(scaleway)]", ingressProviderList, prefill)
+		ingressProvider := prefill
+		if kuberoConfig.configLoaded {
+			ingressProvider = kuberoConfig.IngressProvider
+		} else {
+			ingressProviderList := []string{"kind", "aws", "baremetal", "cloud", "do", "exoscale", "scw"}
+			ingressProvider = selectFromList("Provider [kind, aws, baremetal, cloud(Azure,Google,Oracle,Linode), do(digital ocean), exoscale, scw(scaleway)]", ingressProviderList, prefill)
+		}
 
 		ingressSpinner := spinner.New("Install Ingress")
 		URL := "https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-" + ingressControllerVersion + "/deploy/static/provider/" + ingressProvider + "/deploy.yaml"
@@ -387,7 +473,7 @@ func installKuberoOperator() {
 
 	kuberoInstalled, _ := exec.Command("kubectl", "get", "operator", "kubero-operator.operators").Output()
 	if len(kuberoInstalled) > 0 {
-		cfmt.Println("{{✓ Kubero Operator is allredy installed}}::lightGreen")
+		cfmt.Println("{{✓ Kubero Operator is already installed}}::lightGreen")
 		return
 	}
 
@@ -445,9 +531,13 @@ func installKuberoOperatorSlim() {
 }
 
 func installKuberoUi() {
-
-	ingressInstall := promptLine("7) Install Kubero UI", "[y,n]", "y")
-	if ingressInstall != "y" {
+	kuberoUIInstall := true
+	if kuberoConfig.configLoaded {
+		kuberoUIInstall = kuberoConfig.Install.KuberoUI
+	} else {
+		kuberoUIInstall = promptLine("7) Install Kubero UI", "[y,n]", "y") == "y"
+	}
+	if !kuberoUIInstall {
 		return
 	}
 
@@ -468,21 +558,33 @@ func installKuberoUi() {
 	if len(kuberoSecretInstalled) > 0 {
 		cfmt.Println("{{✓ Kubero Secret exists}}::lightGreen")
 	} else {
+		webhookSecret := generateRandomString(20, "")
+		sessionKey := generateRandomString(20, "")
 
-		webhookSecret := promptLine("Random string for your webhook secret", "", generateRandomString(20, ""))
+		if kuberoConfig.configLoaded {
+			webhookSecret = kuberoConfig.KuberoUI.WebhookSecret
+			sessionKey = kuberoConfig.KuberoUI.SessionKey
+			arg_adminUser = "admin"
+			arg_adminPassword = generateRandomString(12, "")
+			arg_apiToken = generateRandomString(20, "")
+			if kuberoConfig.KuberoUI.AdminUser != "" {
+				arg_adminUser = kuberoConfig.KuberoUI.AdminUser
+			}
+		} else {
+			webhookSecret = promptLine("Random string for your webhook secret", "", webhookSecret)
+			sessionKey = promptLine("Random string for your session key", "", sessionKey)
 
-		sessionKey := promptLine("Random string for your session key", "", generateRandomString(20, ""))
+			if arg_adminUser == "" {
+				arg_adminUser = promptLine("Admin User", "", "admin")
+			}
 
-		if arg_adminUser == "" {
-			arg_adminUser = promptLine("Admin User", "", "admin")
-		}
+			if arg_adminPassword == "" {
+				arg_adminPassword = promptLine("Admin Password", "", generateRandomString(12, ""))
+			}
 
-		if arg_adminPassword == "" {
-			arg_adminPassword = promptLine("Admin Password", "", generateRandomString(12, ""))
-		}
-
-		if arg_apiToken == "" {
-			arg_apiToken = promptLine("Random string for admin API token", "", generateRandomString(20, ""))
+			if arg_apiToken == "" {
+				arg_apiToken = promptLine("Random string for admin API token", "", generateRandomString(20, ""))
+			}
 		}
 
 		var userDB []User
@@ -496,51 +598,73 @@ func installKuberoUi() {
 			"--from-literal=KUBERO_USERS="+userDBencoded,
 		)
 
-		githubConfigure := promptLine("Configure Github", "[y,n]", "y")
-		githubPersonalAccessToken := ""
-		if githubConfigure == "y" {
-			githubPersonalAccessToken = promptLine("Github personal access token", "", "")
-			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITHUB_PERSONAL_ACCESS_TOKEN="+githubPersonalAccessToken)
-		}
+		if kuberoConfig.configLoaded {
+			if kuberoConfig.KuberoUI.Github.Enabled {
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITHUB_PERSONAL_ACCESS_TOKEN="+kuberoConfig.KuberoUI.Github.PersonalAccessToken)
+			}
+			if kuberoConfig.KuberoUI.Gitea.Enabled {
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITEA_PERSONAL_ACCESS_TOKEN="+kuberoConfig.KuberoUI.Gitea.PersonalAccessToken)
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITEA_BASEURL="+kuberoConfig.KuberoUI.Gitea.BaseURL)
+			}
+			if kuberoConfig.KuberoUI.Gogs.Enabled {
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GOGS_PERSONAL_ACCESS_TOKEN="+kuberoConfig.KuberoUI.Gogs.PersonalAccessToken)
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GOGS_BASEURL="+kuberoConfig.KuberoUI.Gogs.BaseURL)
+			}
+			if kuberoConfig.KuberoUI.Gitlab.Enabled {
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITLAB_PERSONAL_ACCESS_TOKEN="+kuberoConfig.KuberoUI.Gitlab.PersonalAccessToken)
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITLAB_BASEURL="+kuberoConfig.KuberoUI.Gitlab.BaseURL)
+			}
+			if kuberoConfig.KuberoUI.Bitbucket.Enabled {
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=BITBUCKET_USERNAME="+kuberoConfig.KuberoUI.Bitbucket.Username)
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=BITBUCKET_APP_PASSWORD="+kuberoConfig.KuberoUI.Bitbucket.AppPassword)
+			}
+		} else {
+			githubConfigure := promptLine("Configure Github", "[y,n]", "y")
+			githubPersonalAccessToken := ""
+			if githubConfigure == "y" {
+				githubPersonalAccessToken = promptLine("Github personal access token", "", "")
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITHUB_PERSONAL_ACCESS_TOKEN="+githubPersonalAccessToken)
+			}
 
-		giteaConfigure := promptLine("Configure Gitea", "[y,n]", "n")
-		giteaPersonalAccessToken := ""
-		giteaBaseUrl := ""
-		if giteaConfigure == "y" {
-			giteaPersonalAccessToken = promptLine("Gitea personal access token", "", "")
-			giteaBaseUrl = promptLine("Gitea URL", "http://localhost:3000", "")
-			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITEA_PERSONAL_ACCESS_TOKEN="+giteaPersonalAccessToken)
-			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITEA_BASEURL="+giteaBaseUrl)
-		}
+			giteaConfigure := promptLine("Configure Gitea", "[y,n]", "n")
+			giteaPersonalAccessToken := ""
+			giteaBaseUrl := ""
+			if giteaConfigure == "y" {
+				giteaPersonalAccessToken = promptLine("Gitea personal access token", "", "")
+				giteaBaseUrl = promptLine("Gitea URL", "http://localhost:3000", "")
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITEA_PERSONAL_ACCESS_TOKEN="+giteaPersonalAccessToken)
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITEA_BASEURL="+giteaBaseUrl)
+			}
 
-		gogsConfigure := promptLine("Configure Gogs", "[y,n]", "n")
-		gogsPersonalAccessToken := ""
-		gogsBaseUrl := ""
-		if gogsConfigure == "y" {
-			gogsPersonalAccessToken = promptLine("Gogs personal access token", "", "")
-			gogsBaseUrl = promptLine("Gogs URL", "http://localhost:3000", "")
-			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GOGS_PERSONAL_ACCESS_TOKEN="+gogsPersonalAccessToken)
-			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GOGS_BASEURL="+gogsBaseUrl)
-		}
+			gogsConfigure := promptLine("Configure Gogs", "[y,n]", "n")
+			gogsPersonalAccessToken := ""
+			gogsBaseUrl := ""
+			if gogsConfigure == "y" {
+				gogsPersonalAccessToken = promptLine("Gogs personal access token", "", "")
+				gogsBaseUrl = promptLine("Gogs URL", "http://localhost:3000", "")
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GOGS_PERSONAL_ACCESS_TOKEN="+gogsPersonalAccessToken)
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GOGS_BASEURL="+gogsBaseUrl)
+			}
 
-		gitlabConfigure := promptLine("Configure Gitlab", "[y,n]", "n")
-		gitlabPersonalAccessToken := ""
-		gitlabBaseUrl := ""
-		if gitlabConfigure == "y" {
-			gitlabPersonalAccessToken = promptLine("Gitlab personal access token", "", "")
-			gitlabBaseUrl = promptLine("Gitlab URL", "http://localhost:3080", "")
-			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITLAB_PERSONAL_ACCESS_TOKEN="+gitlabPersonalAccessToken)
-			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITLAB_BASEURL="+gitlabBaseUrl)
-		}
+			gitlabConfigure := promptLine("Configure Gitlab", "[y,n]", "n")
+			gitlabPersonalAccessToken := ""
+			gitlabBaseUrl := ""
+			if gitlabConfigure == "y" {
+				gitlabPersonalAccessToken = promptLine("Gitlab personal access token", "", "")
+				gitlabBaseUrl = promptLine("Gitlab URL", "http://localhost:3080", "")
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITLAB_PERSONAL_ACCESS_TOKEN="+gitlabPersonalAccessToken)
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITLAB_BASEURL="+gitlabBaseUrl)
+			}
 
-		bitbucketConfigure := promptLine("Configure Bitbucket", "[y,n]", "n")
-		bitbucketUsername := ""
-		bitbucketAppPassword := ""
-		if bitbucketConfigure == "y" {
-			bitbucketUsername = promptLine("Bitbucket Username", "", "")
-			bitbucketAppPassword = promptLine("Bitbucket App Password", "", "")
-			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=BITBUCKET_USERNAME="+bitbucketUsername)
-			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=BITBUCKET_APP_PASSWORD="+bitbucketAppPassword)
+			bitbucketConfigure := promptLine("Configure Bitbucket", "[y,n]", "n")
+			bitbucketUsername := ""
+			bitbucketAppPassword := ""
+			if bitbucketConfigure == "y" {
+				bitbucketUsername = promptLine("Bitbucket Username", "", "")
+				bitbucketAppPassword = promptLine("Bitbucket App Password", "", "")
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=BITBUCKET_USERNAME="+bitbucketUsername)
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=BITBUCKET_APP_PASSWORD="+bitbucketAppPassword)
+			}
 		}
 
 		createSecretCommand.Args = append(createSecretCommand.Args, "-n", "kubero")
@@ -567,16 +691,26 @@ func installKuberoUi() {
 		var kuberoUIConfig KuberoUIConfig
 		yaml.Unmarshal(kf.Body(), &kuberoUIConfig)
 
-		if arg_domain == "" {
-			arg_domain = promptLine("Kuberi UI Domain", "", "kubero.lacolhost.com")
-		}
-		kuberoUIConfig.Spec.Ingress.Hosts[0].Host = arg_domain
+		webhookURL := "https://" + arg_domain + "/api/repo/webhooks"
+		kuberoUIssl := true
 
-		webhookURL := promptLine("URL to which the webhooks should be sent", "", "https://"+arg_domain+"/api/repo/webhooks")
+		if kuberoConfig.configLoaded {
+			arg_domain = kuberoConfig.KuberoUI.UI.Host
+			webhookURL = kuberoConfig.KuberoUI.UI.WebhookUrl
+			kuberoUIssl = kuberoConfig.KuberoUI.UI.SSL
+		} else {
+			if arg_domain == "" {
+				arg_domain = promptLine("Kuberi UI Domain", "", "kubero.localhost.com")
+			}
+
+			webhookURL = promptLine("URL to which the webhooks should be sent", "", "https://"+arg_domain+"/api/repo/webhooks")
+			kuberoUIssl = promptLine("Enable SSL for the Kubero UI", "[y/n]", "y") == "y"
+		}
+
+		kuberoUIConfig.Spec.Ingress.Hosts[0].Host = arg_domain
 		kuberoUIConfig.Spec.Kubero.WebhookURL = webhookURL
 
-		kuberoUIssl := promptLine("Enable SSL for the Kubero UI", "[y/n]", "y")
-		if kuberoUIssl == "y" {
+		if kuberoUIssl {
 			kuberoUIConfig.Spec.Ingress.Annotations.KubernetesIoIngressClass = "letsencrypt-prod"
 			kuberoUIConfig.Spec.Ingress.Annotations.KubernetesIoTLSacme = "true"
 
@@ -588,40 +722,67 @@ func installKuberoUi() {
 			}
 		}
 
-		kuberoUIRegistry := promptLine("Enable Buildpipeline for Kubero (BETA)", "[y/n]", "n")
-		if kuberoUIRegistry == "y" {
+		kuberoUIRegistry := false
+		if kuberoConfig.configLoaded {
+			kuberoUIRegistry = kuberoConfig.KuberoUI.Registry.Enabled
+		} else {
+			kuberoUIRegistry = promptLine("Enable Buildpipeline for Kubero (BETA)", "[y/n]", "n") == "y"
+		}
+		if kuberoUIRegistry {
 			kuberoUIConfig.Spec.Registry.Enabled = true
 
-			kuberoUICreateRegistry := promptLine("Create a local Registry for Kubero", "[y/n]", "n")
-			if kuberoUICreateRegistry == "y" {
+			kuberoUICreateRegistry := false
+			kuberoUIRegistryPort := "443"
+			kuberoUIRegistryHost := "registry." + arg_domain
+			kuberoUIRegistryUsername := "admin"
+			kuberoUIRegistryPassword := generateRandomString(12, "")
+			kuberoUIRegistryStorage := "10Gi"
+
+			storageClassList := getAvailableStorageClasses()
+			kuberoUIRegistryStorageClassName := ""
+
+			if kuberoConfig.configLoaded {
+				kuberoUICreateRegistry = kuberoConfig.KuberoUI.Registry.Local
+				kuberoUIRegistryPort = kuberoConfig.KuberoUI.Registry.Port
+				if kuberoConfig.KuberoUI.Registry.Host != "" {
+					kuberoUIRegistryHost = kuberoConfig.KuberoUI.Registry.Host
+				}
+				kuberoUIRegistryUsername = kuberoConfig.KuberoUI.Registry.Username
+				kuberoUIRegistryPassword = kuberoConfig.KuberoUI.Registry.Password
+				kuberoUIRegistryStorage = kuberoConfig.KuberoUI.Registry.StorageSize
+				kuberoUIRegistryStorageClassName = kuberoConfig.KuberoUI.Registry.StorageClassName
+
+				if !slices.Contains(storageClassList, kuberoUIRegistryStorageClassName) {
+					cfmt.Println("{{✗ The storage class " + kuberoUIRegistryStorageClassName + " is not available.}}::red")
+					return
+				}
+			} else {
+				kuberoUICreateRegistry = promptLine("Create a local Registry for Kubero", "[y/n]", "n") == "y"
+				kuberoUIRegistryPort = promptLine("Registry port", "", "443")
+				kuberoUIRegistryHost = promptLine("Registry domain", "", "registry."+arg_domain)
+				kuberoUIRegistryUsername = promptLine("Registry username", "", "admin")
+				kuberoUIRegistryPassword = promptLine("Registry password", "", generateRandomString(12, ""))
+				kuberoUIRegistryStorage = promptLine("Registry storage size", "", "10Gi")
+				kuberoUIRegistryStorageClassName = selectFromList("Registry storage class", storageClassList, "")
+			}
+
+			if kuberoUICreateRegistry {
 				kuberoUIConfig.Spec.Registry.Create = true
 			}
 
-			kuberoUIRegistryPort := promptLine("Registry port", "", "443")
 			kuberoUIConfig.Spec.Registry.Port, _ = strconv.Atoi(kuberoUIRegistryPort)
-
-			kuberoUIRegistryHost := promptLine("Registry domain", "", "registry."+arg_domain)
 			kuberoUIConfig.Spec.Registry.Host = kuberoUIRegistryHost
-
-			kuberoUIRegistryUsername := promptLine("Registry username", "", "admin")
 			kuberoUIConfig.Spec.Registry.Account.Username = kuberoUIRegistryUsername
-
-			kuberoUIRegistryPassword := promptLine("Registry password", "", generateRandomString(12, ""))
 			kuberoUIConfig.Spec.Registry.Account.Password = kuberoUIRegistryPassword
 
 			kuberoUIRegistryPasswordBytes, _ := bcrypt.GenerateFromPassword([]byte(kuberoUIRegistryPassword), 14)
 			kuberoUIConfig.Spec.Registry.Account.Hash = string(kuberoUIRegistryPasswordBytes)
 
-			kuberoUIRegistryStorage := promptLine("Registry storage size", "", "10Gi")
 			kuberoUIConfig.Spec.Registry.Storage = kuberoUIRegistryStorage
-
-			storageClassList := getAvailableStorageClasses()
-
-			kuberoUIRegistryStorageClassName := selectFromList("Registry storage class", storageClassList, "")
 			kuberoUIConfig.Spec.Registry.StorageClassName = kuberoUIRegistryStorageClassName
 		}
 
-		if clusterType == "" {
+		if clusterType == "" && !kuberoConfig.configLoaded {
 			clusterType = selectFromList("Which cluster type have you insalled?", clusterTypeList, "")
 		}
 
@@ -677,9 +838,13 @@ func installKuberoUi() {
 }
 
 func installCertManager() {
-
-	install := promptLine("5) Install SSL Certmanager", "[y,n]", "y")
-	if install != "y" {
+	install := true
+	if kuberoConfig.configLoaded {
+		install = kuberoConfig.Install.CertManager
+	} else {
+		install = promptLine("5) Install SSL Certmanager", "[y,n]", "y") == "y"
+	}
+	if !install {
 		return
 	}
 
@@ -731,8 +896,11 @@ func installCertManagerClusterissuer() {
 	var certmanagerClusterIssuer CertmanagerClusterIssuer
 	yaml.Unmarshal(kf.Body(), &certmanagerClusterIssuer)
 
-	arg_certmanagerContact := promptLine("Letsencrypt ACME contact email", "", "noreply@yourdomain.com")
-	certmanagerClusterIssuer.Spec.Acme.Email = arg_certmanagerContact
+	if kuberoConfig.configLoaded {
+		certmanagerClusterIssuer.Spec.Acme.Email = kuberoConfig.CertManager.AcmeEmail
+	} else {
+		certmanagerClusterIssuer.Spec.Acme.Email = promptLine("Letsencrypt ACME contact email", "", "noreply@yourdomain.com")
+	}
 
 	certmanagerClusterIssuerYaml, _ := yaml.Marshal(certmanagerClusterIssuer)
 	certmanagerClusterIssuerYamlErr := os.WriteFile("kuberoCertmanagerClusterIssuer.yaml", certmanagerClusterIssuerYaml, 0644)
@@ -784,16 +952,28 @@ func installOLMCertManager() {
 
 func writeCLIconfig() {
 
-	ingressInstall := promptLine("8) Write the Kubero CLI config", "[y,n]", "y")
-	if ingressInstall != "y" {
+	writeCli := true
+	if kuberoConfig.configLoaded {
+		writeCli = kuberoConfig.Install.WriteCliConfig
+	} else {
+		writeCli = promptLine("8) Write the Kubero CLI config", "[y,n]", "y") == "y"
+	}
+
+	if !writeCli {
 		return
 	}
 
 	//TODO consider using SSL here.
-	url := promptLine("Kubero Host adress", "", "http://"+arg_domain+":"+arg_port)
-	viper.Set("api.url", url)
+	url := "http://" + arg_domain + ":" + arg_port
+	token := arg_apiToken
 
-	token := promptLine("Kubero Token", "", arg_apiToken)
+	if kuberoConfig.configLoaded {
+		// TODO: arg_port is not used ?
+	} else {
+		url = promptLine("Kubero Host address", "", "http://"+arg_domain+":"+arg_port)
+		token = promptLine("Kubero Token", "", arg_apiToken)
+	}
+	viper.Set("api.url", url)
 	viper.Set("api.token", token)
 
 	var config Config
