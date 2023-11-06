@@ -408,6 +408,7 @@ func installMetrics() {
 }
 
 func installIngress() {
+	// TODO: is this check correct? The ingress-nginx yaml contains this selector by default which blocks the install when no nodes have this label
 	ingressReadyLabel, _ := exec.Command("kubectl", "get", "nodes", "--selector=ingress-ready=true", "-o", "jsonpath='{.items[*].metadata.name}'").Output()
 	if len(ingressReadyLabel) == 0 {
 		cfmt.Println("{{✗ Ingress: no nodes with label ingress-ready=true found}}::red")
