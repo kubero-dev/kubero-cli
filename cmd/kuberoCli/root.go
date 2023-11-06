@@ -290,7 +290,7 @@ func loadCLIConfig() {
 
 	viper.UnmarshalKey("instances", &instanceList)
 
-	// iterate over all instances and and set the config path
+	// iterate over all instances and set the config path
 	for instanceName, instance := range instanceList {
 		instance.Name = instanceName
 		instance.ConfigPath = viper.ConfigFileUsed()

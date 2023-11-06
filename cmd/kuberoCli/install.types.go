@@ -113,6 +113,73 @@ type KindConfig struct {
 	} `yaml:"nodes"`
 }
 
+type KuberoConfig struct {
+	configLoaded    bool
+	ClusterType     string `yaml:"clusterType" default:"kind"`
+	OLMRelease      string `yaml:"OLMRelease" default:"0.23.1"`
+	IngressProvider string `yaml:"ingressProvider" default:"baremetal"`
+	Install         struct {
+		Kubernetes     bool `yaml:"kubernetes"`
+		OLM            bool `yaml:"olm"`
+		Ingress        bool `yaml:"ingress" default:"true"`
+		Metrics        bool `yaml:"metrics"`
+		CertManager    bool `yaml:"certManager"`
+		KuberoOperator bool `yaml:"kuberoOperator" default:"true"`
+		KuberoUI       bool `yaml:"kuberoUI"`
+		Registry       bool `yaml:"registry"`
+		WriteCliConfig bool `yaml:"writeCliConfig" default:"true"`
+	} `yaml:"install"`
+	CertManager struct {
+		AcmeEmail string `yaml:"acmeEmail" default:"noreply@yourdomain.com"`
+	} `yaml:"certManager"`
+	KuberoUI struct {
+		WebhookSecret string `yaml:"webhookSecret"`
+		SessionKey    string `yaml:"sessionKey"`
+		AdminUser     string `yaml:"adminUser" default:"admin"`
+		AdminPassword string `yaml:"adminPassword"`
+		ApiToken      string `yaml:"apiToken"`
+		UI            struct {
+			Host       string `yaml:"host" default:"kubero.localhost.com"`
+			WebhookUrl string `yaml:"webhookUrl" default:"https://kubero.localhost.com/api/repo/webhooks"`
+			SSL        bool   `yaml:"ssl" default:"true"`
+		} `yaml:"ui"`
+		Registry struct {
+			Enabled          bool   `yaml:"enabled" default:"false"`
+			Local            bool   `yaml:"local" default:"false"`
+			Host             string `yaml:"host"`
+			Port             string `yaml:"port" default:"443"`
+			Username         string `yaml:"username" default:"admin"`
+			Password         string `yaml:"password"`
+			StorageSize      string `yaml:"storageSize" default:"10Gi"`
+			StorageClassName string `yaml:"storageClassName" default:""`
+		} `yaml:"registry"`
+		Github struct {
+			Enabled             bool   `yaml:"enabled"`
+			PersonalAccessToken string `yaml:"personalAccessToken"`
+		} `yaml:"github"`
+		Gitea struct {
+			Enabled             bool   `yaml:"enabled"`
+			PersonalAccessToken string `yaml:"personalAccessToken"`
+			BaseURL             string `yaml:"baseUrl"`
+		} `yaml:"gitea"`
+		Gogs struct {
+			Enabled             bool   `yaml:"enabled"`
+			PersonalAccessToken string `yaml:"personalAccessToken"`
+			BaseURL             string `yaml:"baseUrl"`
+		} `yaml:"gogs"`
+		Gitlab struct {
+			Enabled             bool   `yaml:"enabled"`
+			PersonalAccessToken string `yaml:"personalAccessToken"`
+			BaseURL             string `yaml:"baseUrl"`
+		} `yaml:"gitlab"`
+		Bitbucket struct {
+			Enabled     bool   `yaml:"enabled"`
+			Username    string `yaml:"username"`
+			AppPassword string `yaml:"appPassword"`
+		} `yaml:"bitbucket"`
+	} `yaml:"kuberoUI"`
+}
+
 type KuberoUIConfig struct {
 	APIVersion string `yaml:"apiVersion"`
 	Kind       string `yaml:"kind"`
