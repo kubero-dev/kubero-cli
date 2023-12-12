@@ -577,7 +577,9 @@ func installKuberoUi() {
 
 		kuberoUIssl := promptLine("Enable SSL for the Kubero UI", "[y/n]", "y")
 		if kuberoUIssl == "y" {
-			kuberoUIConfig.Spec.Ingress.Annotations.KubernetesIoIngressClass = "letsencrypt-prod"
+
+			clusterissuer := promptLine("Kubero UI Clusterissuer", "", "letsencrypt-prod")
+			kuberoUIConfig.Spec.Ingress.Annotations.KubernetesIoIngressClass = clusterissuer
 			kuberoUIConfig.Spec.Ingress.Annotations.KubernetesIoTLSacme = "true"
 
 			kuberoUIConfig.Spec.Ingress.TLS = []KuberoUItls{
