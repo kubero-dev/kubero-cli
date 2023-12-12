@@ -736,6 +736,9 @@ func installCertManagerClusterissuer() {
 	arg_certmanagerContact := promptLine("Letsencrypt ACME contact email", "", "noreply@yourdomain.com")
 	certmanagerClusterIssuer.Spec.Acme.Email = arg_certmanagerContact
 
+	clusterissuer := promptLine("Clusterissuer Name", "", "letsencrypt-prod")
+	certmanagerClusterIssuer.Metadata.Name = clusterissuer
+
 	certmanagerClusterIssuerYaml, _ := yaml.Marshal(certmanagerClusterIssuer)
 	certmanagerClusterIssuerYamlErr := os.WriteFile("kuberoCertmanagerClusterIssuer.yaml", certmanagerClusterIssuerYaml, 0644)
 	if certmanagerClusterIssuerYamlErr != nil {
