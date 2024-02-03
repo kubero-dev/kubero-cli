@@ -562,8 +562,7 @@ func installKuberoUi() {
 		installer := resty.New()
 
 		installer.SetBaseURL("https://raw.githubusercontent.com")
-		//kf, _ := installer.R().Get("kubero-dev/kubero-operator/main/config/samples/application_v1alpha1_kubero.yaml")
-		kf, _ := installer.R().Get("kubero-dev/kubero-operator/feature/add-console-config/config/samples/application_v1alpha1_kubero.yaml")
+		kf, _ := installer.R().Get("kubero-dev/kubero-operator/main/config/samples/application_v1alpha1_kubero.yaml")
 
 		var kuberoUIConfig KuberoUIConfig
 		yaml.Unmarshal(kf.Body(), &kuberoUIConfig)
@@ -657,7 +656,6 @@ func installKuberoUi() {
 		kuberiUIYaml, _ := yaml.Marshal(kuberoUIConfig)
 		kuberiUIErr := os.WriteFile("kuberoUI.yaml", kuberiUIYaml, 0644)
 
-		//os.Exit(0)
 		if kuberiUIErr != nil {
 			fmt.Println(kuberiUIErr)
 			return
