@@ -640,7 +640,7 @@ func installKuberoUi() {
 			kuberoUIConfig.Spec.Kubero.Config.Kubero.Console.Enabled = true
 		}
 
-		kuberoUIConfig.Spec.Image.Tag = "v2.0.0-rc.8"
+		//kuberoUIConfig.Spec.Image.Tag = "v2.0.0-rc.8"
 
 		if clusterType == "" {
 			clusterType = selectFromList("Which cluster type have you insalled?", clusterTypeList, "")
