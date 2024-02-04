@@ -623,6 +623,25 @@ func installKuberoUi() {
 			kuberoUIConfig.Spec.Registry.StorageClassName = kuberoUIRegistryStorageClassName
 		}
 
+		kuberoUIAudit := promptLine("Enable Audit Logging", "[y/n]", "n")
+		if kuberoUIAudit == "y" {
+			kuberoUIConfig.Spec.Kubero.AuditLogs.Enabled = true
+
+			storageClassList := getAvailableStorageClasses()
+
+			kuberoUIRegistryStorageClassName := selectFromList("Registry storage class", storageClassList, "")
+			kuberoUIConfig.Spec.Kubero.AuditLogs.StorageClassName = kuberoUIRegistryStorageClassName
+
+		}
+
+		kuberoUIconsole := promptLine("Enable Console Access to running contianers", "[y/n]", "n")
+
+		if kuberoUIconsole == "y" {
+			kuberoUIConfig.Spec.Kubero.Config.Kubero.Console.Enabled = true
+		}
+
+		//kuberoUIConfig.Spec.Image.Tag = "v2.0.0-rc.8"
+
 		if clusterType == "" {
 			clusterType = selectFromList("Which cluster type have you insalled?", clusterTypeList, "")
 		}
@@ -636,6 +655,7 @@ func installKuberoUi() {
 
 		kuberiUIYaml, _ := yaml.Marshal(kuberoUIConfig)
 		kuberiUIErr := os.WriteFile("kuberoUI.yaml", kuberiUIYaml, 0644)
+
 		if kuberiUIErr != nil {
 			fmt.Println(kuberiUIErr)
 			return

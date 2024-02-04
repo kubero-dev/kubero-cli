@@ -190,24 +190,104 @@ type KuberoUIConfig struct {
 			Auth       struct {
 				Github struct {
 					Enabled     bool   `yaml:"enabled"`
-					ID          string `yaml:"id"`
-					Secret      string `yaml:"secret"`
-					CallbackURL string `yaml:"callbackUrl"`
-					Org         string `yaml:"org"`
+					ID          string `yaml:"id,omitempty`
+					Secret      string `yaml:"secret,omitempty"`
+					CallbackURL string `yaml:"callbackUrl,omitempty"`
+					Org         string `yaml:"org,omitempty"`
 				} `yaml:"github"`
 				Oauth2 struct {
 					Enabled     bool   `yaml:"enabled"`
-					Name        string `yaml:"name"`
-					ID          string `yaml:"id"`
-					AuthURL     string `yaml:"authUrl"`
-					TokenURL    string `yaml:"tokenUrl"`
-					Secret      string `yaml:"secret"`
-					CallbackURL string `yaml:"callbackUrl"`
+					Name        string `yaml:"name,omitempty"`
+					ID          string `yaml:"id,omitempty"`
+					AuthURL     string `yaml:"authUrl,omitempty"`
+					TokenURL    string `yaml:"tokenUrl,omitempty"`
+					Secret      string `yaml:"secret,omitempty"`
+					CallbackURL string `yaml:"callbackUrl,omitempty"`
 				} `yaml:"oauth2"`
 			} `yaml:"auth"`
-			Config string `yaml:"config"`
+			AuditLogs struct {
+				Enabled          bool     `yaml:"enabled"`
+				StorageClassName string   `yaml:"storageClassName"`
+				Size             string   `yaml:"size"`
+				AccessModes      []string `yaml:"accessModes"`
+				Limit            string   `yaml:"limit"`
+			} `yaml:"auditLogs"`
+			Config KuberoConfigfile `yaml:"config,omitempty"`
 		} `yaml:"kubero"`
 	} `yaml:"spec"`
+}
+
+type KuberoConfigfile struct {
+	Kubero struct {
+		Readonly bool `yaml:"readonly"`
+		Console  struct {
+			Enabled bool `yaml:"enabled"`
+		} `yaml:"console"`
+		Banner struct {
+			Show      bool   `yaml:"show"`
+			Message   string `yaml:"message"`
+			Bgcolor   string `yaml:"bgcolor"`
+			Fontcolor string `yaml:"fontcolor"`
+		} `yaml:"banner"`
+	} `yaml:"kubero"`
+	Clusterissuer string `yaml:"clusterissuer"`
+	Templates     struct {
+		Enabled  bool `yaml:"enabled"`
+		Catalogs []struct {
+			Name             string `yaml:"name"`
+			Description      string `yaml:"description"`
+			TemplateBasePath string `yaml:"templateBasePath"`
+			Index            struct {
+				URL    string `yaml:"url"`
+				Format string `yaml:"format"`
+			} `yaml:"index"`
+		} `yaml:"catalogs"`
+	} `yaml:"templates"`
+	Buildpacks []struct {
+		Name     string `yaml:"name"`
+		Language string `yaml:"language"`
+		Fetch    struct {
+			Repository      string `yaml:"repository"`
+			Tag             string `yaml:"tag"`
+			SecurityContext struct {
+				RunAsUser int `yaml:"runAsUser"`
+			} `yaml:"securityContext"`
+		} `yaml:"fetch"`
+		Build struct {
+			Repository      string `yaml:"repository"`
+			Tag             string `yaml:"tag"`
+			Command         string `yaml:"command"`
+			SecurityContext struct {
+				RunAsUser int `yaml:"runAsUser"`
+			} `yaml:"securityContext"`
+		} `yaml:"build,omitempty"`
+		Run struct {
+			Repository         string `yaml:"repository"`
+			Tag                string `yaml:"tag"`
+			ReadOnlyAppStorage bool   `yaml:"readOnlyAppStorage"`
+			SecurityContext    struct {
+				AllowPrivilegeEscalation bool `yaml:"allowPrivilegeEscalation"`
+				ReadOnlyRootFilesystem   bool `yaml:"readOnlyRootFilesystem"`
+			} `yaml:"securityContext"`
+			Command string `yaml:"command"`
+		} `yaml:"run,omitempty"`
+	} `yaml:"buildpacks"`
+	PodSizeList []struct {
+		Active      bool   `yaml:"active,omitempty"`
+		Name        string `yaml:"name"`
+		Description string `yaml:"description"`
+		Default     bool   `yaml:"default,omitempty"`
+		Resources   struct {
+			Requests struct {
+				Memory string `yaml:"memory"`
+				CPU    string `yaml:"cpu"`
+			} `yaml:"requests"`
+			Limits struct {
+				Memory string `yaml:"memory"`
+				CPU    string `yaml:"cpu"`
+			} `yaml:"limits"`
+		} `yaml:"resources,omitempty"`
+	} `yaml:"podSizeList"`
 }
 type KuberoUItls struct {
 	SecretName string   `yaml:"secretName"`
