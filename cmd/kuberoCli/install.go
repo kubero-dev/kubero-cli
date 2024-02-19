@@ -634,7 +634,7 @@ func installKuberoUi() {
 
 		}
 
-		kuberoUIconsole := promptLine("Enable Console Access to running contianers", "[y/n]", "n")
+		kuberoUIconsole := promptLine("Enable Console Access to running containers", "[y/n]", "n")
 
 		if kuberoUIconsole == "y" {
 			kuberoUIConfig.Spec.Kubero.Config.Kubero.Console.Enabled = true
