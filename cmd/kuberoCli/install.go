@@ -568,7 +568,7 @@ func installKuberoUi() {
 		yaml.Unmarshal(kf.Body(), &kuberoUIConfig)
 
 		if arg_domain == "" {
-			arg_domain = promptLine("Kuberi UI Domain", "", "kubero.lacolhost.com")
+			arg_domain = promptLine("Kubero UI Domain", "", "kubero.lacolhost.com")
 		}
 		kuberoUIConfig.Spec.Ingress.Hosts[0].Host = arg_domain
 
@@ -634,7 +634,7 @@ func installKuberoUi() {
 
 		}
 
-		kuberoUIconsole := promptLine("Enable Console Access to running contianers", "[y/n]", "n")
+		kuberoUIconsole := promptLine("Enable Console Access to running containers", "[y/n]", "n")
 
 		if kuberoUIconsole == "y" {
 			kuberoUIConfig.Spec.Kubero.Config.Kubero.Console.Enabled = true
