@@ -568,7 +568,7 @@ func installKuberoUi() {
 		yaml.Unmarshal(kf.Body(), &kuberoUIConfig)
 
 		if arg_domain == "" {
-			arg_domain = promptLine("Kuberi UI Domain", "", "kubero.lacolhost.com")
+			arg_domain = promptLine("Kuberi UI Domain", "", "kubero.localhost")
 		}
 		kuberoUIConfig.Spec.Ingress.Hosts[0].Host = arg_domain
 
