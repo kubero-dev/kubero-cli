@@ -629,7 +629,7 @@ func installKuberoUi() {
 
 			storageClassList := getAvailableStorageClasses()
 
-			kuberoUIRegistryStorageClassName := selectFromList("Registry storage class", storageClassList, "")
+			kuberoUIRegistryStorageClassName := selectFromList("Auditlogs storage class", storageClassList, "")
 			kuberoUIConfig.Spec.Kubero.AuditLogs.StorageClassName = kuberoUIRegistryStorageClassName
 
 		}
