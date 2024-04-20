@@ -262,8 +262,9 @@ func installOLM() {
 		install_olm = true
 	}
 
-	olmRelease := promptLine("Install OLM from which release?", "[0.20.0,0.21.0,0.22.0,0.23.1]", "0.23.1")
-	olmURL := "https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v" + olmRelease
+	olmVersionlist := getGithubVersionList("operator-framework/operator-lifecycle-manager", 10)
+	olmRelease := selectFromList("Select OLM version", olmVersionlist, "")
+	olmURL := "https://github.com/operator-framework/operator-lifecycle-manager/releases/download/" + olmRelease
 
 	olmSpinner := spinner.New("Install OLM")
 
@@ -731,7 +732,7 @@ func installCertManagerSlim() {
 	}
 
 	certManagerSpinner.UpdateMessage("Waiting for Cert Manager to be ready")
-	time.Sleep(5 * time.Second)
+	time.Sleep(10 * time.Second)
 	_, certManagerWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/cert-manager-webhook", "-n", "cert-manager", "--timeout=180s", "-n", "cert-manager").Output()
 	if certManagerWaitErr != nil {
 		certManagerSpinner.Error("Failed to run command. Try runnig it manually: kubectl wait --for=condition=available deployment/cert-manager-webhook -n cert-manager --timeout=180s -n cert-manager")
@@ -796,9 +797,15 @@ func installOLMCertManager() {
 	}
 	certManagerSpinner.Success("Cert Manager installed")
 
-	time.Sleep(2 * time.Second)
 	certManagerSpinner = spinner.New("Wait for Cert Manager to be ready")
-	certManagerSpinner.Start("run command : kubectl wait --for=condition=available deployment/cert-manager-webhook -n cert-manager --timeout=180s -n operators")
+	certManagerSpinner.Start("installing Cert Manager")
+
+	cfmt.Println("\r  run command : kubectl wait --for=condition=available deployment/cert-manager-webhook -n cert-manager --timeout=180s -n operators")
+	cfmt.Println("\r  This might take a while. Time enough for a joke:")
+	for i := 0; i < 4; i++ {
+		tellAChucknorrisJoke()
+		time.Sleep(15 * time.Second)
+	}
 	_, certManagerWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/cert-manager-webhook", "-n", "cert-manager", "--timeout=180s", "-n", "operators").Output()
 	if certManagerWaitErr != nil {
 		certManagerSpinner.Error("Failed to run command. Try runnig it manually: kubectl wait --for=condition=available deployment/cert-manager-webhook -n cert-manager --timeout=180s -n operators")
@@ -904,6 +911,28 @@ func getAvailableStorageClasses() []string {
 		storageClasses = append(storageClasses, storageClass.Metadata.Name)
 	}
 	return storageClasses
+}
+
+func getGithubVersionList(repository string, limit int) []string {
+
+	githubapi := resty.New().
+		SetHeader("Accept", "application/json").
+		SetHeader("Content-Type", "application/json").
+		SetHeader("User-Agent", "kubero-cli/"+kuberoCliVersion).
+		SetBaseURL("https://api.github.com/repos/")
+
+	tags, _ := githubapi.R().Get(repository + "/tags")
+	var versions []GithubVersion
+	json.Unmarshal(tags.Body(), &versions)
+
+	versionList := []string{}
+	for _, version := range versions {
+		if limit == 0 || len(versionList) < limit {
+			versionList = append(versionList, version.Name)
+		}
+	}
+
+	return versionList
 }
 
 type StorageClassesList struct {
