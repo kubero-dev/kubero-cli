@@ -282,3 +282,14 @@ type Config struct {
 		Token string `json:"token" yaml:"token"`
 	} `json:"api" yaml:"api"`
 }
+
+type GithubVersion struct {
+	Name       string `json:"name"`
+	ZipballURL string `json:"zipball_url"`
+	TarballURL string `json:"tarball_url"`
+	Commit     struct {
+		Sha string `json:"sha"`
+		URL string `json:"url"`
+	} `json:"commit"`
+	NodeID string `json:"node_id"`
+}

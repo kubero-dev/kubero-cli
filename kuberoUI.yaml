@@ -1,0 +1,275 @@
+apiVersion: application.kubero.dev/v1alpha1
+kind: Kubero
+metadata:
+    name: kubero
+spec:
+    affinity: {}
+    fullnameOverride: ""
+    image:
+        pullPolicy: Always
+        repository: ghcr.io/kubero-dev/kubero/kubero
+        tag: latest
+    imagePullSecrets: []
+    ingress:
+        annotations:
+            cert-manager.io/cluster-issuer: letsencrypt-prod
+            kubernetes.io/tls-acme: "true"
+        className: ""
+        enabled: true
+        hosts:
+            - host: kubero.localhost
+              paths:
+                - path: /
+                  pathType: ImplementationSpecific
+        tls:
+            - secretName: kubero-tls
+              hosts:
+                - kubero.localhost
+    nameOverride: ""
+    nodeSelector: {}
+    podAnnotations: {}
+    podSecurityContext: {}
+    registry:
+        enabled: false
+        create: false
+        host: registry.demo.kubero.dev
+        account:
+            username: kubero
+            password: kubero
+            hash: $2y$05$czQZpvtDYc5OzM/1r1pH0eAplT/okohh/mXoWl/Y65ZP/8/jnSWZq
+        port: 443
+        storage: 1Gi
+        storageClassName: null
+    replicaCount: 1
+    resources: {}
+    securityContext: {}
+    service:
+        port: 2000
+        type: ClusterIP
+    serviceAccount:
+        annotations: {}
+        create: true
+        name: ""
+    tolerations: []
+    kubero:
+        debug: ""
+        namespace: kubero
+        context: inClusterContext
+        webhook_url: https://kubero.localhost/api/repo/webhooks
+        sessionKey: randomString
+        auth:
+            github:
+                enabled: false
+                id: ""
+            oauth2:
+                enabled: false
+        auditLogs:
+            enabled: false
+            storageClassName: ""
+            size: 0.1Gi
+            accessModes:
+                - ReadWriteOnce
+            limit: "1000"
+        config:
+            kubero:
+                readonly: false
+                console:
+                    enabled: false
+                banner:
+                    show: false
+                    message: Welcome to Kubero!
+                    bgcolor: '#8560A9'
+                    fontcolor: azure
+            clusterissuer: letsencrypt-prod
+            templates:
+                enabled: true
+                catalogs:
+                    - name: Kubero
+                      description: Kubero templates
+                      templateBasePath: https://raw.githubusercontent.com/kubero-dev/kubero/main/services/
+                      index:
+                        url: https://raw.githubusercontent.com/kubero-dev/templates/main/index.json
+                        format: json
+                    - name: Kubero Frameworks
+                      description: Kubero templates
+                      templateBasePath: https://raw.githubusercontent.com/kubero-dev/kubero/main/services/
+                      index:
+                        url: https://raw.githubusercontent.com/kubero-dev/templates/main/index-frameworks.json
+                        format: json
+            buildpacks:
+                - name: NodeJS
+                  language: JavaScript
+                  fetch:
+                    repository: ghcr.io/kubero-dev/buildpacks/fetch
+                    tag: v1.2
+                    securityContext:
+                        runAsUser: 1000
+                  build:
+                    repository: node
+                    tag: latest
+                    command: npm install
+                    securityContext:
+                        runAsUser: 1000
+                  run:
+                    repository: node
+                    tag: latest
+                    readOnlyAppStorage: false
+                    securityContext:
+                        allowPrivilegeEscalation: false
+                        readOnlyRootFilesystem: false
+                    command: node index.js
+                - name: PHP
+                  language: PHP
+                  fetch:
+                    repository: ghcr.io/kubero-dev/buildpacks/fetch
+                    tag: v1.2
+                    securityContext:
+                        runAsUser: 1000
+                  build:
+                    repository: composer
+                    tag: latest
+                    command: composer install; chown -R 1000:1000 /app
+                    securityContext:
+                        runAsUser: 0
+                  run:
+                    repository: webdevops/php-apache
+                    tag: "8.1"
+                    readOnlyAppStorage: false
+                    securityContext:
+                        allowPrivilegeEscalation: true
+                        readOnlyRootFilesystem: false
+                    command: apache2-foreground
+                - name: Python
+                  language: Python
+                  fetch:
+                    repository: ghcr.io/kubero-dev/buildpacks/fetch
+                    tag: v1.2
+                    securityContext:
+                        runAsUser: 1000
+                  build:
+                    repository: python
+                    tag: 3.10-buster
+                    command: python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
+                    securityContext:
+                        runAsUser: 0
+                  run:
+                    repository: python
+                    tag: 3.10-buster
+                    readOnlyAppStorage: false
+                    securityContext:
+                        allowPrivilegeEscalation: false
+                        readOnlyRootFilesystem: false
+                    command: . .venv/bin/activate && python3 main.py
+                - name: GoLang
+                  language: GoLang
+                  fetch:
+                    repository: ghcr.io/kubero-dev/buildpacks/fetch
+                    tag: v1.2
+                    securityContext:
+                        runAsUser: 1000
+                  build:
+                    repository: golang
+                    tag: alpine
+                    command: go mod download && go mod verify && go build -v -o app
+                    securityContext:
+                        runAsUser: 0
+                  run:
+                    repository: golang
+                    tag: alpine
+                    readOnlyAppStorage: false
+                    securityContext:
+                        allowPrivilegeEscalation: false
+                        readOnlyRootFilesystem: false
+                    command: ./app
+                - name: Hugo
+                  language: GoLang
+                  fetch:
+                    repository: ghcr.io/kubero-dev/buildpacks/fetch
+                    tag: v1.2
+                    securityContext:
+                        runAsUser: 1000
+                  build:
+                    repository: klakegg/hugo
+                    tag: latest
+                    command: hugo -D
+                    securityContext:
+                        runAsUser: 0
+                  run:
+                    repository: caddy
+                    tag: latest
+                    readOnlyAppStorage: false
+                    securityContext:
+                        allowPrivilegeEscalation: false
+                        readOnlyRootFilesystem: false
+                    command: caddy file-server --listen :8080 --root /app/public
+                - name: Ruby
+                  language: Ruby
+                  fetch:
+                    repository: ghcr.io/kubero-dev/buildpacks/fetch
+                    tag: v1.2
+                    securityContext:
+                        runAsUser: 1000
+                  build:
+                    repository: ruby
+                    tag: "2.7"
+                    command: export GEM_HOME=/app/bundle; bundle install --jobs=4 --retry=3
+                    securityContext:
+                        runAsUser: 0
+                  run:
+                    repository: ruby
+                    tag: "2.7"
+                    readOnlyAppStorage: false
+                    securityContext:
+                        allowPrivilegeEscalation: false
+                        readOnlyRootFilesystem: false
+                    command: export GEM_HOME=/app/bundle; bundle exec ruby main.rb
+                - name: Static
+                  language: HTML
+                  fetch:
+                    repository: ghcr.io/kubero-dev/buildpacks/fetch
+                    tag: v1.2
+                    securityContext:
+                        runAsUser: 1000
+                  build:
+                    repository: busybox
+                    tag: latest
+                    command: echo 'Buildpack not required'
+                    securityContext:
+                        runAsUser: 0
+                  run:
+                    repository: caddy
+                    tag: latest
+                    readOnlyAppStorage: false
+                    securityContext:
+                        allowPrivilegeEscalation: false
+                        readOnlyRootFilesystem: false
+                    command: caddy file-server --listen :8080 --root /app
+            podSizeList:
+                - name: small
+                  description: 'Small (CPU: 0.25, Memory: 0.5Gi)'
+                  default: true
+                  resources:
+                    requests:
+                        memory: 0.5Gi
+                        cpu: 250m
+                    limits:
+                        memory: 1Gi
+                        cpu: 500m
+                - name: medium
+                  description: 'Medium (CPU: 1, Memory: 2Gi)'
+                  resources:
+                    requests:
+                        memory: 2Gi
+                        cpu: 1000m
+                    limits:
+                        memory: 4Gi
+                        cpu: 2000m
+                - name: large
+                  description: 'Large (CPU: 2, Memory: 4Gi)'
+                  resources:
+                    requests:
+                        memory: 4Gi
+                        cpu: 2000m
+                    limits:
+                        memory: 4Gi
+                        cpu: 2000m
