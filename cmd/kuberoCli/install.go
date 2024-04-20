@@ -739,11 +739,11 @@ func installCertManagerSlim() {
 	}
 	certManagerSpinner.Success("Cert Manager installed")
 
-	installCertManagerClusterissuer()
+	installCertManagerClusterissuer("cert-manager")
 
 }
 
-func installCertManagerClusterissuer() {
+func installCertManagerClusterissuer(namespace string) {
 
 	installer := resty.New()
 
@@ -766,7 +766,7 @@ func installCertManagerClusterissuer() {
 		return
 	}
 
-	_, certmanagerClusterIssuerErr := exec.Command("kubectl", "apply", "-f", "kuberoCertmanagerClusterIssuer.yaml", "-n", "cert-manager").Output()
+	_, certmanagerClusterIssuerErr := exec.Command("kubectl", "apply", "-f", "kuberoCertmanagerClusterIssuer.yaml", "-n", namespace).Output()
 	if certmanagerClusterIssuerErr != nil {
 		cfmt.Println("{{✗ Failed to create Certmanager Clusterissuer. Try runnig this command manually: kubectl apply -f kuberoCertmanagerClusterIssuer.yaml -n cert-manager}}::red")
 		return
@@ -805,6 +805,8 @@ func installOLMCertManager() {
 		log.Fatal(certManagerWaitErr)
 	}
 	certManagerSpinner.Success("Cert Manager is ready")
+
+	installCertManagerClusterissuer("default")
 }
 
 func writeCLIconfig() {
