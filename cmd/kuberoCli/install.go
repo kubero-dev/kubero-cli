@@ -91,7 +91,7 @@ var arg_portSecure string
 var clusterType string
 var arg_component string
 var install_olm bool
-var ingressControllerVersion = "v1.7.0" // https://github.com/kubernetes/ingress-nginx/tags -> controller-v1.5.1
+var ingressControllerVersion = "v1.10.0" // https://github.com/kubernetes/ingress-nginx/tags -> controller-v1.5.1
 
 // var clusterTypeSelection = "[scaleway,linode,gke,digitalocean,kind]"
 var clusterTypeList = []string{"kind", "linode", "scaleway", "gke", "digitalocean"}
@@ -369,6 +369,7 @@ func installIngress() {
 		ingressProviderList := []string{"kind", "aws", "baremetal", "cloud", "do", "exoscale", "scw"}
 		ingressProvider := selectFromList("Provider [kind, aws, baremetal, cloud(Azure,Google,Oracle,Linode), do(digital ocean), exoscale, scw(scaleway)]", ingressProviderList, prefill)
 
+		// incressController verion can bot be loaded from github api, since the return is alphabetic
 		ingressSpinner := spinner.New("Install Ingress")
 		URL := "https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-" + ingressControllerVersion + "/deploy/static/provider/" + ingressProvider + "/deploy.yaml"
 		ingressSpinner.Start("run command : kubectl apply -f " + URL)
