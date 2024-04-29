@@ -349,7 +349,7 @@ func installIngress() {
 	} else {
 
 		if clusterType == "" {
-			clusterType = selectFromList("Which cluster type have you insalled?", clusterTypeList, "")
+			clusterType = selectFromList("Which cluster type have you installed?", clusterTypeList, "")
 		}
 
 		prefill := "baremetal"
@@ -644,7 +644,7 @@ func installKuberoUi() {
 		//kuberoUIConfig.Spec.Image.Tag = "v2.0.0-rc.8"
 
 		if clusterType == "" {
-			clusterType = selectFromList("Which cluster type have you insalled?", clusterTypeList, "")
+			clusterType = selectFromList("Which cluster type have you installed?", clusterTypeList, "")
 		}
 
 		if clusterType == "linode" ||
