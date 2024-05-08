@@ -58,6 +58,9 @@ required binaries:
 		case "ingress":
 			installIngress()
 			return
+		case "monitoring":
+			installMonitoring()
+			return
 		case "kubernetes":
 			installKubernetes()
 			checkCluster()
@@ -71,6 +74,7 @@ required binaries:
 			installMetrics()
 			installCertManager()
 			installKuberoOperator()
+			installMonitoring()
 			installKuberoUi()
 			writeCLIconfig()
 			printDNSinfo()
@@ -91,13 +95,14 @@ var arg_portSecure string
 var clusterType string
 var arg_component string
 var install_olm bool
+var monitoringInstalled bool
 var ingressControllerVersion = "v1.10.0" // https://github.com/kubernetes/ingress-nginx/tags -> controller-v1.5.1
 
 // var clusterTypeSelection = "[scaleway,linode,gke,digitalocean,kind]"
 var clusterTypeList = []string{"kind", "linode", "scaleway", "gke", "digitalocean"}
 
 func init() {
-	installCmd.Flags().StringVarP(&arg_component, "component", "c", "", "install component (kubernetes,olm,ingress,metrics,certmanager,kubero-operator,kubero-ui)")
+	installCmd.Flags().StringVarP(&arg_component, "component", "c", "", "install component (kubernetes,olm,ingress,metrics,certmanager,kubero-operator,monitoring,kubero-ui)")
 	installCmd.Flags().StringVarP(&arg_adminUser, "user", "u", "", "Admin username for the kubero UI")
 	installCmd.Flags().StringVarP(&arg_adminPassword, "user-password", "U", "", "Password for the admin user")
 	installCmd.Flags().StringVarP(&arg_apiToken, "apitoken", "a", "", "API token for the admin user")
@@ -107,6 +112,7 @@ func init() {
 	rootCmd.AddCommand(installCmd)
 
 	install_olm = false
+	monitoringInstalled = false
 }
 
 func checkAllBinaries() {
@@ -140,8 +146,9 @@ func printInstallSteps() {
     4. Install the metrics server {{(optional, but recommended)}}::gray
     5. Install the cert-manager {{(optional)}}::gray
     6. Install the kubero operator {{(required)}}::gray
-    7. Install the kubero UI {{(optional, but highly recommended)}}::gray
-    8. Write the kubero CLI config
+    7. Install the monitoring stack {{(optional, but recommended)}}::gray
+    8. Install the kubero UI {{(optional, but highly recommended)}}::gray
+    9. Write the kubero CLI config
 `)
 }
 
@@ -378,6 +385,72 @@ func installIngress() {
 			ingressSpinner.Error("Failed to run command. Try runnig this command manually: kubectl apply -f " + URL)
 			log.Fatal(ingressErr)
 		}
+
+		patch := `{
+			"spec": {
+			  "template": {
+				"metadata": {
+				  "annotations": {
+					"prometheus.io/port": "10254",
+					"prometheus.io/scrape": "true"
+				  }
+				},
+				"spec": {
+				  "containers": [
+					{
+					  "name": "controller",
+					  "ports": [
+						{
+						  "containerPort": 10254,
+						  "name": "prometheus",
+						  "protocol": "TCP"
+						}
+					  ],
+					  "args": [
+						"/nginx-ingress-controller",
+						"--election-id=ingress-nginx-leader",
+						"--controller-class=k8s.io/ingress-nginx",
+						"--ingress-class=nginx",
+						"--configmap=$(POD_NAMESPACE)/ingress-nginx-controller",
+						"--validating-webhook=:8443",
+						"--validating-webhook-certificate=/usr/local/certificates/cert",
+						"--validating-webhook-key=/usr/local/certificates/key",
+						"--watch-ingress-without-class=true",
+						"--enable-metrics=true",
+						"--publish-status-address=localhost"
+					  ]
+					}
+				  ]
+				}
+			  }
+			}
+		  }`
+		_, ingressPatch := exec.Command("kubectl", "patch", "deployments.apps", "ingress-nginx-controller", "-n", "ingress-nginx", "-p", patch).Output()
+		if ingressPatch != nil {
+			ingressSpinner.Error("Failed to patch the ingress controller. Here is a detailled information how to do it manually: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/monitoring.md")
+			//log.Fatal(ingressPatch)
+		}
+
+		patch = `{
+			"spec": {
+				"ports": [
+					{
+						"name": "prometheus",
+						"nodePort": 31280,
+						"port": 10254,
+						"protocol": "TCP",
+						"targetPort": "prometheus"
+					}
+				]
+			}
+		}`
+
+		_, ingressPatch = exec.Command("kubectl", "patch", "svc", "ingress-nginx-controller", "-n", "ingress-nginx", "-p", patch).Output()
+		if ingressPatch != nil {
+			ingressSpinner.Error("Failed to patch the ingress controller service. Here is a detailled information how to do it manually: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/monitoring.md")
+			//log.Fatal(ingressPatch)
+		}
+
 		ingressSpinner.Success("Ingress installed sucessfully")
 	}
 
@@ -446,6 +519,22 @@ func installKuberoOperatorSlim() {
 
 }
 
+func createNamespace(namespace string) {
+
+	kuberoNSinstalled, _ := exec.Command("kubectl", "get", "ns", namespace).Output()
+	if len(kuberoNSinstalled) > 0 {
+		cfmt.Printf("{{✓ Namespace %s exists}}::lightGreen\n", namespace)
+	} else {
+		_, kuberoNSErr := exec.Command("kubectl", "create", "namespace", namespace).Output()
+		if kuberoNSErr != nil {
+			fmt.Println("Failed to run command to create the namespace. Try runnig this command manually: kubectl create namespace " + namespace)
+			log.Fatal(kuberoNSErr)
+		} else {
+			cfmt.Printf("{{✓ Namespace %s created}}::lightGreen\n", namespace)
+		}
+	}
+}
+
 func installKuberoUi() {
 
 	ingressInstall := promptLine("7) Install Kubero UI", "[y,n]", "y")
@@ -453,18 +542,7 @@ func installKuberoUi() {
 		return
 	}
 
-	kuberoNSinstalled, _ := exec.Command("kubectl", "get", "ns", "kubero").Output()
-	if len(kuberoNSinstalled) > 0 {
-		cfmt.Println("{{✓ Kubero Namespace exists}}::lightGreen")
-	} else {
-		_, kuberoNSErr := exec.Command("kubectl", "create", "namespace", "kubero").Output()
-		if kuberoNSErr != nil {
-			fmt.Println("Failed to run command to create the namespace. Try runnig this command manually: kubectl create namespace kubero")
-			log.Fatal(kuberoNSErr)
-		} else {
-			cfmt.Println("{{✓ Kubero Namespace created}}::lightGreen")
-		}
-	}
+	createNamespace("kubero")
 
 	kuberoSecretInstalled, _ := exec.Command("kubectl", "get", "secret", "kubero-secrets", "-n", "kubero").Output()
 	if len(kuberoSecretInstalled) > 0 {
@@ -636,7 +714,14 @@ func installKuberoUi() {
 
 		}
 
-		kuberoUIconsole := promptLine("Enable Console Access to running containers", "[y/n]", "n")
+		if monitoringInstalled {
+			kuberoUIConfig.Spec.Prometheus.Enabled = true
+			kuberoUIConfig.Spec.Prometheus.Endpoint = promptLine("Prometheus URL", "", "http://kubero-prometheus-server")
+		} else {
+			kuberoUIConfig.Spec.Prometheus.Enabled = false
+		}
+
+		kuberoUIconsole := promptLine("Enable Console Access to running containers", "[y/n]", "y")
 
 		if kuberoUIconsole == "y" {
 			kuberoUIConfig.Spec.Kubero.Config.Kubero.Console.Enabled = true
@@ -698,6 +783,61 @@ func installKuberoUi() {
 		kuberoUISpinner.Success("Kubero UI is ready")
 	}
 
+}
+
+func installMonitoring() {
+
+	if promptLine("Enable longterm metrics", "[y/n]", "y") == "y" {
+		monitoringInstalled = true
+	} else {
+		monitoringInstalled = false
+		return
+	}
+
+	createNamespace("kubero")
+
+	spinner := spinner.New("enable metrics")
+	if promptLine("Create local Prometheus instance", "[y/n]", "y") == "y" {
+		URL := "https://raw.githubusercontent.com/kubero-dev/kubero-operator/main/config/samples/application_v1alpha1_kuberoprometheus.yaml"
+		spinner.Start("run command : kubectl apply -f " + URL)
+		_, ingressErr := exec.Command("kubectl", "apply", "-n", "kubero", "-f", URL).Output()
+		if ingressErr != nil {
+			spinner.Error("Failed to run command. Try runnig this command manually: kubectl apply -f " + URL)
+			log.Fatal(ingressErr)
+		}
+
+		spinner.UpdateMessage("Waiting for Prometheus to be ready")
+
+		time.Sleep(5 * time.Second)
+		// kubectl wait --for=condition=available deployment/kubero -n kubero --timeout=180s
+		_, olmWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/kubero-prometheus-server", "-n", "kubero", "--timeout=180s").Output()
+		if olmWaitErr != nil {
+			spinner.Error("Failed to wait for Prometheus to become ready")
+			log.Fatal(olmWaitErr)
+		}
+		spinner.Success("Prometheus installed sucessfully")
+	}
+
+	if promptLine("Enable Kubemetrtics", "[y/n]", "y") == "y" {
+		spinner.Start("run command : kubectl patch kuberoes kubero -n kubero --type=merge")
+
+		patch := `{
+			"spec": {
+				"prometheus": {
+					"kube-state-metrics": {
+						"enabled": true
+					}
+				}
+			}
+		}`
+
+		_, patchResult := exec.Command("kubectl", "patch", "kuberoprometheuses", "kubero-prometheus", "-n", "kubero", "--type=merge", "-p", patch).Output()
+		if patchResult != nil {
+			spinner.Error("Failed to patch the kubero prometheus CRD to enable kube metrics", patchResult.Error(), patch)
+		}
+		spinner.Success("metrics enabled sucessfully")
+
+	}
 }
 
 func installCertManager() {

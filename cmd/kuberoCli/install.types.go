@@ -152,6 +152,10 @@ type KuberoUIConfig struct {
 		} `yaml:"podAnnotations"`
 		PodSecurityContext struct {
 		} `yaml:"podSecurityContext"`
+		Prometheus struct {
+			Enabled  bool   `yaml:"enabled"`
+			Endpoint string `yaml:"endpoint"`
+		} `yaml:"prometheus,omitempty"`
 		Registry struct {
 			Enabled bool   `yaml:"enabled"`
 			Create  bool   `yaml:"create"`
