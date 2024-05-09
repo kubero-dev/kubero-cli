@@ -386,71 +386,6 @@ func installIngress() {
 			log.Fatal(ingressErr)
 		}
 
-		patch := `{
-			"spec": {
-			  "template": {
-				"metadata": {
-				  "annotations": {
-					"prometheus.io/port": "10254",
-					"prometheus.io/scrape": "true"
-				  }
-				},
-				"spec": {
-				  "containers": [
-					{
-					  "name": "controller",
-					  "ports": [
-						{
-						  "containerPort": 10254,
-						  "name": "prometheus",
-						  "protocol": "TCP"
-						}
-					  ],
-					  "args": [
-						"/nginx-ingress-controller",
-						"--election-id=ingress-nginx-leader",
-						"--controller-class=k8s.io/ingress-nginx",
-						"--ingress-class=nginx",
-						"--configmap=$(POD_NAMESPACE)/ingress-nginx-controller",
-						"--validating-webhook=:8443",
-						"--validating-webhook-certificate=/usr/local/certificates/cert",
-						"--validating-webhook-key=/usr/local/certificates/key",
-						"--watch-ingress-without-class=true",
-						"--enable-metrics=true",
-						"--publish-status-address=localhost"
-					  ]
-					}
-				  ]
-				}
-			  }
-			}
-		  }`
-		_, ingressPatch := exec.Command("kubectl", "patch", "deployments.apps", "ingress-nginx-controller", "-n", "ingress-nginx", "-p", patch).Output()
-		if ingressPatch != nil {
-			ingressSpinner.Error("Failed to patch the ingress controller. Here is a detailled information how to do it manually: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/monitoring.md")
-			//log.Fatal(ingressPatch)
-		}
-
-		patch = `{
-			"spec": {
-				"ports": [
-					{
-						"name": "prometheus",
-						"nodePort": 31280,
-						"port": 10254,
-						"protocol": "TCP",
-						"targetPort": "prometheus"
-					}
-				]
-			}
-		}`
-
-		_, ingressPatch = exec.Command("kubectl", "patch", "svc", "ingress-nginx-controller", "-n", "ingress-nginx", "-p", patch).Output()
-		if ingressPatch != nil {
-			ingressSpinner.Error("Failed to patch the ingress controller service. Here is a detailled information how to do it manually: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/monitoring.md")
-			//log.Fatal(ingressPatch)
-		}
-
 		ingressSpinner.Success("Ingress installed sucessfully")
 	}
 
@@ -838,6 +773,72 @@ func installMonitoring() {
 		spinner.Success("metrics enabled sucessfully")
 
 	}
+
+	patch := `{
+		"spec": {
+		  "template": {
+			"metadata": {
+			  "annotations": {
+				"prometheus.io/port": "10254",
+				"prometheus.io/scrape": "true"
+			  }
+			},
+			"spec": {
+			  "containers": [
+				{
+				  "name": "controller",
+				  "ports": [
+					{
+					  "containerPort": 10254,
+					  "name": "prometheus",
+					  "protocol": "TCP"
+					}
+				  ],
+				  "args": [
+					"/nginx-ingress-controller",
+					"--election-id=ingress-nginx-leader",
+					"--controller-class=k8s.io/ingress-nginx",
+					"--ingress-class=nginx",
+					"--configmap=$(POD_NAMESPACE)/ingress-nginx-controller",
+					"--validating-webhook=:8443",
+					"--validating-webhook-certificate=/usr/local/certificates/cert",
+					"--validating-webhook-key=/usr/local/certificates/key",
+					"--watch-ingress-without-class=true",
+					"--enable-metrics=true",
+					"--publish-status-address=localhost"
+				  ]
+				}
+			  ]
+			}
+		  }
+		}
+	  }`
+	_, ingressPatch := exec.Command("kubectl", "patch", "deployments.apps", "ingress-nginx-controller", "-n", "ingress-nginx", "-p", patch).Output()
+	if ingressPatch != nil {
+		cfmt.Println("{{✗ Failed to patch the ingress controller. }}::red\nHere is a detailled information how to do it manually: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/monitoring.md")
+		//log.Fatal(ingressPatch)
+	}
+
+	patch = `{
+		"spec": {
+			"ports": [
+				{
+					"name": "prometheus",
+					"nodePort": 31280,
+					"port": 10254,
+					"protocol": "TCP",
+					"targetPort": "prometheus"
+				}
+			]
+		}
+	}`
+
+	_, ingressPatch = exec.Command("kubectl", "patch", "svc", "ingress-nginx-controller", "-n", "ingress-nginx", "-p", patch).Output()
+	if ingressPatch != nil {
+		cfmt.Println("{{✗ Failed to patch the ingress controller service. }}::red\nHere is a detailled information how to do it manually: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/monitoring.md")
+		//log.Fatal(ingressPatch)
+	}
+
 }
 
 func installCertManager() {
