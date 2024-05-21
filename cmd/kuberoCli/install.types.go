@@ -111,6 +111,7 @@ type KindConfig struct {
 			Protocol      string `yaml:"protocol"`
 		} `yaml:"extraPortMappings"`
 	} `yaml:"nodes"`
+	ContainerdConfigPatches []string `yaml:"containerdConfigPatches"`
 }
 
 type KuberoUIConfig struct {

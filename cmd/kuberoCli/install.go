@@ -587,7 +587,7 @@ func installKuberoUi() {
 		}
 		kuberoUIConfig.Spec.Ingress.Hosts[0].Host = arg_domain
 
-		webhookURL := promptLine("URL to which the webhooks should be sent", "", "https://"+arg_domain+"/api/repo/webhooks")
+		webhookURL := promptLine("URL to which the webhooks should be sent (localhost fails with GitHub)", "", "https://"+arg_domain+"/api/repo/webhooks")
 		kuberoUIConfig.Spec.Kubero.WebhookURL = webhookURL
 
 		kuberoUIssl := promptLine("Enable SSL for the Kubero UI", "[y/n]", "y")
