@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 	"time"
 
 	"encoding/json"
@@ -279,7 +280,8 @@ func installOLM() {
 	if len(olmCRDInstalled) > 0 {
 		cfmt.Println("{{✓ OLM CRD's allredy installed}}::lightGreen")
 	} else {
-		olmSpinner.Start("run command : kubectl create -f " + olmURL + "/olm.yaml")
+		cfmt.Println("  run command : kubectl create -f " + olmURL + "/olm.yaml")
+		olmSpinner.Start("Installing OLM CRDs")
 		_, olmCRDErr := exec.Command("kubectl", "create", "-f", olmURL+"/crds.yaml").Output()
 		if olmCRDErr != nil {
 			fmt.Println("")
@@ -290,7 +292,8 @@ func installOLM() {
 		}
 	}
 
-	olmSpinner.Start("run command : kubectl create -f " + olmURL + "/olm.yaml")
+	cfmt.Println("  run command : kubectl create -f " + olmURL + "/olm.yaml")
+	olmSpinner.Start("Install OLM")
 
 	_, olmOLMErr := exec.Command("kubectl", "create", "-f", olmURL+"/olm.yaml").Output()
 	if olmOLMErr != nil {
@@ -301,7 +304,8 @@ func installOLM() {
 	olmSpinner.Success("OLM installed sucessfully")
 
 	olmWaitSpinner := spinner.New("Wait for OLM to be ready")
-	olmWaitSpinner.Start("run command : kubectl wait --for=condition=available deployment/olm-operator -n " + namespace + " --timeout=180s")
+	cfmt.Println("  run command : kubectl wait --for=condition=available deployment/olm-operator -n " + namespace + " --timeout=180s")
+	olmWaitSpinner.Start("Wait for OLM to be ready")
 	_, olmWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/olm-operator", "-n", namespace, "--timeout=180s").Output()
 	if olmWaitErr != nil {
 		olmWaitSpinner.Error("Failed to run command. Try runnig this command manually: kubectl wait --for=condition=available deployment/olm-operator -n " + namespace + " --timeout=180s")
@@ -310,7 +314,8 @@ func installOLM() {
 	olmWaitSpinner.Success("OLM is ready")
 
 	olmWaitCatalogSpinner := spinner.New("Wait for OLM Catalog to be ready")
-	olmWaitCatalogSpinner.Start("run command : kubectl wait --for=condition=available deployment/catalog-operator -n " + namespace + " --timeout=180s")
+	cfmt.Println("  run command : kubectl wait --for=condition=available deployment/catalog-operator -n " + namespace + " --timeout=180s")
+	olmWaitCatalogSpinner.Start("Wait for OLM Catalog to be ready")
 	_, olmWaitCatalogErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/catalog-operator", "-n", namespace, "--timeout=180s").Output()
 	if olmWaitCatalogErr != nil {
 		olmWaitCatalogSpinner.Error("Failed to run command. Try runnig this command manually: kubectl wait --for=condition=available deployment/catalog-operator -n " + namespace + " --timeout=180s")
@@ -379,7 +384,8 @@ func installIngress() {
 		// incressController verion can bot be loaded from github api, since the return is alphabetic
 		ingressSpinner := spinner.New("Install Ingress")
 		URL := "https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-" + ingressControllerVersion + "/deploy/static/provider/" + ingressProvider + "/deploy.yaml"
-		ingressSpinner.Start("run command : kubectl apply -f " + URL)
+		cfmt.Println("  run command : kubectl apply -f " + URL)
+		ingressSpinner.Start("Install Ingress")
 		_, ingressErr := exec.Command("kubectl", "apply", "-f", URL).Output()
 		if ingressErr != nil {
 			ingressSpinner.Error("Failed to run command. Try runnig this command manually: kubectl apply -f " + URL)
@@ -411,7 +417,8 @@ func installKuberoOperator() {
 func installKuberoOLMOperator() {
 
 	kuberoSpinner := spinner.New("Install Kubero Operator")
-	kuberoSpinner.Start("run command : kubectl apply -f https://operatorhub.io/install/kubero-operator.yaml")
+	cfmt.Println("  run command : kubectl apply -f https://operatorhub.io/install/kubero-operator.yaml")
+	kuberoSpinner.Start("Install Kubero Operator")
 	_, kuberoErr := exec.Command("kubectl", "apply", "-f", "https://operatorhub.io/install/kubero-operator.yaml").Output()
 	if kuberoErr != nil {
 		fmt.Println("")
@@ -434,7 +441,8 @@ func installKuberoOLMOperator() {
 func installKuberoOperatorSlim() {
 
 	kuberoSpinner := spinner.New("Install Kubero Operator")
-	kuberoSpinner.Start("run command : kubectl apply -f https://raw.githubusercontent.com/kubero-dev/kubero-operator/main/deploy/operator.yaml")
+	cfmt.Println("  run command : kubectl apply -f https://raw.githubusercontent.com/kubero-dev/kubero-operator/main/deploy/operator.yaml")
+	kuberoSpinner.Start("Install Kubero Operator")
 	_, kuberoErr := exec.Command("kubectl", "apply", "-f", "https://raw.githubusercontent.com/kubero-dev/kubero-operator/main/deploy/operator.yaml").Output()
 	if kuberoErr != nil {
 		fmt.Println("")
@@ -587,7 +595,15 @@ func installKuberoUi() {
 		}
 		kuberoUIConfig.Spec.Ingress.Hosts[0].Host = arg_domain
 
-		webhookURL := promptLine("URL to which the webhooks should be sent (localhost fails with GitHub)", "", "https://"+arg_domain+"/api/repo/webhooks")
+		// Warn if domain contains kubero.net
+
+		webhookDomin := arg_domain
+		if strings.Contains(arg_domain, "kubero.localhost") {
+			cfmt.Println("{{⚠ kubero.localhost might not be reachable won't get any Webhooks. GitHub will fail to connect your pipeline. }}::yellow")
+			webhookDomin = "webhook.local.kubero.net"
+		}
+
+		webhookURL := promptLine("URL to which the webhooks should be sent (localhost fails with GitHub)", "", "https://"+webhookDomin+"/api/repo/webhooks")
 		kuberoUIConfig.Spec.Kubero.WebhookURL = webhookURL
 
 		kuberoUIssl := promptLine("Enable SSL for the Kubero UI", "[y/n]", "y")
@@ -610,15 +626,19 @@ func installKuberoUi() {
 			kuberoUIConfig.Spec.Registry.Enabled = true
 
 			kuberoUICreateRegistry := promptLine("Create a local Registry for Kubero", "[y/n]", "n")
+
 			if kuberoUICreateRegistry == "y" {
 				kuberoUIConfig.Spec.Registry.Create = true
+				kuberoUIConfig.Spec.Registry.Host = "registry.local.kubero.net" // registry.local.kubero.net points to localhost 127.0.0.1
+				kuberoUIConfig.Spec.Registry.Port = 80
+			} else {
+
+				kuberoUIRegistryPort := promptLine("Registry port", "", "443")
+				kuberoUIConfig.Spec.Registry.Port, _ = strconv.Atoi(kuberoUIRegistryPort)
+
+				kuberoUIRegistryHost := promptLine("Registry domain", "", "registry.yourdomain.com")
+				kuberoUIConfig.Spec.Registry.Host = kuberoUIRegistryHost
 			}
-
-			kuberoUIRegistryPort := promptLine("Registry port", "", "443")
-			kuberoUIConfig.Spec.Registry.Port, _ = strconv.Atoi(kuberoUIRegistryPort)
-
-			kuberoUIRegistryHost := promptLine("Registry domain", "", "registry."+arg_domain)
-			kuberoUIConfig.Spec.Registry.Host = kuberoUIRegistryHost
 
 			kuberoUIRegistryUsername := promptLine("Registry username", "", "admin")
 			kuberoUIConfig.Spec.Registry.Account.Username = kuberoUIRegistryUsername
@@ -734,7 +754,8 @@ func installMonitoring() {
 	spinner := spinner.New("enable metrics")
 	if promptLine("Create local Prometheus instance", "[y/n]", "y") == "y" {
 		URL := "https://raw.githubusercontent.com/kubero-dev/kubero-operator/main/config/samples/application_v1alpha1_kuberoprometheus.yaml"
-		spinner.Start("run command : kubectl apply -f " + URL)
+		cfmt.Println("  run command : kubectl apply -f " + URL)
+		spinner.Start("Installing Prometheus")
 		_, ingressErr := exec.Command("kubectl", "apply", "-n", "kubero", "-f", URL).Output()
 		if ingressErr != nil {
 			spinner.Error("Failed to run command. Try runnig this command manually: kubectl apply -f " + URL)
@@ -754,7 +775,8 @@ func installMonitoring() {
 	}
 
 	if promptLine("Enable Kubemetrtics", "[y/n]", "y") == "y" {
-		spinner.Start("run command : kubectl patch kuberoes kubero -n kubero --type=merge")
+		cfmt.Println("  run command : kubectl patch kuberoes kubero -n kubero --type=merge")
+		spinner.Start("Enabling Metrics")
 
 		patch := `{
 			"spec": {
@@ -770,7 +792,7 @@ func installMonitoring() {
 		if patchResult != nil {
 			spinner.Error("Failed to patch the kubero prometheus CRD to enable kube metrics", patchResult.Error(), patch)
 		}
-		spinner.Success("metrics enabled sucessfully")
+		spinner.Success("Metrics enabled sucessfully")
 
 	}
 
@@ -866,7 +888,8 @@ func installCertManagerSlim() {
 	certManagerSpinner := spinner.New("Install Cert Manager")
 	//certmanagerUrl := "https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml"
 	certmanagerUrl := "https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml"
-	certManagerSpinner.Start("run command : kubectl create -f " + certmanagerUrl)
+	cfmt.Println("  run command : kubectl create -f " + certmanagerUrl)
+	certManagerSpinner.Start("Installing Cert Manager")
 	_, certManagerErr := exec.Command("kubectl", "create", "-f", certmanagerUrl).Output()
 	if certManagerErr != nil {
 		certManagerSpinner.Error("Failed to run command. Try runnig this command manually: kubectl create -f " + certmanagerUrl)
@@ -931,7 +954,8 @@ func installOLMCertManager() {
 	}
 
 	certManagerSpinner := spinner.New("Install Cert Manager")
-	certManagerSpinner.Start("run command : kubectl create -f https://operatorhub.io/install/cert-manager.yaml")
+	cfmt.Println("  run command : kubectl create -f https://operatorhub.io/install/cert-manager.yaml")
+	certManagerSpinner.Start("Installing Cert Manager")
 	_, certManagerErr := exec.Command("kubectl", "create", "-f", "https://operatorhub.io/install/cert-manager.yaml").Output()
 	if certManagerErr != nil {
 		certManagerSpinner.Error("Failed to run command. Try runnig this command manually: kubectl create -f https://operatorhub.io/install/cert-manager.yaml")
@@ -960,7 +984,7 @@ func installOLMCertManager() {
 
 func writeCLIconfig() {
 
-	ingressInstall := promptLine("8) Write the Kubero CLI config", "[y,n]", "y")
+	ingressInstall := promptLine("8) Write the Kubero CLI config", "[y,n]", "n")
 	if ingressInstall != "y" {
 		return
 	}

@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/leaanthony/spinner"
 	"gopkg.in/yaml.v3"
 )
@@ -63,7 +64,8 @@ func installKind() {
 	}
 
 	kindSpinner := spinner.New("Spin up a local Kind cluster")
-	kindSpinner.Start("run command : kind create cluster --config kind.yaml")
+	cfmt.Println("run command : kind create cluster --config kind.yaml")
+	kindSpinner.Start("Creating Kind cluster")
 	out, err := exec.Command("kind", "create", "cluster", "--config", "kind.yaml").Output()
 	if err != nil {
 		kindSpinner.Error("Failed to run command. Try runnig this command manually and skip this step : 'kind create cluster --config kind.yaml'")
