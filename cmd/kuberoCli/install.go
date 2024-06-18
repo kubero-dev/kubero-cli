@@ -8,7 +8,6 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
-	"strconv"
 	"strings"
 	"time"
 
@@ -70,17 +69,17 @@ required binaries:
 			return
 		case "":
 			printInstallSteps()
-			installKubernetes()
-			checkCluster()
-			installOLM()
-			installIngress()
-			installMetrics()
-			installCertManager()
-			installKuberoOperator()
-			installMonitoring()
-			installKpack()
-			installKuberoUi()
-			writeCLIconfig()
+			installKubernetes()     // 1
+			checkCluster()          //
+			installOLM()            // 2
+			installKuberoOperator() // 3
+			installIngress()        // 4
+			installMetrics()        // 5
+			installCertManager()    // 6
+			installMonitoring()     // 7
+			installKpack()          // 8
+			installKuberoUi()       // 9
+			writeCLIconfig()        // 10
 			printDNSinfo()
 			finalMessage()
 			return
@@ -146,13 +145,14 @@ func printInstallSteps() {
   Steps to install kubero:
     1. Create a kubernetes cluster {{(optional)}}::gray
     2. Install the OLM {{(optional)}}::gray
-    3. Install the ingress controller {{(required)}}::gray
-    4. Install the metrics server {{(optional, but recommended)}}::gray
-    5. Install the cert-manager {{(optional)}}::gray
-    6. Install the kubero operator {{(required)}}::gray
+    3. Install the kubero operator {{(required)}}::gray
+    4. Install the ingress controller {{(required)}}::gray
+    5. Install the metrics server {{(optional, but recommended)}}::gray
+    6. Install the cert-manager {{(optional)}}::gray
     7. Install the monitoring stack {{(optional, but recommended)}}::gray
-    8. Install the kubero UI {{(optional, but highly recommended)}}::gray
-    9. Write the kubero CLI config
+    8. Install the buildpacks for buildpacks.io {{(optional)}}::gray
+    9. Install the kubero UI {{(optional, but highly recommended)}}::gray
+    10. Write the kubero CLI config
 `)
 }
 
@@ -357,7 +357,7 @@ func installMetrics() {
 		cfmt.Println("{{✓ Metrics is allredy enabled}}::lightGreen")
 		return
 	}
-	install := promptLine("4) Install Kubernetes internal metrics service (required for HPA, Horizontal Pod Autoscaling)", "[y,n]", "y")
+	install := promptLine("5) Install Kubernetes internal metrics service (required for HPA, Horizontal Pod Autoscaling)", "[y,n]", "y")
 	if install != "y" {
 		return
 	}
@@ -381,7 +381,7 @@ func installIngress() {
 		return
 	}
 
-	ingressInstall := promptLine("3) Install Ingress", "[y,n]", "y")
+	ingressInstall := promptLine("4) Install Ingress", "[y,n]", "y")
 	if ingressInstall != "y" {
 		return
 	} else {
@@ -425,7 +425,7 @@ func installIngress() {
 
 func installKuberoOperator() {
 
-	cfmt.Println("\n  {{6) Install Kubero Operator}}::bold")
+	cfmt.Println("\n  {{3) Install Kubero Operator}}::bold")
 
 	kuberoInstalled, _ := exec.Command("kubectl", "get", "operator", "kubero-operator.operators").Output()
 	if len(kuberoInstalled) > 0 {
@@ -476,14 +476,23 @@ func installKuberoOperatorSlim() {
 		log.Fatal(kuberoErr)
 	}
 
-	kuberoSpinner.UpdateMessage("Wait for Kubero Operator to be ready")
+	kuberoSpinner.UpdateMessage("Wait for Kubero Operator CRD's to be installed")
 	var kuberoWait []byte
 	for len(kuberoWait) == 0 {
 		// kubectl api-resources --api-group=application.kubero.dev --no-headers=true
 		kuberoWait, _ = exec.Command("kubectl", "api-resources", "--api-group=application.kubero.dev", "--no-headers=true").Output()
 		time.Sleep(1 * time.Second)
 	}
+	kuberoSpinner.UpdateMessage("Kubero Operator CRD's installed")
 
+	time.Sleep(5 * time.Second)
+	// kubectl wait --for=condition=available deployment/kubero -n kubero --timeout=180s
+	kuberoSpinner.UpdateMessage("Wait for Kubero Operator to be ready")
+	_, olmWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/kubero-operator-controller-manager", "-n", "kubero-operator-system", "--timeout=300s").Output()
+	if olmWaitErr != nil {
+		kuberoSpinner.Error("Failed to wait for Kubero UI to become ready")
+		log.Fatal(olmWaitErr)
+	}
 	kuberoSpinner.Success("Kubero Operator installed sucessfully")
 
 }
@@ -664,10 +673,13 @@ func installKuberoUi() {
 				kuberoUIConfig.Spec.Registry.StorageClassName = kuberoUIRegistryStorageClassName
 			}
 
-			kuberoUIRegistryHost := promptLine("Registry domain", "", "")
+			kuberoUIRegistryHost := promptLine("Registry", "[registry.kubero.mydomain.com]", "")
 			kuberoUIConfig.Spec.Registry.Host = kuberoUIRegistryHost
-			kuberoUIRegistryPort := promptLine("Registry port", "", "443")
-			kuberoUIConfig.Spec.Registry.Port, _ = strconv.Atoi(kuberoUIRegistryPort)
+
+			kuberoUIRegistrySubpath := promptLine("Subpath (optional) ", "[example/foo/bar]", "")
+			kuberoUIConfig.Spec.Registry.Subpath = kuberoUIRegistrySubpath
+
+			kuberoUIConfig.Spec.Registry.Port = 443
 
 			kuberoUIRegistryUsername := promptLine("Registry username", "", "admin")
 			kuberoUIConfig.Spec.Registry.Account.Username = kuberoUIRegistryUsername
@@ -751,7 +763,7 @@ func installKuberoUi() {
 
 		time.Sleep(5 * time.Second)
 		// kubectl wait --for=condition=available deployment/kubero -n kubero --timeout=180s
-		_, olmWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/kubero", "-n", "kubero", "--timeout=180s").Output()
+		_, olmWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/kubero", "-n", "kubero", "--timeout=300s").Output()
 		if olmWaitErr != nil {
 			kuberoUISpinner.Error("Failed to wait for Kubero UI to become ready")
 			log.Fatal(olmWaitErr)
@@ -775,23 +787,24 @@ func installMonitoring() {
 	spinner := spinner.New("enable metrics")
 	if promptLine("7.1) Create local Prometheus instance", "[y/n]", "y") == "y" {
 		URL := "https://raw.githubusercontent.com/kubero-dev/kubero-operator/main/config/samples/application_v1alpha1_kuberoprometheus.yaml"
-		cfmt.Println("  run command : kubectl apply -f " + URL)
+		cfmt.Println("  run command : kubectl apply -n kubero -f " + URL)
 		spinner.Start("Installing Prometheus")
 		_, ingressErr := exec.Command("kubectl", "apply", "-n", "kubero", "-f", URL).Output()
 		if ingressErr != nil {
 			spinner.Error("Failed to run command. Try runnig this command manually: kubectl apply -f " + URL)
 			log.Fatal(ingressErr)
 		}
+		/*
+			spinner.UpdateMessage("Waiting for Prometheus to be ready")
 
-		spinner.UpdateMessage("Waiting for Prometheus to be ready")
-
-		time.Sleep(5 * time.Second)
-		// kubectl wait --for=condition=available deployment/kubero -n kubero --timeout=180s
-		_, olmWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/kubero-prometheus-server", "-n", "kubero", "--timeout=180s").Output()
-		if olmWaitErr != nil {
-			spinner.Error("Failed to wait for Prometheus to become ready")
-			log.Fatal(olmWaitErr)
-		}
+			time.Sleep(5 * time.Second)
+			// kubectl wait --for=condition=available deployment/kubero -n kubero --timeout=180s
+			_, olmWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/kubero-prometheus-server", "-n", "kubero", "--timeout=300s").Output()
+			if olmWaitErr != nil {
+				spinner.Error("Failed to wait for Prometheus to become ready")
+				log.Fatal(olmWaitErr)
+			}
+		*/
 		spinner.Success("Prometheus installed sucessfully")
 	}
 
@@ -886,7 +899,7 @@ func installMonitoring() {
 
 func installCertManager() {
 
-	install := promptLine("5) Install SSL Certmanager", "[y,n]", "y")
+	install := promptLine("6) Install SSL Certmanager", "[y,n]", "y")
 	if install != "y" {
 		return
 	}
@@ -940,10 +953,10 @@ func installCertManagerClusterissuer(namespace string) {
 	var certmanagerClusterIssuer CertmanagerClusterIssuer
 	yaml.Unmarshal(kf.Body(), &certmanagerClusterIssuer)
 
-	arg_certmanagerContact := promptLine("5.1) Letsencrypt ACME contact email", "", "noreply@yourdomain.com")
+	arg_certmanagerContact := promptLine("6.1) Letsencrypt ACME contact email", "", "noreply@yourdomain.com")
 	certmanagerClusterIssuer.Spec.Acme.Email = arg_certmanagerContact
 
-	clusterissuer := promptLine("5.2) Clusterissuer Name", "", "letsencrypt-prod")
+	clusterissuer := promptLine("6.2) Clusterissuer Name", "", "letsencrypt-prod")
 	certmanagerClusterIssuer.Metadata.Name = clusterissuer
 
 	certmanagerClusterIssuerYaml, _ := yaml.Marshal(certmanagerClusterIssuer)

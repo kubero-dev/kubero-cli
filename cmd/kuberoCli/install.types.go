@@ -161,6 +161,7 @@ type KuberoUIConfig struct {
 			Enabled bool   `yaml:"enabled"`
 			Create  bool   `yaml:"create"`
 			Host    string `yaml:"host"`
+			Subpath string `yaml:"subpath"`
 			Account struct {
 				Username string `yaml:"username"`
 				Password string `yaml:"password"`
