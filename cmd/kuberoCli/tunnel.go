@@ -76,9 +76,9 @@ func startTunnel() {
 		os.Exit(1)
 	}
 	cfmt.Println()
-	cfmt.Println("  Endpoint IP      : {{" + ipres.String() + "}}::cyan")
-	cfmt.Println("  Destination Host : {{" + tunnelHost + "}}::cyan")
-	cfmt.Println("  Destination Port : {{" + strconv.Itoa(tunnelPort) + "}}::cyan\n\n")
+	cfmt.Println("  Endpoint IP (Tunnel Password) : {{" + ipres.String() + "}}::cyan")
+	cfmt.Println("  Destination Host              : {{" + tunnelHost + "}}::cyan")
+	cfmt.Println("  Destination Port              : {{" + strconv.Itoa(tunnelPort) + "}}::cyan\n\n")
 
 	spinner := spinner.New()
 	spinner.Start("Waiting for tunnel to be ready")
