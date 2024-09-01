@@ -61,8 +61,6 @@ required binaries:
 		case "monitoring":
 			installMonitoring()
 			return
-		case "buildpacks":
-			installKpack()
 		case "kubernetes":
 			installKubernetes()
 			checkCluster()
@@ -77,9 +75,8 @@ required binaries:
 			installMetrics()        // 5
 			installCertManager()    // 6
 			installMonitoring()     // 7
-			installKpack()          // 8
-			installKuberoUi()       // 9
-			writeCLIconfig()        // 10
+			installKuberoUi()       // 8
+			writeCLIconfig()        // 9
 			printDNSinfo()
 			finalMessage()
 			return
@@ -105,7 +102,7 @@ var ingressControllerVersion = "v1.10.0" // https://github.com/kubernetes/ingres
 var clusterTypeList = []string{"kind", "linode", "scaleway", "gke", "digitalocean"}
 
 func init() {
-	installCmd.Flags().StringVarP(&arg_component, "component", "c", "", "install component (kubernetes,olm,ingress,metrics,certmanager,kubero-operator,monitoring,buildpacks,kubero-ui)")
+	installCmd.Flags().StringVarP(&arg_component, "component", "c", "", "install component (kubernetes,olm,ingress,metrics,certmanager,kubero-operator,monitoring,kubero-ui)")
 	installCmd.Flags().StringVarP(&arg_adminUser, "user", "u", "", "Admin username for the kubero UI")
 	installCmd.Flags().StringVarP(&arg_adminPassword, "user-password", "U", "", "Password for the admin user")
 	installCmd.Flags().StringVarP(&arg_apiToken, "apitoken", "a", "", "API token for the admin user")
@@ -150,9 +147,8 @@ func printInstallSteps() {
     5. Install the metrics server {{(optional, but recommended)}}::gray
     6. Install the cert-manager {{(optional)}}::gray
     7. Install the monitoring stack {{(optional, but recommended)}}::gray
-    8. Install the buildpacks for buildpacks.io {{(optional)}}::gray
-    9. Install the kubero UI {{(optional, but highly recommended)}}::gray
-    10. Write the kubero CLI config
+    8. Install the kubero UI {{(optional, but highly recommended)}}::gray
+    9. Write the kubero CLI config
 `)
 }
 
@@ -325,29 +321,6 @@ func installOLM() {
 		log.Fatal(olmWaitCatalogErr)
 	}
 	olmWaitCatalogSpinner.Success("OLM Catalog is ready")
-}
-
-func installKpack() {
-
-	kpackInstalled, _ := exec.Command("kubectl", "get", "crd", "builds.kpack.io").Output()
-	if len(kpackInstalled) > 0 {
-		cfmt.Println("{{✓ Kpack is allredy installed}}::lightGreen")
-		return
-	}
-
-	kpackInstall := promptLine("8) Install Kpack for buildpacks.io", "[y,n]", "y")
-	if kpackInstall != "y" {
-		return
-	}
-
-	components := "https://github.com/buildpacks-community/kpack/releases/download/v0.13.3/release-0.13.3.yaml"
-	_, installErr := exec.Command("kubectl", "apply", "-f", components).Output()
-
-	if installErr != nil {
-		fmt.Println("failed to install kpack")
-		log.Fatal(installErr)
-	}
-	cfmt.Println("{{✓ Kpack Operator installed}}::lightGreen")
 }
 
 func installMetrics() {
