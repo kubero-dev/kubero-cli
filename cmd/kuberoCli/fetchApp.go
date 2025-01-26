@@ -19,7 +19,7 @@ var fetchAppCmd = &cobra.Command{
 
 		pipelinesList := getAllRemotePipelines()
 		if len(pipelinesList) == 0 {
-			cfmt.Println("\n{{ERROR:}}::red No pipelines found")
+			_, _ = cfmt.Println("\n{{ERROR:}}::red No pipelines found")
 			os.Exit(1)
 		}
 		ensurePipelineIsSet(pipelinesList)
@@ -28,7 +28,7 @@ var fetchAppCmd = &cobra.Command{
 
 		appsList := getAllRemoteApps()
 		if len(appsList) == 0 {
-			cfmt.Println("\n{{ERROR:}}::red No apps found in pipeline '" + pipelineName + "'")
+			_, _ = cfmt.Println("\n{{ERROR:}}::red No apps found in pipeline '" + pipelineName + "'")
 			os.Exit(1)
 		}
 

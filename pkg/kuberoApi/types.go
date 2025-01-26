@@ -159,9 +159,12 @@ type AppSpec struct {
 		Create bool   `json:"create"`
 		Name   string `json:"name"`
 	} `json:"serviceAccount" yaml:"serviceAccount" gorm:"embedded"`
-	EnvVars []string `json:"envVars" gorm:"-"`
-	Web     Web      `json:"web" gorm:"embedded"`
-	Worker  Worker   `json:"worker" gorm:"embedded"`
+	EnvVars  []string `json:"envVars" gorm:"-"`
+	Web      Web      `json:"web" gorm:"embedded"`
+	Worker   Worker   `json:"worker" gorm:"embedded"`
+	Security struct {
+		VulnerabilityScans bool `json:"vulnerabilityScans,omitempty" yaml:"vulnerabilityScans,omitempty"`
+	} `json:"security,omitempty" yaml:"security,omitempty"`
 }
 
 type Web struct {

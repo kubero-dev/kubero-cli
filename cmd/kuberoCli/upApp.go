@@ -24,7 +24,7 @@ var upAppCmd = &cobra.Command{
 
 		appsList := getAllLocalApps()
 		if len(appsList) == 0 {
-			cfmt.Println("\n{{ERROR:}}::red No apps found in pipeline '" + pipelineName + "'")
+			_, _ = cfmt.Println("\n{{ERROR:}}::red No apps found in pipeline '" + pipelineName + "'")
 			os.Exit(1)
 		}
 		ensureAppNameIsSelected(appsList)

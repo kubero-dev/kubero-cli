@@ -323,6 +323,7 @@ type ScalewayCreate struct {
 	FeatureGates      []string `json:"feature_gates" gorm:"column:feature_gates"`
 	AdmissionPlugins  []string `json:"admission_plugins" gorm:"column:admission_plugins"`
 	ApiServerCertSans []string `json:"apiServer_cert_sans" gorm:"column:apiServer_cert_sans"`
+	Ingress           string   `json:"ingress" gorm:"column:ingress"`
 }
 
 type ScalewayNodePool struct {
