@@ -1,203 +1,193 @@
 package kuberoApi
 
-import "time"
+import (
+	"gorm.io/gorm"
+	"time"
+)
 
-type PipelineCRD struct {
-	APIVersion string   `json:"apiVersion" yaml:"apiVersion"`
-	Kind       string   `json:"kind"`
-	Metadata   metadata `json:"metadata,omitempty" yaml:"metadata,omitempty"`
-	Spec       struct {
-		Buildpack struct {
-			Build struct {
-				Command    string `json:"command"`
-				Repository string `json:"repository"`
-				Tag        string `json:"tag"`
-			} `json:"build"`
-			Fetch struct {
-				Repository string `json:"repository"`
-				Tag        string `json:"tag"`
-			} `json:"fetch"`
-			Language string `json:"language"`
-			Name     string `json:"name"`
-			Run      struct {
-				Command    string `json:"command"`
-				Repository string `json:"repository"`
-				Tag        string `json:"tag"`
-			} `json:"run"`
-		} `json:"buildpack"`
-		Deploymentstrategy string `json:"deploymentstrategy"`
-		Domain             string `json:"domain"`
-		Dockerimage        string `json:"dockerimage,omitempty" yaml:"dockerimage,omitempty"`
-		Git                struct {
-			Keys struct {
-				CreatedAt time.Time `json:"created_at"`
-				ID        int       `json:"id"`
-				//Priv      string    `json:"priv"`
-				//Pub       string    `json:"pub"`
-				ReadOnly bool   `json:"read_only"`
-				Title    string `json:"title"`
-				URL      string `json:"url"`
-				Verified bool   `json:"verified"`
-			} `json:"keys"`
-			Repository struct {
-				Provider      string `json:"provider"`
-				Admin         bool   `json:"admin"`
-				CloneURL      string `json:"clone_url"`
-				DefaultBranch string `json:"default_branch"`
-				Description   string `json:"description"`
-				Homepage      string `json:"homepage"`
-				ID            int    `json:"id"`
-				Language      string `json:"language"`
-				Name          string `json:"name"`
-				NodeID        string `json:"node_id" yaml:"node_id"`
-				Owner         string `json:"owner"`
-				Private       bool   `json:"private"`
-				Push          bool   `json:"push"`
-				SSHURL        string `json:"ssh_url"`
-				Visibility    string `json:"visibility"`
-			} `json:"repository"`
-			Webhook struct {
-				Active    bool      `json:"active"`
-				CreatedAt time.Time `json:"created_at"`
-				Events    []string  `json:"events"`
-				ID        int       `json:"id"`
-				Insecure  string    `json:"insecure"`
-				URL       string    `json:"url"`
-			} `json:"webhook"`
-			Webhooks struct { //TODO: This might be a typo
-			} `json:"webhooks"`
-		} `json:"git,omitempty" yaml:"git,omitempty"`
-		Name       string  `json:"pipelineName" yaml:"pipelineName"`
-		Phases     []Phase `json:"phases"`
-		Reviewapps bool    `json:"reviewapps"`
-	} `json:"spec"`
+type Metadata struct {
+	gorm.Model
+	Name   string      `json:"name,omitempty" yaml:"name,omitempty"`
+	Labels interface{} `json:"labels,omitempty" yaml:"labels,omitempty"`
+}
+
+type GitKeys struct {
+	gorm.Model
+	ReadOnly bool   `json:"read_only"`
+	Title    string `json:"title"`
+	URL      string `json:"url"`
+	Verified bool   `json:"verified"`
+}
+
+type GitRepository struct {
+	gorm.Model
+	Provider      string `json:"provider"`
+	Admin         bool   `json:"admin"`
+	CloneURL      string `json:"clone_url"`
+	DefaultBranch string `json:"default_branch"`
+	Description   string `json:"description"`
+	Homepage      string `json:"homepage"`
+	Language      string `json:"language"`
+	Name          string `json:"name"`
+	NodeID        string `json:"node_id" yaml:"node_id"`
+	Owner         string `json:"owner"`
+	Private       bool   `json:"private"`
+	Push          bool   `json:"push"`
+	SshUrl        string `json:"ssh_url"`
+	Visibility    string `json:"visibility"`
+}
+
+type GitWebhook struct {
+	gorm.Model
+	Active    bool      `json:"active"`
+	CreatedAt time.Time `json:"created_at"`
+	Events    []string  `json:"events"`
+	Insecure  string    `json:"insecure"`
+	URL       string    `json:"url"`
+}
+
+type Git struct {
+	gorm.Model
+	Keys       GitKeys       `json:"keys" gorm:"embedded"`
+	Repository GitRepository `json:"repository" gorm:"embedded"`
+	Webhook    GitWebhook    `json:"webhook" gorm:"embedded"`
+}
+
+type Build struct {
+	gorm.Model
+	Command    string `json:"command"`
+	Repository string `json:"repository"`
+	Tag        string `json:"tag"`
+}
+
+type Fetch struct {
+	gorm.Model
+	Repository string `json:"repository"`
+	Tag        string `json:"tag"`
+}
+
+type Run struct {
+	gorm.Model
+	Command    string `json:"command"`
+	Repository string `json:"repository"`
+	Tag        string `json:"tag"`
+}
+
+type Buildpack struct {
+	gorm.Model
+	Build    Build  `json:"build" gorm:"embedded"`
+	Fetch    Fetch  `json:"fetch" gorm:"embedded"`
+	Language string `json:"language"`
+	Name     string `json:"name"`
+	Run      Run    `json:"run" gorm:"embedded"`
 }
 
 type Phase struct {
+	gorm.Model
 	Name    string `json:"name"`
 	Enabled bool   `json:"enabled"`
 	Context string `json:"context"`
 }
 
-type AppCRD struct {
-	APIVersion string   `json:"apiVersion" yaml:"apiVersion"`
-	Kind       string   `json:"kind"`
-	Metadata   metadata `json:"metadata,omitempty" yaml:"metadata,omitempty"`
-	Spec       struct {
-		Addons   []interface{} `json:"addons"`
-		Affinity struct {
-		} `json:"affinity"`
-		Autodeploy  bool `json:"autodeploy"`
-		Autoscale   bool `json:"autoscale"`
-		Autoscaling struct {
-			Enabled bool `json:"enabled"`
-		} `json:"autoscaling"`
-		Branch           string        `json:"branch"`
-		Buildpack        string        `json:"buildpack"`
-		Cronjobs         []interface{} `json:"cronjobs"`
-		Domain           string        `json:"domain"`
-		EnvVars          []interface{} `json:"envvars"`
-		FullnameOverride string        `json:"fullnameOverride" yaml:"fullnameOverride"`
-		Gitrepo          struct {
-			Admin         bool   `json:"admin"`
-			CloneURL      string `json:"clone_url"`
-			DefaultBranch string `json:"default_branch"`
-			Description   string `json:"description"`
-			Homepage      string `json:"homepage"`
-			ID            int    `json:"id"`
-			Language      string `json:"language"`
-			Name          string `json:"name"`
-			NodeID        string `json:"node_id"`
-			Owner         string `json:"owner"`
-			Private       bool   `json:"private"`
-			Push          bool   `json:"push"`
-			SSHURL        string `json:"ssh_url"`
-			Visibility    string `json:"visibility"`
-		} `json:"gitrepo"`
-		Image struct {
-			Fetch struct {
-				Repository string `json:"repository"`
-				Tag        string `json:"tag"`
-			} `json:"fetch"`
-			Build struct {
-				Command    string `json:"command"`
-				Repository string `json:"repository"`
-				Tag        string `json:"tag"`
-			} `json:"build"`
-			Run struct {
-				Command    string `json:"command"`
-				Repository string `json:"repository"`
-				Tag        string `json:"tag"`
-			} `json:"run"`
-			ContainerPort int    `json:"containerPort"`
-			PullPolicy    string `json:"pullPolicy" yaml:"pullPolicy"`
-			Repository    string `json:"repository"`
-			Tag           string `json:"tag"`
-		} `json:"image"`
-		ImagePullSecrets []interface{} `json:"imagePullSecrets" yaml:"imagePullSecrets"`
-		Ingress          struct {
-			Annotations struct {
-			} `json:"annotations"`
-			ClassName string `json:"className"`
-			Enabled   bool   `json:"enabled"`
-			Hosts     []struct {
-				Host  string `json:"host"`
-				Paths []struct {
-					Path     string `json:"path"`
-					PathType string `json:"pathType" yaml:"pathType"`
-				} `json:"paths"`
-			} `json:"hosts"`
-			TLS []interface{} `json:"tls"`
-		} `json:"ingress"`
-		Name         string `json:"appname" yaml:"appname"`
-		NameOverride string `json:"nameOverride" yaml:"nameOverride"`
-		NodeSelector struct {
-		} `json:"nodeSelector" yaml:"NodeSelector"`
-		Phase          string `json:"phase"`
-		Pipeline       string `json:"pipeline"`
-		PodAnnotations struct {
-		} `json:"podAnnotations" yaml:"podAnnotations"`
-		PodSecurityContext struct {
-		} `json:"podSecurityContext" yaml:"podSecurityContext"`
-		Podsize      string `json:"podsize"`
-		ReplicaCount int    `json:"replicaCount" yaml:"replicaCount"`
-		Service      struct {
-			Port int    `json:"port"`
-			Type string `json:"type"`
-		} `json:"service"`
-		ServiceAccount struct {
-			Annotations struct {
-			} `json:"annotations"`
-			Create bool   `json:"create"`
-			Name   string `json:"name"`
-		} `json:"serviceAccount" yaml:"serviceAccount"`
-		Tolerations []interface{} `json:"tolerations"`
-		Web         struct {
-			Autoscaling struct {
-				MaxReplicas                       int `json:"maxReplicas" yaml:"maxReplicas"`
-				MinReplicas                       int `json:"minReplicas" yaml:"minReplicas"`
-				TargetCPUUtilizationPercentage    int `json:"targetCPUUtilizationPercentage" yaml:"targetCPUUtilizationPercentage"`
-				TargetMemoryUtilizationPercentage int `json:"targetMemoryUtilizationPercentage" yaml:"targetMemoryUtilizationPercentage"`
-			} `json:"autoscaling"`
-			ReplicaCount int `json:"replicaCount yaml:pathType"`
-		} `json:"web"`
-		Worker struct {
-			Autoscaling struct {
-				MaxReplicas                       int `json:"maxReplicas" yaml:"maxReplicas"`
-				MinReplicas                       int `json:"minReplicas" yaml:"minReplicas"`
-				TargetCPUUtilizationPercentage    int `json:"targetCPUUtilizationPercentage" yaml:"targetCPUUtilizationPercentage"`
-				TargetMemoryUtilizationPercentage int `json:"targetMemoryUtilizationPercentage" yaml:"targetMemoryUtilizationPercentage"`
-			} `json:"autoscaling"`
-			ReplicaCount int `json:"replicaCount yaml:pathType"`
-		} `json:"worker"`
-		Security struct {
-			VulnerabilityScans bool `json:"vulnerabilityScans,omitempty" yaml:"vulnerabilityScans,omitempty"`
-		} `json:"security,omitempty" yaml:"security,omitempty"`
-	} `json:"spec"`
+type PipelineSpec struct {
+	gorm.Model
+	Buildpack          Buildpack `json:"buildpack" gorm:"embedded"`
+	DeploymentStrategy string    `json:"deploymentstrategy"`
+	Domain             string    `json:"domain"`
+	DockerImage        string    `json:"dockerimage,omitempty" yaml:"dockerimage,omitempty"`
+	Git                Git       `json:"git,omitempty" yaml:"git,omitempty" gorm:"embedded"`
+	Name               string    `json:"pipelineName" yaml:"pipelineName"`
+	Phases             []Phase   `json:"phases" gorm:"foreignKey:PipelineID"`
+	ReviewApps         bool      `json:"reviewapps"`
 }
 
-type metadata struct {
-	Name string `json:"name,omitempty" yaml:"name,omitempty"`
-	//Namespace string      `json:"namespace,omitempty" yaml:"namespace,omitempty"` // we want to left this empty
-	Labels interface{} `json:"labels,omitempty" yaml:"labels,omitempty"`
+type PipelineCRD struct {
+	gorm.Model
+	APIVersion string       `json:"apiVersion" yaml:"apiVersion"`
+	Kind       string       `json:"kind"`
+	Metadata   Metadata     `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+	Spec       PipelineSpec `json:"spec" gorm:"embedded"`
+}
+
+type AppSpec struct {
+	gorm.Model
+	Autodeploy  bool `json:"autodeploy"`
+	Autoscale   bool `json:"autoscale"`
+	Autoscaling struct {
+		Enabled bool `json:"enabled"`
+	} `json:"autoscaling" gorm:"embedded"`
+	Branch           string        `json:"branch"`
+	Buildpack        string        `json:"buildpack"`
+	Domain           string        `json:"domain"`
+	FullnameOverride string        `json:"fullnameOverride" yaml:"fullnameOverride"`
+	Gitrepo          GitRepository `json:"gitrepo" gorm:"embedded"`
+	Image            struct {
+		Fetch struct {
+			Repository string `json:"repository"`
+			Tag        string `json:"tag"`
+		} `json:"fetch" gorm:"embedded"`
+		Build struct {
+			Command    string `json:"command"`
+			Repository string `json:"repository"`
+			Tag        string `json:"tag"`
+		} `json:"build" gorm:"embedded"`
+		Run struct {
+			Command    string `json:"command"`
+			Repository string `json:"repository"`
+			Tag        string `json:"tag"`
+		} `json:"run" gorm:"embedded"`
+		ContainerPort int    `json:"containerPort"`
+		PullPolicy    string `json:"pullPolicy" yaml:"pullPolicy"`
+		Repository    string `json:"repository"`
+		Tag           string `json:"tag"`
+	} `json:"image" gorm:"embedded"`
+	Ingress struct {
+		ClassName string `json:"className"`
+		Enabled   bool   `json:"enabled"`
+	} `json:"ingress" gorm:"embedded"`
+	Name         string `json:"appname" yaml:"appname"`
+	NameOverride string `json:"nameOverride" yaml:"nameOverride"`
+	Phase        string `json:"phase"`
+	Pipeline     string `json:"pipeline"`
+	PodSize      string `json:"podsize"`
+	ReplicaCount int    `json:"replicaCount" yaml:"replicaCount"`
+	Service      struct {
+		Port int    `json:"port"`
+		Type string `json:"type"`
+	} `json:"service" gorm:"embedded"`
+	ServiceAccount struct {
+		Create bool   `json:"create"`
+		Name   string `json:"name"`
+	} `json:"serviceAccount" yaml:"serviceAccount" gorm:"embedded"`
+	EnvVars []string `json:"envVars" gorm:"-"`
+	Web     Web      `json:"web" gorm:"embedded"`
+	Worker  Worker   `json:"worker" gorm:"embedded"`
+}
+
+type Web struct {
+	Autoscaling struct {
+		MaxReplicas                       int `json:"maxReplicas" gorm:"column:maxReplicas"`
+		MinReplicas                       int `json:"minReplicas" gorm:"column:minReplicas"`
+		TargetCPUUtilizationPercentage    int `json:"targetCPUUtilizationPercentage" gorm:"column:targetCPUUtilizationPercentage"`
+		TargetMemoryUtilizationPercentage int `json:"targetMemoryUtilizationPercentage" gorm:"column:targetMemoryUtilizationPercentage"`
+	} `json:"autoscaling" gorm:"embedded"`
+	ReplicaCount int `json:"replicaCount" gorm:"column:replicaCount"`
+}
+
+type Worker struct {
+	Autoscaling struct {
+		MaxReplicas                       int `json:"maxReplicas" gorm:"column:maxReplicas"`
+		MinReplicas                       int `json:"minReplicas" gorm:"column:minReplicas"`
+		TargetCPUUtilizationPercentage    int `json:"targetCPUUtilizationPercentage" gorm:"column:targetCPUUtilizationPercentage"`
+		TargetMemoryUtilizationPercentage int `json:"targetMemoryUtilizationPercentage" gorm:"column:targetMemoryUtilizationPercentage"`
+	} `json:"autoscaling" gorm:"embedded"`
+	ReplicaCount int `json:"replicaCount" gorm:"column:replicaCount"`
+}
+
+type AppCRD struct {
+	gorm.Model
+	APIVersion string   `json:"apiVersion" yaml:"apiVersion"`
+	Kind       string   `json:"kind"`
+	Metadata   Metadata `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+	Spec       AppSpec  `json:"spec" gorm:"embedded"`
 }
