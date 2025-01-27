@@ -1,7 +1,8 @@
+package kuberoCli
+
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 */
-package kuberoCli
 
 import (
 	"fmt"
@@ -23,10 +24,10 @@ var instanceCmd = &cobra.Command{
 		/*
 			fmt.Println("current instance : " + currentInstanceName)
 			fmt.Println(instanceList)
-			if currentInstance.Apiurl == "" {
+			if currentInstance.ApiUrl == "" {
 				fmt.Println("No current instance api URL")
 			} else {
-				fmt.Println("Current instance api URL : " + currentInstance.Apiurl)
+				fmt.Println("Current instance api URL : " + currentInstance.ApiUrl)
 			}
 		*/
 
@@ -69,7 +70,7 @@ func printInstanceList() {
 			active,
 			token,
 			instanceName,
-			instanceList[instanceName].Apiurl,
+			instanceList[instanceName].ApiUrl,
 			instanceList[instanceName].ConfigPath,
 			instanceList[instanceName].IacBaseDir,
 		})
@@ -88,7 +89,7 @@ func createInstanceForm() {
 
 	personalInstanceList[instanceName] = Instance{
 		Name:       instanceName,
-		Apiurl:     instanceApiurl,
+		ApiUrl:     instanceApiurl,
 		ConfigPath: instancePath,
 	}
 
@@ -104,7 +105,11 @@ func setCurrentInstance(instanceName string) {
 	currentInstanceName = instanceName
 	currentInstance = instanceList[instanceName]
 	viper.Set("currentInstance", instanceName)
-	viper.WriteConfig()
+	writeConfigErr := viper.WriteConfig()
+	if writeConfigErr != nil {
+		fmt.Println("Failed to save configuration:", writeConfigErr)
+		return
+	}
 }
 
 func deleteInstanceForm() {
@@ -112,6 +117,10 @@ func deleteInstanceForm() {
 
 	delete(instanceList, instanceName)
 	viper.Set("instances", instanceList)
-	viper.WriteConfig()
+	writeConfigErr := viper.WriteConfig()
+	if writeConfigErr != nil {
+		fmt.Println("Failed to save configuration:", writeConfigErr)
+		return
+	}
 
 }

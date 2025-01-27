@@ -2,6 +2,7 @@ package kuberoCli
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 
 	"github.com/go-resty/resty/v2"
@@ -9,27 +10,31 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var podsizesCmd = &cobra.Command{
+var podSizesCmd = &cobra.Command{
 	Use:   "podsizes",
 	Short: "List the available pod sizes",
 	Run: func(cmd *cobra.Command, args []string) {
 		resp, _ := api.GetPodsize()
-		printPodsizes(resp)
+		printPodSizes(resp)
 	},
 }
 
 func init() {
-	configCmd.AddCommand(podsizesCmd)
+	configCmd.AddCommand(podSizesCmd)
 }
 
-func printPodsizes(r *resty.Response) {
+func printPodSizes(r *resty.Response) {
 
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"Name", "Description"})
 	//table.SetBorder(false)
 
-	var podsizeList []Podsize
-	json.Unmarshal(r.Body(), &podsizeList)
+	var podsizeList []PodSize
+	unmarshalErr := json.Unmarshal(r.Body(), &podsizeList)
+	if unmarshalErr != nil {
+		fmt.Println("Failed to unmarshal the response body:", unmarshalErr)
+		return
+	}
 
 	for _, podsize := range podsizeList {
 		table.Append([]string{podsize.Name, podsize.Description})
