@@ -1,93 +1,258 @@
 # kubero-cli
-A CLI for kubero. The simplest PaaS for Kubernetes.
-The main repository is [here](https://github.com/kubero-dev/kubero). Please use the main repository to open issues. 
+
+![Version](https://img.shields.io/github/v/release/kubero-dev/kubero-cli)
+![Build Status](https://img.shields.io/github/actions/workflow/status/kubero-dev/kubero-cli/build.yml?branch=main)
+![License](https://img.shields.io/github/license/kubero-dev/kubero-cli)
+
+A powerful and user-friendly Command Line Interface (CLI) for [Kubero](https://github.com/kubero-dev/kubero), the simplest Platform as a Service (PaaS) for Kubernetes.
+
+> **Note:** Please report any issues in the [main repository](https://github.com/kubero-dev/kubero).
+
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+   - [Supported Platforms](#supported-platforms)
+   - [1. Shortcut Installation](#1-shortcut-installation)
+   - [2. Homebrew Installation](#2-homebrew-installation)
+   - [3. Build from Source](#3-build-from-source)
+- [Supported Providers](#supported-providers)
+- [Usage](#usage)
+   - [Command Overview](#command-overview)
+- [Provider Credentials](#provider-credentials)
+   - [Scaleway](#scaleway)
+   - [Linode](#linode)
+   - [DigitalOcean](#digitalocean)
+   - [Google GKE](#google-gke)
+- [Development Guide](#development-guide)
+- [Contributing](#contributing)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
+
+---
+
+## Features
+
+- **Easy Cluster Deployment:** Quickly create Kubernetes clusters on supported providers.
+- **App Management:** Simplify application deployment and management.
+- **Pipeline Integration:** Seamlessly integrate CI/CD pipelines.
+- **User-Friendly Commands:** Intuitive CLI commands for efficient workflows.
+- **Dashboard Access:** Easy access to the Kubero dashboard for monitoring.
+
+---
 
 ## Installation
 
-Download the latest release [here](https://github.com/kubero-dev/kubero-cli/releases/latest) and extract the binary.
+### Supported Platforms
 
-### Shortcut (MacOS, Linux)
-```
+- **macOS**
+- **Linux**
+
+### 1. Shortcut Installation
+
+Install Kubero CLI with a single command:
+
+```shell
 curl -fsSL get.kubero.dev | bash
 ```
 
-### Brew (MacOS, Linux)
+### 2. Homebrew Installation
+
+If Homebrew is not installed, install it first:
+
+```shell
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
+
+Install Kubero CLI via Homebrew:
+
+```shell
 brew tap kubero-dev/kubero
 brew install kubero-cli
 ```
 
-## Supported installer
-- Scaleway
-- Linode
-- Digital Ocean
-- Google GKE
-- Kind (localhost)
-- Vultr (soon)
-- Oracle Cloud OCI/OKE (soon)
-- Exoscale (soon)
-- Swissflow (soon)
+### 3. Build from Source
 
+For advanced use cases, build and package the binary manually.
+
+#### Requirements
+
+- [Git](https://git-scm.com/downloads)
+- [Go](https://go.dev/doc/install)
+- [UPX](https://github.com/upx/upx/releases/)
+
+#### Steps
+
+1. **Clone the Repository:**
+
+   ```shell
+   git clone https://github.com/kubero-dev/kubero-cli.git
+   ```
+
+2. **Navigate to the Project Directory:**
+
+   ```shell
+   cd kubero-cli
+   ```
+
+3. **Create a Version Tag (Optional):**
+
+   ```shell
+   git tag -a v1.0 -m "Version 1.0"
+   ```
+
+4. **Build and Package the Binary:**
+
+   ```shell
+   cd cmd
+   go build -ldflags "-s -w -X main.version=$(git describe --tags --abbrev=0) -X main.commit=$(git rev-parse --short HEAD) -X main.date=$(date +%Y-%m-%d)" -trimpath -o kubero-cli
+   upx kubero-cli
+   mv kubero-cli ../kubero
+   cd ..
+   ```
+
+5. **Move the Binary to Your PATH:**
+
+   ```shell
+   sudo mv kubero /usr/local/bin/
+   ```
+
+6. **Reload Shell Configuration:**
+
+   ```shell
+   source "$HOME/.$(basename ${SHELL})rc"
+   ```
+
+7. **Verify Installation:**
+
+   ```shell
+   kubero --version
+   ```
+
+---
+
+## Supported Providers
+
+Kubero CLI currently supports the following cloud providers:
+
+- **Scaleway**
+- **Linode**
+- **DigitalOcean**
+- **Google GKE**
+- **Kind** (local clusters)
+
+### Coming Soon
+
+- **Vultr**
+- **Oracle Cloud OCI/OKE**
+- **Exoscale**
+- **Swissflow**
+
+---
 
 ## Usage
-Command map
-```
-    kubero
-    ├── install                // create kubernetes cluster and install kubero with all required components
-    ├── login                  // login to kubero, safe instance to credentials file
-    ├── logout                 // logout from kubero, remove instance from credentials file
-    ├── instance               // print current kubero instance
-    │   ├── create             // create a configuration to a kubero instance
-    │   ├── delete             // delete a configuration to a kubero instance
-    │   ├── select             // select a kubero instance
-    ├── create                 // create a new pipeline and app config
-    │   ├── app
-    │   └── pipeline
-    ├── list                   // list all running pipelines and apps
-    ├── up                     // deploy app and pipeline
-    │   ├── app
-    │   └── pipeline
-    ├── down                   // delete app and pipeline
-    │   ├── app
-    │   └── pipeline
-    ├── fetch                  // sync app and pipeline to local config
-    │   ├── app
-    │   └── pipeline
-    ├── config                 // print configurations
-    │   ├── addons
-    │   ├── buildpacks
-    │   └── podsizes
-    ├── dashboard              // Open the kubero dashboard
-    ├── tunnel                 // Open a tunnel to a natted cluster
-    └── help                   // Help about any command   
+
+### Command Overview
+
+```plaintext
+kubero
+├── install                # Create a Kubernetes cluster and install Kubero with all required components
+├── list                   # List all running clusters
+├── login                  # Log in to Kubero and save credentials
+├── logout                 # Log out from Kubero and remove saved credentials
+├── create                 # Create new app and pipeline configurations
+│   ├── app
+│   └── pipeline
+├── up                     # Deploy apps and pipelines
+│   ├── app
+│   └── pipeline
+├── down                   # Remove apps and pipelines
+│   ├── app
+│   └── pipeline
+├── fetch                  # Sync configurations to local files
+│   ├── app
+│   └── pipeline
+├── dashboard              # Open the Kubero dashboard
+├── tunnel                 # Open a tunnel to a NAT-ed cluster
+├── instance               # Manage Kubero instances
+│   ├── create             # Create an instance configuration
+│   ├── delete             # Delete an instance configuration
+│   └── select             # Select an active instance
+├── config                 # View available configurations
+│   ├── addons             # List addons
+│   ├── buildpacks         # List buildpacks
+│   └── podsizes           # List pod size configurations
+└── help                   # Display help for commands
 ```
 
+---
 
-## Environment variables for credentials
+## Provider Credentials
+
+Set the appropriate environment variables for your cloud provider before using Kubero CLI.
+
 ### Scaleway
-```
-export SCALEWAY_ACCESS_TOKEN=xxx
-export SCALEWAY_PROJECTID=xxx
-export SCALEWAY_ORGANIZATIONID=xxx
+
+```shell
+export SCALEWAY_ACCESS_TOKEN=your_access_token
+export SCALEWAY_PROJECT_ID=your_project_id
+export SCALEWAY_ORGANIZATION_ID=your_organization_id
 ```
 
 ### Linode
-```
-export LINODE_ACCESS_TOKEN=xxx
+
+```shell
+export LINODE_ACCESS_TOKEN=your_access_token
 ```
 
-### Digital Ocean
-```
-export DIGITALOCEAN_ACCESS_TOKEN=xxx
+### DigitalOcean
+
+```shell
+export DIGITALOCEAN_ACCESS_TOKEN=your_access_token
 ```
 
 ### Google GKE
-```
-export GOOGLE_API_KEY=xxx
+
+```shell
+export GOOGLE_API_KEY=your_api_key
 ```
 
-## Development
-Create a dev VERSION File
-```
+---
+
+## Development Guide
+
+### Enable Development Mode
+
+To enable development mode for testing and debugging, create a `VERSION` file:
+
+```shell
 echo "dev" > cmd/kuberoCli/VERSION
 ```
+
+---
+
+## Contributing
+
+We welcome contributions from the community! Please check out our [Contributing Guidelines](https://github.com/kubero-dev/kubero/blob/main/CONTRIBUTING.md) for more information.
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+## Acknowledgments
+
+- **[Kubero](https://github.com/kubero-dev/kubero):** The simplest PaaS for Kubernetes.
+- **[Go](https://golang.org/):** The programming language used for development.
+- **Community Contributors:** Thank you to all who have contributed to this project.
+
+---
+
+Thank you for using **kubero-cli**! If you have suggestions or encounter issues, please open an issue in the [main repository](https://github.com/kubero-dev/kubero).
+
+---
