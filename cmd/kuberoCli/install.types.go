@@ -1,454 +1,429 @@
 package kuberoCli
 
-import "time"
+import (
+	"gorm.io/gorm"
+	"time"
+)
 
 type DigitalOceanKubernetesConfig struct {
-	Name      string `json:"name"`
-	Region    string `json:"region"`
-	Version   string `json:"version"`
+	Name      string `json:"name" gorm:"column:name"`
+	Region    string `json:"region" gorm:"column:region"`
+	Version   string `json:"version" gorm:"column:version"`
 	NodePools []struct {
-		Size  string `json:"size"`
-		Count int    `json:"count"`
-		Name  string `json:"name"`
-	} `json:"node_pools"`
+		Size  string `json:"size" gorm:"column:size"`
+		Count int    `json:"count" gorm:"column:count"`
+		Name  string `json:"name" gorm:"column:name"`
+	} `json:"node_pools" gorm:"embedded"`
 }
 
 type DigitalOcean struct {
 	KubernetesCluster struct {
-		ID            string   `json:"id"`
-		Name          string   `json:"name"`
-		Region        string   `json:"region"`
-		Version       string   `json:"version"`
-		ClusterSubnet string   `json:"cluster_subnet"`
-		ServiceSubnet string   `json:"service_subnet"`
-		VpcUUID       string   `json:"vpc_uuid"`
-		Ipv4          string   `json:"ipv4"`
-		Endpoint      string   `json:"endpoint"`
-		Tags          []string `json:"tags"`
+		ID            string   `json:"id" gorm:"column:id"`
+		Name          string   `json:"name" gorm:"column:name"`
+		Region        string   `json:"region" gorm:"column:region"`
+		Version       string   `json:"version" gorm:"column:version"`
+		ClusterSubnet string   `json:"cluster_subnet" gorm:"column:cluster_subnet"`
+		ServiceSubnet string   `json:"service_subnet" gorm:"column:service_subnet"`
+		VpcUUID       string   `json:"vpc_uuid" gorm:"column:vpc_uuid"`
+		Ipv4          string   `json:"ipv4" gorm:"column:ipv4"`
+		Endpoint      string   `json:"endpoint" gorm:"column:endpoint"`
+		Tags          []string `json:"tags" gorm:"column:tags"`
 		NodePools     []struct {
-			ID        string        `json:"id"`
-			Name      string        `json:"name"`
-			Size      string        `json:"size"`
-			Count     int           `json:"count"`
-			Tags      []string      `json:"tags"`
-			Labels    interface{}   `json:"labels"`
-			Taints    []interface{} `json:"taints"`
-			AutoScale bool          `json:"auto_scale"`
-			MinNodes  int           `json:"min_nodes"`
-			MaxNodes  int           `json:"max_nodes"`
+			ID        string        `json:"id" gorm:"column:id"`
+			Name      string        `json:"name" gorm:"column:name"`
+			Size      string        `json:"size" gorm:"column:size"`
+			Count     int           `json:"count" gorm:"column:count"`
+			Tags      []string      `json:"tags" gorm:"column:tags"`
+			Labels    interface{}   `json:"labels" gorm:"column:labels"`
+			Taints    []interface{} `json:"taints" gorm:"column:taints"`
+			AutoScale bool          `json:"auto_scale" gorm:"column:auto_scale"`
+			MinNodes  int           `json:"min_nodes" gorm:"column:min_nodes"`
+			MaxNodes  int           `json:"max_nodes" gorm:"column:max_nodes"`
 			Nodes     []struct {
-				ID     string `json:"id"`
-				Name   string `json:"name"`
+				ID     string `json:"id" gorm:"column:id"`
+				Name   string `json:"name" gorm:"column:name"`
 				Status struct {
-					State string `json:"state"`
-				} `json:"status"`
-				DropletID string    `json:"droplet_id"`
-				CreatedAt time.Time `json:"created_at"`
-				UpdatedAt time.Time `json:"updated_at"`
-			} `json:"nodes"`
-		} `json:"node_pools"`
+					State string `json:"state" gorm:"column:state"`
+				} `json:"status" gorm:"embedded"`
+				DropletID string    `json:"droplet_id" gorm:"column:droplet_id"`
+				CreatedAt time.Time `json:"created_at" gorm:"column:created_at"`
+				UpdatedAt time.Time `json:"updated_at" gorm:"column:updated_at"`
+			} `json:"nodes" gorm:"embedded"`
+		} `json:"node_pools" gorm:"embedded"`
 		MaintenancePolicy struct {
-			StartTime string `json:"start_time"`
-			Duration  string `json:"duration"`
-			Day       string `json:"day"`
-		} `json:"maintenance_policy"`
-		AutoUpgrade bool `json:"auto_upgrade"`
+			StartTime string `json:"start_time" gorm:"column:start_time"`
+			Duration  string `json:"duration" gorm:"column:duration"`
+			Day       string `json:"day" gorm:"column:day"`
+		} `json:"maintenance_policy" gorm:"embedded"`
+		AutoUpgrade bool `json:"auto_upgrade" gorm:"column:auto_upgrade"`
 		Status      struct {
-			State   string `json:"state"`
-			Message string `json:"message"`
-		} `json:"status"`
-		CreatedAt         time.Time `json:"created_at"`
-		UpdatedAt         time.Time `json:"updated_at"`
-		SurgeUpgrade      bool      `json:"surge_upgrade"`
-		RegistryEnabled   bool      `json:"registry_enabled"`
-		Ha                bool      `json:"ha"`
-		SupportedFeatures []string  `json:"supported_features"`
-	} `json:"kubernetes_cluster"`
+			State   string `json:"state" gorm:"column:state"`
+			Message string `json:"message" gorm:"column:message"`
+		} `json:"status" gorm:"embedded"`
+		CreatedAt         time.Time `json:"created_at" gorm:"column:created_at"`
+		UpdatedAt         time.Time `json:"updated_at" gorm:"column:updated_at"`
+		SurgeUpgrade      bool      `json:"surge_upgrade" gorm:"column:surge_upgrade"`
+		RegistryEnabled   bool      `json:"registry_enabled" gorm:"column:registry_enabled"`
+		Ha                bool      `json:"ha" gorm:"column:ha"`
+		SupportedFeatures []string  `json:"supported_features" gorm:"column:supported_features"`
+	} `json:"kubernetes_cluster" gorm:"embedded"`
 }
 
 type DigitaloceanOptions struct {
 	Options struct {
 		Regions []struct {
-			Name string `json:"name"`
-			Slug string `json:"slug"`
-		} `json:"regions"`
+			Name string `json:"name" gorm:"column:name"`
+			Slug string `json:"slug" gorm:"column:slug"`
+		} `json:"regions" gorm:"embedded"`
 		Versions []struct {
-			Slug              string   `json:"slug"`
-			KubernetesVersion string   `json:"kubernetes_version"`
-			SupportedFeatures []string `json:"supported_features"`
-		} `json:"versions"`
+			Slug              string   `json:"slug" gorm:"column:slug"`
+			KubernetesVersion string   `json:"kubernetes_version" gorm:"column:kubernetes_version"`
+			SupportedFeatures []string `json:"supported_features" gorm:"column:supported_features"`
+		} `json:"versions" gorm:"embedded"`
 		Sizes []struct {
-			Name string `json:"name"`
-			Slug string `json:"slug"`
-		} `json:"sizes"`
-	} `json:"options"`
+			Name string `json:"name" gorm:"column:name"`
+			Slug string `json:"slug" gorm:"column:slug"`
+		} `json:"sizes" gorm:"embedded"`
+	} `json:"options" gorm:"embedded"`
 }
 
 type User struct {
-	ID       int    `json:"id"`
-	Method   string `json:"method"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Insecure bool   `json:"insecure"`
-	Apitoken string `json:"apitoken,omitempty"`
+	gorm.Model
+	Method   string `json:"method" gorm:"column:method"`
+	Username string `json:"username" gorm:"column:username"`
+	Password string `json:"password" gorm:"column:password"`
+	Insecure bool   `json:"insecure" gorm:"column:insecure"`
+	ApiToken string `json:"apiToken,omitempty" gorm:"column:apiToken"`
 }
 
 type KindConfig struct {
-	Kind       string `yaml:"kind"`
-	APIVersion string `yaml:"apiVersion"`
-	Name       string `yaml:"name"`
+	Kind       string `yaml:"kind" gorm:"column:kind"`
+	APIVersion string `yaml:"apiVersion" gorm:"column:apiVersion"`
+	Name       string `yaml:"name" gorm:"column:name"`
 	Networking struct {
-		IPFamily         string `yaml:"ipFamily"`
-		APIServerAddress string `yaml:"apiServerAddress"`
-	} `yaml:"networking"`
+		IPFamily         string `yaml:"ipFamily" gorm:"column:ipFamily"`
+		APIServerAddress string `yaml:"apiServerAddress" gorm:"column:apiServerAddress"`
+	} `yaml:"networking" gorm:"embedded"`
 	Nodes []struct {
-		Role                 string   `yaml:"role"`
-		Image                string   `yaml:"image,omitempty"`
-		KubeadmConfigPatches []string `yaml:"kubeadmConfigPatches"`
+		Role                 string   `yaml:"role" gorm:"column:role"`
+		Image                string   `yaml:"image,omitempty" gorm:"column:image"`
+		KubeadmConfigPatches []string `yaml:"kubeadmConfigPatches" gorm:"column:kubeadmConfigPatches"`
 		ExtraPortMappings    []struct {
-			ContainerPort int    `yaml:"containerPort"`
-			HostPort      int    `yaml:"hostPort"`
-			Protocol      string `yaml:"protocol"`
-		} `yaml:"extraPortMappings"`
-	} `yaml:"nodes"`
-	ContainerdConfigPatches []string `yaml:"containerdConfigPatches"`
+			ContainerPort int    `yaml:"containerPort" gorm:"column:containerPort"`
+			HostPort      int    `yaml:"hostPort" gorm:"column:hostPort"`
+			Protocol      string `yaml:"protocol" gorm:"column:protocol"`
+		} `yaml:"extraPortMappings" gorm:"embedded"`
+	} `yaml:"nodes" gorm:"embedded"`
+	ContainerdConfigPatches []string `yaml:"containerdConfigPatches" gorm:"column:containerdConfigPatches"`
 }
 
 type KuberoUIConfig struct {
-	APIVersion string `yaml:"apiVersion"`
-	Kind       string `yaml:"kind"`
+	APIVersion string `yaml:"apiVersion" gorm:"column:apiVersion"`
+	Kind       string `yaml:"kind" gorm:"column:kind"`
 	Metadata   struct {
-		Name string `yaml:"name"`
-	} `yaml:"metadata"`
+		Name string `yaml:"name" gorm:"column:name"`
+	} `yaml:"metadata" gorm:"embedded"`
 	Spec struct {
-		Affinity struct {
-		} `yaml:"affinity"`
-		FullnameOverride string `yaml:"fullnameOverride"`
+		FullnameOverride string `yaml:"fullnameOverride" gorm:"column:fullnameOverride"`
 		Image            struct {
-			PullPolicy string `yaml:"pullPolicy"`
-			Repository string `yaml:"repository"`
-			Tag        string `yaml:"tag"`
-		} `yaml:"image"`
-		ImagePullSecrets []interface{} `yaml:"imagePullSecrets"`
+			PullPolicy string `yaml:"pullPolicy" gorm:"column:pullPolicy"`
+			Repository string `yaml:"repository" gorm:"column:repository"`
+			Tag        string `yaml:"tag" gorm:"column:tag"`
+		} `yaml:"image" gorm:"embedded"`
+		ImagePullSecrets []interface{} `yaml:"imagePullSecrets" gorm:"-"`
 		Ingress          struct {
 			Annotations struct {
-				KubernetesIoIngressClass string `yaml:"cert-manager.io/cluster-issuer,omitempty"`
-				KubernetesIoTLSacme      string `yaml:"kubernetes.io/tls-acme,omitempty"`
-			} `yaml:"annotations"`
-			ClassName string `yaml:"className"`
-			Enabled   bool   `yaml:"enabled"`
+				KubernetesIoIngressClass string `yaml:"cert-manager.io/cluster-issuer,omitempty" gorm:"column:cert_manager_io_cluster_issuer"`
+				KubernetesIoTlsAcme      string `yaml:"kubernetes.io/tls-acme,omitempty" gorm:"column:kubernetes_io_tls_acme"`
+			} `yaml:"annotations" gorm:"embedded"`
+			ClassName string `yaml:"className" gorm:"column:className"`
+			Enabled   bool   `yaml:"enabled" gorm:"column:enabled"`
 			Hosts     []struct {
-				Host  string `yaml:"host"`
+				Host  string `yaml:"host" gorm:"column:host"`
 				Paths []struct {
-					Path     string `yaml:"path"`
-					PathType string `yaml:"pathType"`
-				} `yaml:"paths"`
-			} `yaml:"hosts"`
-			TLS []KuberoUItls `yaml:"tls"`
-		} `yaml:"ingress"`
-		NameOverride string `yaml:"nameOverride"`
+					Path     string `yaml:"path" gorm:"column:path"`
+					PathType string `yaml:"pathType" gorm:"column:pathType"`
+				} `yaml:"paths" gorm:"embedded"`
+			} `yaml:"hosts" gorm:"embedded"`
+			TLS []KuberoUITls `yaml:"tls" gorm:"-"`
+		} `yaml:"ingress" gorm:"embedded"`
+		NameOverride string `yaml:"nameOverride" gorm:"column:nameOverride"`
 		NodeSelector struct {
-		} `yaml:"nodeSelector"`
+		} `yaml:"nodeSelector" gorm:"-"`
 		PodAnnotations struct {
-		} `yaml:"podAnnotations"`
+		} `yaml:"podAnnotations" gorm:"-"`
 		PodSecurityContext struct {
-		} `yaml:"podSecurityContext"`
+		} `yaml:"podSecurityContext" gorm:"-"`
 		Prometheus struct {
-			Enabled  bool   `yaml:"enabled"`
-			Endpoint string `yaml:"endpoint"`
-		} `yaml:"prometheus,omitempty"`
+			Enabled  bool   `yaml:"enabled" gorm:"column:enabled"`
+			Endpoint string `yaml:"endpoint" gorm:"column:endpoint"`
+		} `yaml:"prometheus,omitempty" gorm:"embedded"`
 		Registry struct {
-			Enabled bool   `yaml:"enabled"`
-			Create  bool   `yaml:"create"`
-			Host    string `yaml:"host"`
-			Subpath string `yaml:"subpath"`
+			Enabled bool   `yaml:"enabled" gorm:"column:enabled"`
+			Create  bool   `yaml:"create" gorm:"column:create"`
+			Host    string `yaml:"host" gorm:"column:host"`
+			SubPath string `yaml:"subPath" gorm:"column:subPath"`
 			Account struct {
-				Username string `yaml:"username"`
-				Password string `yaml:"password"`
-				Hash     string `yaml:"hash"`
-			} `yaml:"account"`
-			Port             int         `yaml:"port"`
-			Storage          string      `yaml:"storage"`
-			StorageClassName interface{} `yaml:"storageClassName"`
-		} `yaml:"registry"`
-		ReplicaCount int `yaml:"replicaCount"`
+				Username string `yaml:"username" gorm:"column:username"`
+				Password string `yaml:"password" gorm:"column:password"`
+				Hash     string `yaml:"hash" gorm:"column:hash"`
+			} `yaml:"account" gorm:"embedded"`
+			Port             int         `yaml:"port" gorm:"column:port"`
+			Storage          string      `yaml:"storage" gorm:"column:storage"`
+			StorageClassName interface{} `yaml:"storageClassName" gorm:"column:storageClassName"`
+		} `yaml:"registry" gorm:"embedded"`
+		ReplicaCount int `yaml:"replicaCount" gorm:"column:replicaCount"`
 		Resources    struct {
-		} `yaml:"resources"`
+		} `yaml:"resources" gorm:"-"`
 		SecurityContext struct {
-		} `yaml:"securityContext"`
+		} `yaml:"securityContext" gorm:"-"`
 		Service struct {
-			Port int    `yaml:"port"`
-			Type string `yaml:"type"`
-		} `yaml:"service"`
+			Port int    `yaml:"port" gorm:"column:port"`
+			Type string `yaml:"type" gorm:"column:type"`
+		} `yaml:"service" gorm:"embedded"`
 		ServiceAccount struct {
 			Annotations struct {
-			} `yaml:"annotations"`
-			Create bool   `yaml:"create"`
-			Name   string `yaml:"name"`
-		} `yaml:"serviceAccount"`
-		Tolerations []interface{} `yaml:"tolerations"`
+			} `yaml:"annotations" gorm:"-"`
+			Create bool   `yaml:"create" gorm:"column:create"`
+			Name   string `yaml:"name" gorm:"column:name"`
+		} `yaml:"serviceAccount" gorm:"embedded"`
+		Tolerations []interface{} `yaml:"tolerations" gorm:"-"`
 		Kubero      struct {
-			Debug      string `yaml:"debug"`
-			Namespace  string `yaml:"namespace"`
-			Context    string `yaml:"context"`
-			WebhookURL string `yaml:"webhook_url"`
-			SessionKey string `yaml:"sessionKey"`
+			Debug      string `yaml:"debug" gorm:"column:debug"`
+			Namespace  string `yaml:"namespace" gorm:"column:namespace"`
+			Context    string `yaml:"context" gorm:"column:context"`
+			WebhookURL string `yaml:"webhook_url" gorm:"column:webhook_url"`
+			SessionKey string `yaml:"sessionKey" gorm:"column:sessionKey"`
 			Auth       struct {
 				Github struct {
-					Enabled     bool   `yaml:"enabled"`
-					ID          string `yaml:"id,omitempty`
-					Secret      string `yaml:"secret,omitempty"`
-					CallbackURL string `yaml:"callbackUrl,omitempty"`
-					Org         string `yaml:"org,omitempty"`
-				} `yaml:"github"`
+					Enabled     bool   `yaml:"enabled" gorm:"column:enabled"`
+					ID          string `yaml:"id,omitempty" gorm:"column:id"`
+					Secret      string `yaml:"secret,omitempty" gorm:"column:secret"`
+					CallbackURL string `yaml:"callbackUrl,omitempty" gorm:"column:callbackUrl"`
+					Org         string `yaml:"org,omitempty" gorm:"column:org"`
+				} `yaml:"github" gorm:"embedded"`
 				Oauth2 struct {
-					Enabled     bool   `yaml:"enabled"`
-					Name        string `yaml:"name,omitempty"`
-					ID          string `yaml:"id,omitempty"`
-					AuthURL     string `yaml:"authUrl,omitempty"`
-					TokenURL    string `yaml:"tokenUrl,omitempty"`
-					Secret      string `yaml:"secret,omitempty"`
-					CallbackURL string `yaml:"callbackUrl,omitempty"`
-				} `yaml:"oauth2"`
-			} `yaml:"auth"`
+					Enabled     bool   `yaml:"enabled" gorm:"column:enabled"`
+					Name        string `yaml:"name,omitempty" gorm:"column:name"`
+					ID          string `yaml:"id,omitempty" gorm:"column:id"`
+					AuthURL     string `yaml:"authUrl,omitempty" gorm:"column:authUrl"`
+					TokenURL    string `yaml:"tokenUrl,omitempty" gorm:"column:tokenUrl"`
+					Secret      string `yaml:"secret,omitempty" gorm:"column:secret"`
+					CallbackURL string `yaml:"callbackUrl,omitempty" gorm:"column:callbackUrl"`
+				} `yaml:"oauth2" gorm:"embedded"`
+			} `yaml:"auth" gorm:"embedded"`
 			AuditLogs struct {
-				Enabled          bool     `yaml:"enabled"`
-				StorageClassName string   `yaml:"storageClassName"`
-				Size             string   `yaml:"size"`
-				AccessModes      []string `yaml:"accessModes"`
-				Limit            string   `yaml:"limit"`
-			} `yaml:"auditLogs"`
-			Config KuberoConfigfile `yaml:"config,omitempty"`
-		} `yaml:"kubero"`
-	} `yaml:"spec"`
+				Enabled          bool     `yaml:"enabled" gorm:"column:enabled"`
+				StorageClassName string   `yaml:"storageClassName" gorm:"column:storageClassName"`
+				Size             string   `yaml:"size" gorm:"column:size"`
+				AccessModes      []string `yaml:"accessModes" gorm:"column:accessModes"`
+				Limit            string   `yaml:"limit" gorm:"column:limit"`
+			} `yaml:"auditLogs" gorm:"embedded"`
+			Config KuberoConfigfile `yaml:"config,omitempty" gorm:"embedded"`
+		} `yaml:"kubero" gorm:"embedded"`
+	} `yaml:"spec" gorm:"embedded"`
 }
 
 type KuberoConfigfile struct {
 	Kubero struct {
-		Readonly bool `yaml:"readonly"`
+		Readonly bool `yaml:"readonly" gorm:"column:readonly"`
 		Console  struct {
-			Enabled bool `yaml:"enabled"`
-		} `yaml:"console"`
+			Enabled bool `yaml:"enabled" gorm:"column:enabled"`
+		} `yaml:"console" gorm:"embedded"`
 		Banner struct {
-			Show      bool   `yaml:"show"`
-			Message   string `yaml:"message"`
-			Bgcolor   string `yaml:"bgcolor"`
-			Fontcolor string `yaml:"fontcolor"`
-		} `yaml:"banner"`
-	} `yaml:"kubero"`
-	Clusterissuer string `yaml:"clusterissuer"`
+			Show      bool   `yaml:"show" gorm:"column:show"`
+			Message   string `yaml:"message" gorm:"column:message"`
+			BgColor   string `yaml:"bgColor" gorm:"column:bgColor"`
+			Fontcolor string `yaml:"fontcolor" gorm:"column:fontcolor"`
+		} `yaml:"banner" gorm:"embedded"`
+	} `yaml:"kubero" gorm:"embedded"`
+	ClusterIssuer string `yaml:"clusterIssuer" gorm:"column:clusterIssuer"`
 	Templates     struct {
-		Enabled  bool `yaml:"enabled"`
+		Enabled  bool `yaml:"enabled" gorm:"column:enabled"`
 		Catalogs []struct {
-			Name             string `yaml:"name"`
-			Description      string `yaml:"description"`
-			TemplateBasePath string `yaml:"templateBasePath"`
+			Name             string `yaml:"name" gorm:"column:name"`
+			Description      string `yaml:"description" gorm:"column:description"`
+			TemplateBasePath string `yaml:"templateBasePath" gorm:"column:templateBasePath"`
 			Index            struct {
-				URL    string `yaml:"url"`
-				Format string `yaml:"format"`
-			} `yaml:"index"`
-		} `yaml:"catalogs"`
-	} `yaml:"templates"`
-	Buildpacks []struct {
-		Name     string `yaml:"name"`
-		Language string `yaml:"language"`
+				URL    string `yaml:"url" gorm:"column:url"`
+				Format string `yaml:"format" gorm:"column:format"`
+			} `yaml:"index" gorm:"embedded"`
+		} `yaml:"catalogs" gorm:"embedded"`
+	} `yaml:"templates" gorm:"embedded"`
+	BuildPacks []struct {
+		Name     string `yaml:"name" gorm:"column:name"`
+		Language string `yaml:"language" gorm:"column:language"`
 		Fetch    struct {
-			Repository      string `yaml:"repository"`
-			Tag             string `yaml:"tag"`
+			Repository      string `yaml:"repository" gorm:"column:repository"`
+			Tag             string `yaml:"tag" gorm:"column:tag"`
 			SecurityContext struct {
-				RunAsUser int `yaml:"runAsUser"`
-			} `yaml:"securityContext"`
-		} `yaml:"fetch"`
+				RunAsUser int `yaml:"runAsUser" gorm:"column:runAsUser"`
+			} `yaml:"securityContext" gorm:"embedded"`
+		} `yaml:"fetch" gorm:"embedded"`
 		Build struct {
-			Repository      string `yaml:"repository"`
-			Tag             string `yaml:"tag"`
-			Command         string `yaml:"command"`
+			Repository      string `yaml:"repository" gorm:"column:repository"`
+			Tag             string `yaml:"tag" gorm:"column:tag"`
+			Command         string `yaml:"command" gorm:"column:command"`
 			SecurityContext struct {
-				RunAsUser int `yaml:"runAsUser"`
-			} `yaml:"securityContext"`
-		} `yaml:"build,omitempty"`
+				RunAsUser int `yaml:"runAsUser" gorm:"column:runAsUser"`
+			} `yaml:"securityContext" gorm:"embedded"`
+		} `yaml:"build,omitempty" gorm:"embedded"`
 		Run struct {
-			Repository         string `yaml:"repository"`
-			Tag                string `yaml:"tag"`
-			ReadOnlyAppStorage bool   `yaml:"readOnlyAppStorage"`
+			Repository         string `yaml:"repository" gorm:"column:repository"`
+			Tag                string `yaml:"tag" gorm:"column:tag"`
+			ReadOnlyAppStorage bool   `yaml:"readOnlyAppStorage" gorm:"column:readOnlyAppStorage"`
 			SecurityContext    struct {
-				AllowPrivilegeEscalation bool `yaml:"allowPrivilegeEscalation"`
-				ReadOnlyRootFilesystem   bool `yaml:"readOnlyRootFilesystem"`
-			} `yaml:"securityContext"`
-			Command string `yaml:"command"`
-		} `yaml:"run,omitempty"`
-	} `yaml:"buildpacks"`
+				AllowPrivilegeEscalation bool `yaml:"allowPrivilegeEscalation" gorm:"column:allowPrivilegeEscalation"`
+				ReadOnlyRootFilesystem   bool `yaml:"readOnlyRootFilesystem" gorm:"column:readOnlyRootFilesystem"`
+			} `yaml:"securityContext" gorm:"embedded"`
+			Command string `yaml:"command" gorm:"column:command"`
+		} `yaml:"run,omitempty" gorm:"embedded"`
+	} `yaml:"buildPacks" gorm:"embedded"`
 	PodSizeList []struct {
-		Active      bool   `yaml:"active,omitempty"`
-		Name        string `yaml:"name"`
-		Description string `yaml:"description"`
-		Default     bool   `yaml:"default,omitempty"`
+		Active      bool   `yaml:"active,omitempty" gorm:"column:active"`
+		Name        string `yaml:"name" gorm:"column:name"`
+		Description string `yaml:"description" gorm:"column:description"`
+		Default     bool   `yaml:"default,omitempty" gorm:"column:default"`
 		Resources   struct {
 			Requests struct {
-				Memory string `yaml:"memory"`
-				CPU    string `yaml:"cpu"`
-			} `yaml:"requests"`
+				Memory string `yaml:"memory" gorm:"column:memory"`
+				CPU    string `yaml:"cpu" gorm:"column:cpu"`
+			} `yaml:"requests" gorm:"embedded"`
 			Limits struct {
-				Memory string `yaml:"memory"`
-				CPU    string `yaml:"cpu"`
-			} `yaml:"limits"`
-		} `yaml:"resources,omitempty"`
-	} `yaml:"podSizeList"`
-}
-type KuberoUItls struct {
-	SecretName string   `yaml:"secretName"`
-	Hosts      []string `yaml:"hosts"`
+				Memory string `yaml:"memory" gorm:"column:memory"`
+				CPU    string `yaml:"cpu" gorm:"column:cpu"`
+			} `yaml:"limits" gorm:"embedded"`
+		} `yaml:"resources,omitempty" gorm:"embedded"`
+	} `yaml:"podSizeList" gorm:"embedded"`
 }
 
-// https://developers.scaleway.com/en/products/k8s/api/#post-612200
+type KuberoUITls struct {
+	SecretName string   `yaml:"secretName" gorm:"column:secretName"`
+	Hosts      []string `yaml:"hosts" gorm:"column:hosts"`
+}
+
+// ScalewayCreate https://developers.scaleway.com/en/products/k8s/api/#post-612200
 type ScalewayCreate struct {
-	OrganizationID  string             `json:"organization_id,omitempty"` // DEPRECATED
-	ProjectID       string             `json:"project_id,omitempty"`      // REQUIRED
-	Type            string             `json:"type"`
-	Name            string             `json:"name"` // REQUIRED
-	Description     string             `json:"description"`
-	Tags            []string           `json:"tags"`
-	Version         string             `json:"version"`          // REQUIRED
-	Cni             string             `json:"cni"`              // REQUIRED
-	EnableDashboard bool               `json:"enable_dashboard"` // DEPRECATED
-	Ingress         string             `json:"ingress"`          // DEPRECATED
-	Pools           []ScalewayNodePool `json:"pools"`
-	/*
-		AutoscalerConfig struct {
-			ScaleDownDisabled             bool    `json:"scale_down_disabled"`
-			ScaleDownDelayAfterAdd        string  `json:"scale_down_delay_after_add"`
-			Estimator                     string  `json:"estimator"`
-			Expander                      string  `json:"expander"`
-			IgnoreDaemonsetsUtilization   bool    `json:"ignore_daemonsets_utilization"`
-			BalanceSimilarNodeGroups      bool    `json:"balance_similar_node_groups"`
-			ExpendablePodsPriorityCutoff  int     `json:"expendable_pods_priority_cutoff"`
-			ScaleDownUnneededTime         string  `json:"scale_down_unneeded_time"`
-			ScaleDownUtilizationThreshold float32 `json:"scale_down_utilization_threshold"`
-			MaxGracefulTerminationSec     int     `json:"max_graceful_termination_sec"`
-		} `json:"autoscaler_config,omitempty"`
-	*/
-	AutoUpgrade struct {
-		Enable            bool `json:"enable"`
+	OrganizationID string             `json:"organization_id,omitempty" gorm:"column:organization_id"`
+	ProjectID      string             `json:"project_id,omitempty" gorm:"column:project_id"`
+	Type           string             `json:"type" gorm:"column:type"`
+	Name           string             `json:"name" gorm:"column:name"`
+	Description    string             `json:"description" gorm:"column:description"`
+	Tags           []string           `json:"tags" gorm:"column:tags"`
+	Version        string             `json:"version" gorm:"column:version"`
+	Cni            string             `json:"cni" gorm:"column:cni"`
+	Pools          []ScalewayNodePool `json:"pools" gorm:"embedded"`
+	AutoUpgrade    struct {
+		Enable            bool `json:"enable" gorm:"column:enable"`
 		MaintenanceWindow struct {
-			StartHour int    `json:"start_hour"`
-			Day       string `json:"day"`
-		} `json:"maintenance_window"`
-	} `json:"auto_upgrade"`
-	FeatureGates     []string `json:"feature_gates"`
-	AdmissionPlugins []string `json:"admission_plugins"`
-	/*
-		OpenIDConnectConfig struct {
-			IssuerURL      string   `json:"issuer_url"`
-			ClientID       string   `json:"client_id"`
-			UsernameClaim  string   `json:"username_claim"`
-			UsernamePrefix string   `json:"username_prefix"`
-			GroupsClaim    []string `json:"groups_claim"`
-			GroupsPrefix   string   `json:"groups_prefix"`
-			RequiredClaim  []string `json:"required_claim"`
-		} `json:"open_id_connect_config"`
-	*/
-	ApiserverCertSans []string `json:"apiserver_cert_sans"`
+			StartHour int    `json:"start_hour" gorm:"column:start_hour"`
+			Day       string `json:"day" gorm:"column:day"`
+		} `json:"maintenance_window" gorm:"embedded"`
+	} `json:"auto_upgrade" gorm:"embedded"`
+	FeatureGates      []string `json:"feature_gates" gorm:"column:feature_gates"`
+	AdmissionPlugins  []string `json:"admission_plugins" gorm:"column:admission_plugins"`
+	ApiServerCertSans []string `json:"apiServer_cert_sans" gorm:"column:apiServer_cert_sans"`
+	Ingress           string   `json:"ingress" gorm:"column:ingress"`
 }
 
 type ScalewayNodePool struct {
-	Name             string   `json:"name"`
-	NodeType         string   `json:"node_type"`
-	PlacementGroupID string   `json:"placement_group_id,omitempty"`
-	Autoscaling      bool     `json:"autoscaling"`
-	Size             int      `json:"size"`
-	MinSize          int      `json:"min_size"`
-	MaxSize          int      `json:"max_size"`
-	ContainerRuntime string   `json:"container_runtime"`
-	Autohealing      bool     `json:"autohealing"`
-	Tags             []string `json:"tags"`
-	/* fails {"details":[{"argument_name":"default_pool_config[0].kubelet_args.\u003ckubelet_argKey\u003e","help_message":"kubelet argument \u003ckubelet_argKey\u003e is not available for this version","reason":"constraint"}
-	KubeletArgs      struct {
-		KubeletArgKey string `json:"<kubelet_argKey>"`
-	} `json:"kubelet_args"`
-	*/
-	/* fails with {"argument_name":"default_pool_config[0].upgrade_policy.max_unavailable","help_message":"value must be between 1 and 20","reason":"constraint"}],"message":"invalid argument(s)","type":"invalid_arguments"}
-	UpgradePolicy struct {
-		MaxUnavailable int `json:"max_unavailable"`
-		MaxSurge       int `json:"max_surge"`
-	} `json:"upgrade_policy"`
-	*/
-	Zone           string `json:"zone"`
-	RootVolumeType string `json:"root_volume_type"`
-	RootVolumeSize int    `json:"root_volume_size"`
+	Name             string   `json:"name" gorm:"column:name"`
+	NodeType         string   `json:"node_type" gorm:"column:node_type"`
+	PlacementGroupID string   `json:"placement_group_id,omitempty" gorm:"column:placement_group_id"`
+	Autoscaling      bool     `json:"autoscaling" gorm:"column:autoscaling"`
+	Size             int      `json:"size" gorm:"column:size"`
+	MinSize          int      `json:"min_size" gorm:"column:min_size"`
+	MaxSize          int      `json:"max_size" gorm:"column:max_size"`
+	ContainerRuntime string   `json:"container_runtime" gorm:"column:container_runtime"`
+	AutoHealing      bool     `json:"autoHealing" gorm:"column:autoHealing"`
+	Tags             []string `json:"tags" gorm:"column:tags"`
+	Zone             string   `json:"zone" gorm:"column:zone"`
+	RootVolumeType   string   `json:"root_volume_type" gorm:"column:root_volume_type"`
+	RootVolumeSize   int      `json:"root_volume_size" gorm:"column:root_volume_size"`
 }
 
 type ScalewayVersionsResponse struct {
 	Versions []struct {
-		Name                       string   `json:"name"`
-		Label                      string   `json:"label"`
-		Region                     string   `json:"region"`
-		AvailableCnis              []string `json:"available_cnis"`
-		AvailableIngresses         []string `json:"available_ingresses"`
-		AvailableContainerRuntimes []string `json:"available_container_runtimes"`
-		AvailableFeatureGates      []string `json:"available_feature_gates"`
-		AvailableAdmissionPlugins  []string `json:"available_admission_plugins"`
+		Name                       string   `json:"name" gorm:"column:name"`
+		Label                      string   `json:"label" gorm:"column:label"`
+		Region                     string   `json:"region" gorm:"column:region"`
+		AvailableCnis              []string `json:"available_cnis" gorm:"column:available_cnis"`
+		AvailableIngresses         []string `json:"available_ingresses" gorm:"column:available_ingresses"`
+		AvailableContainerRuntimes []string `json:"available_container_runtimes" gorm:"column:available_container_runtimes"`
+		AvailableFeatureGates      []string `json:"available_feature_gates" gorm:"column:available_feature_gates"`
+		AvailableAdmissionPlugins  []string `json:"available_admission_plugins" gorm:"column:available_admission_plugins"`
 		AvailableKubeletArgs       struct {
-			AvailableKubeletArgKey string `json:"<available_kubelet_argKey>"`
-		} `json:"available_kubelet_args"`
-	} `json:"versions"`
+			AvailableKubeletArgKey string `json:"<available_kubelet_argKey>" gorm:"column:available_kubelet_arg_key"`
+		} `json:"available_kubelet_args" gorm:"embedded"`
+	} `json:"versions" gorm:"embedded"`
 }
 
 type ScalewayCreateResponse struct {
-	ID               string    `json:"id"`
-	Type             string    `json:"type"`
-	Name             string    `json:"name"`
-	Status           string    `json:"status"`
-	Version          string    `json:"version"`
-	Region           string    `json:"region"`
-	OrganizationID   string    `json:"organization_id"`
-	ProjectID        string    `json:"project_id"`
-	Tags             []string  `json:"tags"`
-	Cni              string    `json:"cni"`
-	Description      string    `json:"description"`
-	ClusterURL       string    `json:"cluster_url"`
-	DNSWildcard      string    `json:"dns_wildcard"`
-	CreatedAt        time.Time `json:"created_at"`
-	UpdatedAt        time.Time `json:"updated_at"`
+	ID               string    `json:"id" gorm:"column:id"`
+	Type             string    `json:"type" gorm:"column:type"`
+	Name             string    `json:"name" gorm:"column:name"`
+	Status           string    `json:"status" gorm:"column:status"`
+	Version          string    `json:"version" gorm:"column:version"`
+	Region           string    `json:"region" gorm:"column:region"`
+	OrganizationID   string    `json:"organization_id" gorm:"column:organization_id"`
+	ProjectID        string    `json:"project_id" gorm:"column:project_id"`
+	Tags             []string  `json:"tags" gorm:"column:tags"`
+	Cni              string    `json:"cni" gorm:"column:cni"`
+	Description      string    `json:"description" gorm:"column:description"`
+	ClusterURL       string    `json:"cluster_url" gorm:"column:cluster_url"`
+	DNSWildcard      string    `json:"dns_wildcard" gorm:"column:dns_wildcard"`
+	CreatedAt        time.Time `json:"created_at" gorm:"column:created_at"`
+	UpdatedAt        time.Time `json:"updated_at" gorm:"column:updated_at"`
 	AutoscalerConfig struct {
-		ScaleDownDisabled             bool    `json:"scale_down_disabled"`
-		ScaleDownDelayAfterAdd        string  `json:"scale_down_delay_after_add"`
-		Estimator                     string  `json:"estimator"`
-		Expander                      string  `json:"expander"`
-		IgnoreDaemonsetsUtilization   bool    `json:"ignore_daemonsets_utilization"`
-		BalanceSimilarNodeGroups      bool    `json:"balance_similar_node_groups"`
-		ExpendablePodsPriorityCutoff  int     `json:"expendable_pods_priority_cutoff"`
-		ScaleDownUnneededTime         int     `json:"scale_down_unneeded_time"`
-		ScaleDownUtilizationThreshold float32 `json:"scale_down_utilization_threshold"`
-		MaxGracefulTerminationSec     int     `json:"max_graceful_termination_sec"`
-	} `json:"autoscaler_config"`
-	DashboardEnabled bool   `json:"dashboard_enabled"`
-	Ingress          string `json:"ingress"`
+		ScaleDownDisabled             bool    `json:"scale_down_disabled" gorm:"column:scale_down_disabled"`
+		ScaleDownDelayAfterAdd        string  `json:"scale_down_delay_after_add" gorm:"column:scale_down_delay_after_add"`
+		Estimator                     string  `json:"estimator" gorm:"column:estimator"`
+		Expander                      string  `json:"expander" gorm:"column:expander"`
+		IgnoreDaemonSetsUtilization   bool    `json:"ignore_daemonSets_utilization" gorm:"column:ignore_daemonSets_utilization"`
+		BalanceSimilarNodeGroups      bool    `json:"balance_similar_node_groups" gorm:"column:balance_similar_node_groups"`
+		ExpendablePodsPriorityCutoff  int     `json:"expendable_pods_priority_cutoff" gorm:"column:expendable_pods_priority_cutoff"`
+		ScaleDownUnneededTime         int     `json:"scale_down_unneeded_time" gorm:"column:scale_down_unneeded_time"`
+		ScaleDownUtilizationThreshold float32 `json:"scale_down_utilization_threshold" gorm:"column:scale_down_utilization_threshold"`
+		MaxGracefulTerminationSec     int     `json:"max_graceful_termination_sec" gorm:"column:max_graceful_termination_sec"`
+	} `json:"autoscaler_config" gorm:"embedded"`
+	DashboardEnabled bool   `json:"dashboard_enabled" gorm:"column:dashboard_enabled"`
+	Ingress          string `json:"ingress" gorm:"column:ingress"`
 	AutoUpgrade      struct {
-		Enabled           bool `json:"enabled"`
+		Enabled           bool `json:"enabled" gorm:"column:enabled"`
 		MaintenanceWindow struct {
-			StartHour int    `json:"start_hour"`
-			Day       string `json:"day"`
-		} `json:"maintenance_window"`
-	} `json:"auto_upgrade"`
-	UpgradeAvailable    string   `json:"upgrade_available"`
-	FeatureGates        []string `json:"feature_gates"`
-	AdmissionPlugins    []string `json:"admission_plugins"`
+			StartHour int    `json:"start_hour" gorm:"column:start_hour"`
+			Day       string `json:"day" gorm:"column:day"`
+		} `json:"maintenance_window" gorm:"embedded"`
+	} `json:"auto_upgrade" gorm:"embedded"`
+	UpgradeAvailable    string   `json:"upgrade_available" gorm:"column:upgrade_available"`
+	FeatureGates        []string `json:"feature_gates" gorm:"column:feature_gates"`
+	AdmissionPlugins    []string `json:"admission_plugins" gorm:"column:admission_plugins"`
 	OpenIDConnectConfig struct {
-		IssuerURL      string   `json:"issuer_url"`
-		ClientID       string   `json:"client_id"`
-		UsernameClaim  string   `json:"username_claim"`
-		UsernamePrefix string   `json:"username_prefix"`
-		GroupsClaim    []string `json:"groups_claim"`
-		GroupsPrefix   string   `json:"groups_prefix"`
-		RequiredClaim  []string `json:"required_claim"`
-	} `json:"open_id_connect_config"`
-	ApiserverCertSans []string `json:"apiserver_cert_sans"`
+		IssuerURL      string   `json:"issuer_url" gorm:"column:issuer_url"`
+		ClientID       string   `json:"client_id" gorm:"column:client_id"`
+		UsernameClaim  string   `json:"username_claim" gorm:"column:username_claim"`
+		UsernamePrefix string   `json:"username_prefix" gorm:"column:username_prefix"`
+		GroupsClaim    []string `json:"groups_claim" gorm:"column:groups_claim"`
+		GroupsPrefix   string   `json:"groups_prefix" gorm:"column:groups_prefix"`
+		RequiredClaim  []string `json:"required_claim" gorm:"column:required_claim"`
+	} `json:"open_id_connect_config" gorm:"embedded"`
+	ApiServerCertSans []string `json:"apiServer_cert_sans" gorm:"column:apiServer_cert_sans"`
 }
 
 type ScalewayKubeconfigResponse struct {
-	Name        string `json:"name"`
-	ContentType string `json:"content_type"`
-	Content     string `json:"content"`
+	Name        string `json:"name" gorm:"column:name"`
+	ContentType string `json:"content_type" gorm:"column:content_type"`
+	Content     string `json:"content" gorm:"column:content"`
+}
+
+type JokeResponse struct {
+	Categories []string `json:"categories"`
+	CreatedAt  string   `json:"created_at"`
+	IconURL    string   `json:"icon_url"`
+	ID         string   `json:"id"`
+	UpdatedAt  string   `json:"updated_at"`
+	URL        string   `json:"url"`
+	Value      string   `json:"value"`
 }
 
 type KuberoIngress struct {
@@ -518,17 +493,7 @@ type LinodeNodepool struct {
 	} `json:"autoscaler,omitempty"`
 }
 
-type JokeResponse struct {
-	Categories []string `json:"categories"`
-	CreatedAt  string   `json:"created_at"`
-	IconURL    string   `json:"icon_url"`
-	ID         string   `json:"id"`
-	UpdatedAt  string   `json:"updated_at"`
-	URL        string   `json:"url"`
-	Value      string   `json:"value"`
-}
-
-type CertmanagerClusterIssuer struct {
+type CertManagerClusterIssuer struct {
 	APIVersion string `yaml:"apiVersion"`
 	Kind       string `yaml:"kind"`
 	Metadata   struct {

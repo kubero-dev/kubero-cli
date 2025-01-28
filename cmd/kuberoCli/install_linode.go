@@ -20,12 +20,12 @@ func installLinode() {
 	// https://www.linode.com/docs/api/linode-kubernetes-engine-lke/#kubernetes-cluster-view
 	// https://www.linode.com/docs/api/linode-kubernetes-engine-lke/#kubeconfig-view
 
-	cfmt.Println("{{⚠ Installing Kubernetes on Linode is currently beta state in kubero-cli}}::yellow")
-	cfmt.Println("{{  Please report if you run into errors}}::yellow")
+	_, _ = cfmt.Println("{{⚠ Installing Kubernetes on Linode is currently beta state in kubero-cli}}::yellow")
+	_, _ = cfmt.Println("{{  Please report if you run into errors}}::yellow")
 
 	token := os.Getenv("LINODE_ACCESS_TOKEN")
 	if token == "" {
-		cfmt.Println("{{✗ LINODE_ACCESS_TOKEN is not set}}::red")
+		_, _ = cfmt.Println("{{✗ LINODE_ACCESS_TOKEN is not set}}::red")
 		log.Fatal("missing LINODE_ACCESS_TOKEN")
 	}
 
@@ -53,25 +53,29 @@ func installLinode() {
 		},
 	}
 
-	spinner := spinner.New("Spin up a Linode Kubernetes Cluster")
+	spinnerObj := spinner.New("Spin up a Linode Kubernetes Cluster")
 
-	spinner.Start("Create Linode Kubernetes Cluster")
+	spinnerObj.Start("Create Linode Kubernetes Cluster")
 	clusterResponse, _ := api.R().SetBody(clusterConfig).Post("")
 	if clusterResponse.StatusCode() > 299 {
 		fmt.Println()
-		spinner.Error("Failed to create Linode Kubernetes Cluster")
+		spinnerObj.Error("Failed to create Linode Kubernetes Cluster")
 		log.Fatal(clusterResponse.String())
 	}
-	spinner.Success("Linode Kubernetes Cluster created")
+	spinnerObj.Success("Linode Kubernetes Cluster created")
 
 	var cluster LinodeCreateClusterResponse
-	json.Unmarshal(clusterResponse.Body(), &cluster)
+	jsonUnmarshalErr := json.Unmarshal(clusterResponse.Body(), &cluster)
+	if jsonUnmarshalErr != nil {
+		log.Fatal(jsonUnmarshalErr)
+		return
+	}
 
 	// According to the docs, the cluster is ready after 2-5 minutes.
-	cfmt.Println("{{  Wait for Linode Kubernetes Cluster to be ready}}::lightBlue")
-	cfmt.Println("{{  According to the docs this may take up to 7 minutes}}::lightBlue")
-	cfmt.Println("{{  Time for a coffee break and some Chuck Norris jokes.}}::lightBlue")
-	spinner.Start("Wait for Linode Kubernetes Cluster to be ready")
+	_, _ = cfmt.Println("{{  Wait for Linode Kubernetes Cluster to be ready}}::lightBlue")
+	_, _ = cfmt.Println("{{  According to the docs this may take up to 7 minutes}}::lightBlue")
+	_, _ = cfmt.Println("{{  Time for a coffee break and some Chuck Norris jokes.}}::lightBlue")
+	spinnerObj.Start("Wait for Linode Kubernetes Cluster to be ready")
 
 	var LinodeKubeconfig struct {
 		Kubeconfig string `json:"kubeconfig"`
@@ -84,7 +88,7 @@ func installLinode() {
 			tellAChucknorrisJoke()
 		}
 		if LinodeKubeconfig.Kubeconfig != "" {
-			spinner.Success("Linode Kubernetes Cluster is ready")
+			spinnerObj.Success("Linode Kubernetes Cluster is ready")
 			break
 		}
 	}
@@ -92,17 +96,17 @@ func installLinode() {
 
 	if err != nil {
 		fmt.Println()
-		spinner.Error("Failed to decode kubeconfig")
+		spinnerObj.Error("Failed to decode kubeconfig")
 		log.Fatal(err)
 	}
 
 	err = mergeKubeconfig(kubeconfig)
 	if err != nil {
 		fmt.Println()
-		spinner.Error("Failed to merge kubeconfig")
+		spinnerObj.Error("Failed to merge kubeconfig")
 		log.Fatal(err)
 	}
 
-	spinner.Success("Linode Kubernetes Cluster credentials set")
+	spinnerObj.Success("Linode Kubernetes Cluster credentials set")
 
 }

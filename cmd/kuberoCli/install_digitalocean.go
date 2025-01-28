@@ -17,12 +17,12 @@ import (
 func installDigitalOcean() {
 	// https://docs.digitalocean.com/reference/api/api-reference/#operation/kubernetes_create_cluster
 
-	cfmt.Println("{{⚠ Installing Kubernetes on Digital Ocean is currently beta state in kubero-cli}}::yellow")
-	cfmt.Println("{{  Please report if you run into errors}}::yellow")
+	_, _ = cfmt.Println("{{⚠ Installing Kubernetes on Digital Ocean is currently beta state in kubero-cli}}::yellow")
+	_, _ = cfmt.Println("{{  Please report if you run into errors}}::yellow")
 
 	token := os.Getenv("DIGITALOCEAN_ACCESS_TOKEN")
 	if token == "" {
-		cfmt.Println("{{✗ DIGITALOCEAN_ACCESS_TOKEN is not set}}::red")
+		_, _ = cfmt.Println("{{✗ DIGITALOCEAN_ACCESS_TOKEN is not set}}::red")
 		log.Fatal("missing DIGITALOCEAN_ACCESS_TOKEN")
 	}
 
@@ -36,6 +36,10 @@ func installDigitalOcean() {
 
 	var doConfig DigitalOceanKubernetesConfig
 	doConfig.NodePools = []struct {
+		Size  string `json:"size" gorm:"column:size"`
+		Count int    `json:"count" gorm:"column:count"`
+		Name  string `json:"name" gorm:"column:name"`
+	}([]struct {
 		Size  string `json:"size"`
 		Count int    `json:"count"`
 		Name  string `json:"name"`
@@ -45,7 +49,7 @@ func installDigitalOcean() {
 			Count: 1,
 			Name:  "worker-pool",
 		},
-	}
+	})
 
 	kubernetesVersions, regions, sizes := getDigitaloceanOptions(doApi)
 
@@ -62,14 +66,18 @@ func installDigitalOcean() {
 
 	if kf.StatusCode() > 299 {
 		fmt.Println(kf.String())
-		cfmt.Println("{{✗ failed to create digital ocean cluster}}::red")
+		_, _ = cfmt.Println("{{✗ failed to create digital ocean cluster}}::red")
 		os.Exit(1)
 	} else {
-		cfmt.Println("{{✓ digital ocean cluster created}}::lightGreen")
+		_, _ = cfmt.Println("{{✓ digital ocean cluster created}}::lightGreen")
 	}
 
 	var doCluster DigitalOcean
-	json.Unmarshal(kf.Body(), &doCluster)
+	jsonUnmarshalErr := json.Unmarshal(kf.Body(), &doCluster)
+	if jsonUnmarshalErr != nil {
+		fmt.Println(jsonUnmarshalErr)
+		return
+	}
 
 	doSpinner := spinner.New("Starting a kubernetes cluster on digital ocean")
 	doSpinner.Start("Waiting for digital ocean cluster to be ready. This may take a few minutes. Time enough to get a coffee ☕")
@@ -86,7 +94,11 @@ func installDigitalOcean() {
 			continue
 		} else {
 			var doCluster DigitalOcean
-			json.Unmarshal(doWait.Body(), &doCluster)
+			jsonUnmarshalBErr := json.Unmarshal(doWait.Body(), &doCluster)
+			if jsonUnmarshalBErr != nil {
+				fmt.Println(jsonUnmarshalBErr)
+				return
+			}
 			if doCluster.KubernetesCluster.Status.State == "running" {
 				doSpinner.Success("digital ocean cluster created")
 				break
@@ -96,25 +108,33 @@ func installDigitalOcean() {
 
 	kubectl, _ := doApi.R().
 		Get("v2/kubernetes/clusters/" + clusterID + "/kubeconfig")
-	mergeKubeconfig(kubectl.Body())
+	mergeKubeconfigErr := mergeKubeconfig(kubectl.Body())
+	if mergeKubeconfigErr != nil {
+		fmt.Println(mergeKubeconfigErr)
+		return
+	}
 
 }
 
 func getDigitaloceanOptions(api *resty.Client) ([]string, []string, []string) {
 	token := os.Getenv("DIGITALOCEAN_ACCESS_TOKEN")
 	if token == "" {
-		cfmt.Println("{{✗ DIGITALOCEAN_ACCESS_TOKEN is not set}}::red")
+		_, _ = cfmt.Println("{{✗ DIGITALOCEAN_ACCESS_TOKEN is not set}}::red")
 		log.Fatal("missing DIGITALOCEAN_ACCESS_TOKEN")
 	}
 
 	optionsResponse, err := api.R().Get("/v2/kubernetes/options")
 	if err != nil {
-		cfmt.Println("{{✗ failed to get digitalocean options}}::red")
+		_, _ = cfmt.Println("{{✗ failed to get digitalocean options}}::red")
 		log.Fatal(err)
 	}
 
 	var versionsResponse DigitaloceanOptions
-	json.Unmarshal(optionsResponse.Body(), &versionsResponse)
+	jsonUnmarshalErr := json.Unmarshal(optionsResponse.Body(), &versionsResponse)
+	if jsonUnmarshalErr != nil {
+		fmt.Println(jsonUnmarshalErr)
+		return nil, nil, nil
+	}
 
 	var versions []string
 	for _, v := range versionsResponse.Options.Versions {

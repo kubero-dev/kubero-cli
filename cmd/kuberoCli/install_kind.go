@@ -27,7 +27,11 @@ func installKind() {
 	kf, _ := installer.R().Get("/kubero-dev/kubero/main/kind.yaml")
 
 	var kindConfig KindConfig
-	yaml.Unmarshal(kf.Body(), &kindConfig)
+	yamlUnmarshalErr := yaml.Unmarshal(kf.Body(), &kindConfig)
+	if yamlUnmarshalErr != nil {
+		fmt.Println(yamlUnmarshalErr)
+		return
+	}
 
 	// set cluster name
 	kindConfig.Name = promptLine("Kind Cluster Name", "", "kubero-"+strconv.Itoa(rand.Intn(1000)))
@@ -37,20 +41,24 @@ func installKind() {
 	var kindDefaults struct {
 		AvailableKubernetesVersions []string `yaml:"availableKubernetesVersions"`
 	}
-	yaml.Unmarshal(kv.Body(), &kindDefaults)
+	yamlUnmarshalBErr := yaml.Unmarshal(kv.Body(), &kindDefaults)
+	if yamlUnmarshalBErr != nil {
+		fmt.Println(yamlUnmarshalBErr)
+		return
+	}
 	version := selectFromList("Kubernetes Version", kindDefaults.AvailableKubernetesVersions, "")
 
 	kindConfig.Nodes[0].Image = "kindest/node:" + version
 
-	if arg_port == "" {
-		arg_port = promptLine("Local HTTP Port", "", "80")
+	if argPort == "" {
+		argPort = promptLine("Local HTTP Port", "", "80")
 	}
-	kindConfig.Nodes[0].ExtraPortMappings[0].HostPort, _ = strconv.Atoi(arg_port)
+	kindConfig.Nodes[0].ExtraPortMappings[0].HostPort, _ = strconv.Atoi(argPort)
 
-	if arg_portSecure == "" {
-		arg_portSecure = promptLine("Local HTTPS Port", "", "443")
+	if argPortSecure == "" {
+		argPortSecure = promptLine("Local HTTPS Port", "", "443")
 	}
-	kindConfig.Nodes[0].ExtraPortMappings[1].HostPort, _ = strconv.Atoi(arg_portSecure)
+	kindConfig.Nodes[0].ExtraPortMappings[1].HostPort, _ = strconv.Atoi(argPortSecure)
 
 	kindConfigYaml, _ := yaml.Marshal(kindConfig)
 	//fmt.Println("-------------- kind.yaml ---------------")
@@ -64,14 +72,14 @@ func installKind() {
 	}
 
 	kindSpinner := spinner.New("Spin up a local Kind cluster")
-	cfmt.Println("run command : kind create cluster --config kind.yaml")
+	_, _ = cfmt.Println("run command : kind create cluster --config kind.yaml")
 	kindSpinner.Start("Creating Kind cluster")
 	out, err := exec.Command("kind", "create", "cluster", "--config", "kind.yaml").Output()
 	if err != nil {
-		kindSpinner.Error("Failed to run command. Try runnig this command manually and skip this step : 'kind create cluster --config kind.yaml'")
+		kindSpinner.Error("Failed to run command. Try running this command manually and skip this step : 'kind create cluster --config kind.yaml'")
 		log.Fatal(err)
 	}
-	kindSpinner.Success("Kind cluster started sucessfully")
+	kindSpinner.Success("Kind cluster started successfully")
 
 	fmt.Println(string(out))
 }

@@ -1,7 +1,8 @@
+package kuberoCli
+
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 */
-package kuberoCli
 
 import (
 	"fmt"
@@ -23,7 +24,7 @@ var listCmd = &cobra.Command{
 			// get a single pipeline
 			pipelineResp, err := client.Get("/api/cli/pipelines/" + pipelineName)
 			if pipelineResp.StatusCode() == 404 {
-				cfmt.Println("{{  Pipeline not found}}::red")
+				_, _ = cfmt.Println("{{  Pipeline not found}}::red")
 				os.Exit(1)
 			}
 

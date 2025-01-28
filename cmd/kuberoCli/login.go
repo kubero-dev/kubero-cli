@@ -1,6 +1,7 @@
 package kuberoCli
 
 import (
+	"fmt"
 	"github.com/spf13/cobra"
 )
 
@@ -39,5 +40,9 @@ func setKuberoCredentials(token string) {
 	}
 
 	credentialsConfig.Set(currentInstanceName, token)
-	credentialsConfig.WriteConfig()
+	writeConfigErr := credentialsConfig.WriteConfig()
+	if writeConfigErr != nil {
+		fmt.Println("Error writing config file: ", writeConfigErr)
+		return
+	}
 }

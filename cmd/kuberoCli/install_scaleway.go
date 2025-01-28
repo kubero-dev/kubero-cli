@@ -25,14 +25,14 @@ func installScaleway() {
 	// get the kubeconfig
 	// https://api.scaleway.com/k8s/v1/regions/{region}/clusters/{cluster_id}/kubeconfig
 
-	// cfmt.Println("{{⚠ Installing Kubernetes on Scaleway is currently beta state in kubero-cli}}::yellow")
-	// cfmt.Println("{{  Please report if you run into errors}}::yellow")
+	// _, _ = cfmt.Println("{{⚠ Installing Kubernetes on Scaleway is currently beta state in kubero-cli}}::yellow")
+	// _, _ = cfmt.Println("{{  Please report if you run into errors}}::yellow")
 
 	var cluster ScalewayCreate
 	/*
 		cluster.ProjectID = os.Getenv("SCALEWAY_PROJECTID")
 		if cluster.ProjectID == "" {
-			cfmt.Println("{{✗ SCALEWAY_PROJECTID is not set}}::red")
+			_, _ = cfmt.Println("{{✗ SCALEWAY_PROJECTID is not set}}::red")
 			log.Fatal("missing SCALEWAY_PROJECTID")
 		}
 	*/
@@ -40,7 +40,7 @@ func installScaleway() {
 
 	token := os.Getenv("SCALEWAY_ACCESS_TOKEN")
 	if token == "" {
-		cfmt.Println("{{✗ SCALEWAY_ACCESS_TOKEN is not set}}::red")
+		_, _ = cfmt.Println("{{✗ SCALEWAY_ACCESS_TOKEN is not set}}::red")
 		log.Fatal("missing SCALEWAY_ACCESS_TOKEN")
 	}
 
@@ -93,21 +93,29 @@ func installScaleway() {
 
 	var clusterResponse ScalewayCreateResponse
 	if newCluster.StatusCode() < 299 {
-		json.Unmarshal(newCluster.Body(), &clusterResponse)
-		cfmt.Println("{{✓ Scaleway Kubernetes cluster created}}::lightGreen")
+		jsonUnmarshalErr := json.Unmarshal(newCluster.Body(), &clusterResponse)
+		if jsonUnmarshalErr != nil {
+			_, _ = cfmt.Println("{{✗ Failed to create Scaleway Kubernetes cluster}}::red")
+			return
+		}
+		_, _ = cfmt.Println("{{✓ Scaleway Kubernetes cluster created}}::lightGreen")
 	} else {
-		cfmt.Println("{{✗ Scaleway Kubernetes Cluster creation failed}}::red")
+		_, _ = cfmt.Println("{{✗ Scaleway Kubernetes Cluster creation failed}}::red")
 		log.Fatal(string(newCluster.Body()))
 	}
 
-	spinner := spinner.New()
-	spinner.Start("Waiting for cluster to be ready")
+	spinnerObj := spinner.New()
+	spinnerObj.Start("Waiting for cluster to be ready")
 	for {
 		clusterStatus, _ := api.R().Get(region + "/clusters/" + clusterResponse.ID)
 		var clusterStatusResponse ScalewayCreateResponse
-		json.Unmarshal(clusterStatus.Body(), &clusterStatusResponse)
+		jsonUnmarshalErr := json.Unmarshal(clusterStatus.Body(), &clusterStatusResponse)
+		if jsonUnmarshalErr != nil {
+			_, _ = cfmt.Println("{{✗ Failed to get Scaleway Kubernetes cluster status}}::red")
+			return
+		}
 		if clusterStatusResponse.Status == "ready" {
-			spinner.Success("Scaleway Kubernetes Cluster is ready")
+			spinnerObj.Success("Scaleway Kubernetes Cluster is ready")
 			break
 		}
 		time.Sleep(2 * time.Second)
@@ -116,15 +124,19 @@ func installScaleway() {
 	k, _ := api.R().Get(region + "/clusters/" + clusterResponse.ID + "/kubeconfig")
 
 	var scalewayKubeconfigResponse ScalewayKubeconfigResponse
-	json.Unmarshal(k.Body(), &scalewayKubeconfigResponse)
+	jsonUnmarshalErr := json.Unmarshal(k.Body(), &scalewayKubeconfigResponse)
+	if jsonUnmarshalErr != nil {
+		_, _ = cfmt.Println("{{✗ Failed to download kubeconfig}}::red")
+		return
+	}
 	kubeconfig, _ := base64.StdEncoding.DecodeString(scalewayKubeconfigResponse.Content)
 
-	err := mergeKubeconfig([]byte(kubeconfig))
+	err := mergeKubeconfig(kubeconfig)
 	if err != nil {
-		cfmt.Println("{{✗ Failed to download kubeconfig}}::red")
+		_, _ = cfmt.Println("{{✗ Failed to download kubeconfig}}::red")
 		log.Fatal(err)
 	} else {
-		cfmt.Println("{{✓ Kubeconfig downloaded}}::lightGreen")
+		_, _ = cfmt.Println("{{✓ Kubeconfig downloaded}}::lightGreen")
 	}
 
 }
@@ -132,14 +144,18 @@ func installScaleway() {
 func getScalewayVersions(api *resty.Client, region string) []string {
 	token := os.Getenv("SCALEWAY_ACCESS_TOKEN")
 	if token == "" {
-		cfmt.Println("{{✗ SCALEWAY_ACCESS_TOKEN is not set}}::red")
+		_, _ = cfmt.Println("{{✗ SCALEWAY_ACCESS_TOKEN is not set}}::red")
 		log.Fatal("missing SCALEWAY_ACCESS_TOKEN")
 	}
 
-	versions_r, _ := api.R().Get(region + "/versions")
+	versionsR, _ := api.R().Get(region + "/versions")
 
 	var versionsResponse ScalewayVersionsResponse
-	json.Unmarshal(versions_r.Body(), &versionsResponse)
+	jsonUnmarshalErr := json.Unmarshal(versionsR.Body(), &versionsResponse)
+	if jsonUnmarshalErr != nil {
+		_, _ = cfmt.Println("{{✗ Failed to get Scaleway Kubernetes versions}}::red")
+		return nil
+	}
 
 	var versions []string
 	for _, v := range versionsResponse.Versions {

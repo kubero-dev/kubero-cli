@@ -17,15 +17,19 @@ func appsList() {
 	pipelineResp, _ := api.GetPipelineApps(pipelineName)
 
 	var pl Pipeline
-	json.Unmarshal(pipelineResp.Body(), &pl)
+	jsonUnmarshalErr := json.Unmarshal(pipelineResp.Body(), &pl)
+	if jsonUnmarshalErr != nil {
+		log.Fatal(jsonUnmarshalErr)
+		return
+	}
 
 	for _, phase := range pl.Phases {
 		if !phase.Enabled {
 			continue
 		}
-		cfmt.Print("\n")
+		_, _ = cfmt.Print("\n")
 
-		cfmt.Println("{{  " + strings.ToUpper(phase.Name) + "}}::bold|white" + " (" + phase.Context + ")")
+		_, _ = cfmt.Println("{{  " + strings.ToUpper(phase.Name) + "}}::bold|white" + " (" + phase.Context + ")")
 
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetHeader([]string{
@@ -55,7 +59,11 @@ func appsList() {
 func getAllRemoteApps() []string {
 	apps, _ := api.GetApps()
 	var appShortList []appShort
-	json.Unmarshal(apps.Body(), &appShortList)
+	jsonUnmarshalErr := json.Unmarshal(apps.Body(), &appShortList)
+	if jsonUnmarshalErr != nil {
+		log.Fatal(jsonUnmarshalErr)
+		return nil
+	}
 
 	var appsList []string
 	for _, app := range appShortList {
@@ -104,7 +112,11 @@ func loadLocalApp(pipelineName string, stageName string, appName string) kuberoA
 
 	var appCRD kuberoApi.AppCRD
 
-	appConfig.Unmarshal(&appCRD)
+	appConfigUnmarshalErr := appConfig.Unmarshal(&appCRD)
+	if appConfigUnmarshalErr != nil {
+		log.Fatal(appConfigUnmarshalErr)
+		return kuberoApi.AppCRD{}
+	}
 
 	return appCRD
 }
@@ -118,7 +130,11 @@ func loadAppConfig(pipelineName string, stageName string, appName string) *viper
 	appConfig.SetConfigName(appName)
 	appConfig.SetConfigType("yaml")
 	appConfig.AddConfigPath(dir)
-	appConfig.ReadInConfig()
+	readInConfigErr := appConfig.ReadInConfig()
+	if readInConfigErr != nil {
+		log.Fatal(readInConfigErr)
+		return nil
+	}
 
 	return appConfig
 }
