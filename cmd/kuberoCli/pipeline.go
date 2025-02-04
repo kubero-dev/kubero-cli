@@ -32,25 +32,20 @@ func printPipeline(r *resty.Response) {
 	//fmt.Println(r)
 
 	var pipeline Pipeline
-	json.Unmarshal(r.Body(), &pipeline)
-
-	cfmt.Printf("{{Name:}}::lightWhite %v \n", pipeline.Name)
-	cfmt.Printf("{{Buildpack:}}::lightWhite %v\n", pipeline.Buildpack.Name)
-	cfmt.Printf("{{Language:}}::lightWhite %v\n", pipeline.Buildpack.Language)
-	if pipeline.Dockerimage != "" {
-		fmt.Printf("{{Docker Image:}}::lightWhite %v \n", pipeline.Dockerimage)
+	unmarshalErr := json.Unmarshal(r.Body(), &pipeline)
+	if unmarshalErr != nil {
+		fmt.Println("Error: ", "Unable to decode response")
+		return
 	}
-	cfmt.Printf("{{Deployment Strategy:}}::lightWhite %v \n", pipeline.Deploymentstrategy)
-	cfmt.Printf("{{Git:}}::lightWhite %v:%v \n", pipeline.Git.Repository.SSHURL, pipeline.Git.Repository.DefaultBranch)
-	/*
-		cfmt.Printf("{{Review Apps:}}::lightWhite %v \n", pipeline.Reviewapps)
-		cfmt.Printf("{{Phases:}}::lightWhite \n")
-		for _, phase := range pipeline.Phases {
-			if phase.Enabled {
-				fmt.Printf(" - %v (%v) \n", phase.Name, phase.Context)
-			}
-		}
-	*/
+
+	_, _ = cfmt.Printf("{{Name:}}::lightWhite %v \n", pipeline.Name)
+	_, _ = cfmt.Printf("{{BuildPack:}}::lightWhite %v\n", pipeline.BuildPack.Name)
+	_, _ = cfmt.Printf("{{Language:}}::lightWhite %v\n", pipeline.BuildPack.Language)
+	if pipeline.DockerImage != "" {
+		fmt.Printf("{{Docker Image:}}::lightWhite %v \n", pipeline.DockerImage)
+	}
+	_, _ = cfmt.Printf("{{Deployment Strategy:}}::lightWhite %v \n", pipeline.DeploymentStrategy)
+	_, _ = cfmt.Printf("{{Git:}}::lightWhite %v:%v \n", pipeline.Git.Repository.SshUrl, pipeline.Git.Repository.DefaultBranch)
 }
 
 // print the response as a table
@@ -64,7 +59,7 @@ func printPipelinesList(r *resty.Response) {
 		"Name",
 		"Repository",
 		//"Branch",
-		"Buildpack",
+		"BuildPack",
 		"reviewapps",
 		"test",
 		"staging",
@@ -75,17 +70,21 @@ func printPipelinesList(r *resty.Response) {
 	})
 
 	var pipelinesList PipelinesList
-	json.Unmarshal(r.Body(), &pipelinesList)
+	unmarshalErr := json.Unmarshal(r.Body(), &pipelinesList)
+	if unmarshalErr != nil {
+		fmt.Println("Error: ", "Unable to decode response")
+		return
+	}
 
 	for _, pipeline := range pipelinesList.Items {
 		table.Append([]string{
 			pipeline.Name,
-			pipeline.Git.Repository.SSHURL,
+			pipeline.Git.Repository.SshUrl,
 			//pipeline.Git.Repository.DefaultBranch,
-			pipeline.Buildpack.Name,
-			//pipeline.Dockerimage,
-			//pipeline.Deploymentstrategy,
-			//fmt.Sprintf("%t", pipeline.Reviewapps)
+			pipeline.BuildPack.Name,
+			//pipeline.DockerImage,
+			//pipeline.DeploymentStrategy,
+			//fmt.Sprintf("%t", pipeline.ReviewApps)
 			boolToEmoji(pipeline.Phases[0].Enabled),
 			boolToEmoji(pipeline.Phases[1].Enabled),
 			boolToEmoji(pipeline.Phases[2].Enabled),
@@ -106,9 +105,14 @@ func getAllRemotePipelines() []string {
 		os.Exit(1)
 	}
 
-	json.Unmarshal(res.Body(), &pipelinesList)
+	unmarshalErr := json.Unmarshal(res.Body(), &pipelinesList)
+	if unmarshalErr != nil {
+		fmt.Println("Error: ", "Unable to decode response")
+		return nil
+	}
 
-	pipelines := []string{}
+	var pipelines []string
+	pipelines = make([]string, 0)
 
 	for _, pipeline := range pipelinesList.Items {
 		pipelines = append(pipelines, pipeline.Name)
@@ -122,7 +126,9 @@ func getAllLocalPipelines() []string {
 	baseDir := getIACBaseDir()
 	dir := baseDir + "/" + pipelineName
 
-	pipelineNames := []string{}
+	var pipelineNames []string
+	pipelineNames = make([]string, 0)
+
 	files, err := os.ReadDir(dir)
 	if err != nil {
 		log.Fatal(err)
@@ -164,7 +170,11 @@ func loadPipelineConfig(pipelineName string) *viper.Viper {
 	pipelineConfig.SetConfigName("pipeline") // name of config file (without extension)
 	pipelineConfig.SetConfigType("yaml")     // REQUIRED if the config file does not have the extension in the name
 	pipelineConfig.AddConfigPath(dir)        // path to look for the config file in
-	pipelineConfig.ReadInConfig()
+	readInConfigErr := pipelineConfig.ReadInConfig()
+	if readInConfigErr != nil {
+		fmt.Println("Error: ", "Unable to read config file")
+		return nil
+	}
 
 	return pipelineConfig
 }
@@ -175,7 +185,11 @@ func loadLocalPipeline(pipelineName string) kuberoApi.PipelineCRD {
 
 	var pipelineCRD kuberoApi.PipelineCRD
 
-	pipelineConfig.Unmarshal(&pipelineCRD)
+	pipelineConfigUnmarshalErr := pipelineConfig.Unmarshal(&pipelineCRD)
+	if pipelineConfigUnmarshalErr != nil {
+		fmt.Println("Error: ", "Unable to unmarshal config file")
+		return kuberoApi.PipelineCRD{}
+	}
 
 	return pipelineCRD
 }

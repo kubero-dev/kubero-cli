@@ -40,7 +40,11 @@ func upPipeline() {
 	confirmationLine("Are you sure you want to deploy the pipeline '"+pipelineName+"'?", "y")
 
 	pipeline := loadLocalPipeline(pipelineName)
-	api.DeployPipeline(pipeline)
+	_, deployPipelineErr := api.DeployPipeline(pipeline)
+	if deployPipelineErr != nil {
+		_, _ = cfmt.Println("{{Error deploying pipeline}}::red", deployPipelineErr)
+		return
+	}
 }
 
 func upApp() {
@@ -49,7 +53,11 @@ func upApp() {
 	app.Spec.Pipeline = pipelineName             // ensure pipeline is set
 	app.Spec.Phase = stageName                   // ensure stage is set
 	app.Spec.Security.VulnerabilityScans = false // TODO: ask for this
-	api.DeployApp(app)
+	_, DeployAppErr := api.DeployApp(app)
+	if DeployAppErr != nil {
+		_, _ = cfmt.Println("{{Error deploying app}}::red", DeployAppErr)
+		return
+	}
 }
 
 func upAllPipelines() {
@@ -57,10 +65,14 @@ func upAllPipelines() {
 	confirmationLine("Are you sure you want to deploy all pipelines?", "y")
 	pipelinesConfigs := loadAllLocalPipelines()
 
-	cfmt.Println("{{Deploying all pipelines}}::yellow")
+	_, _ = cfmt.Println("{{Deploying all pipelines}}::yellow")
 
 	for _, pipelineCRD := range pipelinesConfigs {
-		cfmt.Println("{{Deploying pipeline}}::yellow " + pipelineCRD.Spec.Name + "")
-		api.DeployPipeline(pipelineCRD)
+		_, _ = cfmt.Println("{{Deploying pipeline}}::yellow " + pipelineCRD.Spec.Name + "")
+		_, deployPipelineErr := api.DeployPipeline(pipelineCRD)
+		if deployPipelineErr != nil {
+			_, _ = cfmt.Println("{{Error deploying pipeline}}::red", deployPipelineErr)
+			return
+		}
 	}
 }

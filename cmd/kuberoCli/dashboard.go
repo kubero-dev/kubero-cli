@@ -1,11 +1,13 @@
+package kuberoCli
+
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 */
-package kuberoCli
 
 import (
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
+	"log"
 )
 
 // dashboardCmd represents the dashboard command
@@ -16,8 +18,12 @@ var dashboardCmd = &cobra.Command{
 	Long:    `Use the dashboard subcommand to open the Kubero dashboard in your browser.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		url := currentInstance.Apiurl
-		browser.OpenURL(url)
+		url := currentInstance.ApiUrl
+		openURLErr := browser.OpenURL(url)
+		if openURLErr != nil {
+			log.Fatal("Failed to open the browser:", openURLErr)
+			return
+		}
 
 	},
 }
