@@ -1,9 +1,11 @@
+package kuberoCli
+
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 */
-package kuberoCli
 
 import (
+	"fmt"
 	"os"
 	"regexp"
 	"strconv"
@@ -60,7 +62,7 @@ func startTunnel() {
 	// Check if subdomain is valid
 	// localtunnel.me allows only lowercasae letters, numbers and dashes
 	if !regexp.MustCompile(`^[a-z0-9-]+$`).MatchString(tunnelSubdomain) {
-		cfmt.Println("{{✖}}::red Subdomain {{" + tunnelSubdomain + "}}::yellow can only contain lowercase letters, numbers and dashes")
+		_, _ = cfmt.Println("{{✖}}::red Subdomain {{" + tunnelSubdomain + "}}::yellow can only contain lowercase letters, numbers and dashes")
 		os.Exit(1)
 	}
 
@@ -72,16 +74,16 @@ func startTunnel() {
 	ipclient := resty.New().R()
 	ipres, err := ipclient.Get("https://api.ipify.org")
 	if err != nil {
-		cfmt.Println("{{✖}}::red Error getting your IP")
+		_, _ = cfmt.Println("{{✖}}::red Error getting your IP")
 		os.Exit(1)
 	}
-	cfmt.Println()
-	cfmt.Println("  Endpoint IP (Tunnel Password) : {{" + ipres.String() + "}}::cyan")
-	cfmt.Println("  Destination Host              : {{" + tunnelHost + "}}::cyan")
-	cfmt.Println("  Destination Port              : {{" + strconv.Itoa(tunnelPort) + "}}::cyan\n\n")
+	_, _ = cfmt.Println()
+	_, _ = cfmt.Println("  Endpoint IP (Tunnel Password) : {{" + ipres.String() + "}}::cyan")
+	_, _ = cfmt.Println("  Destination Host              : {{" + tunnelHost + "}}::cyan")
+	_, _ = cfmt.Println("  Destination Port              : {{" + strconv.Itoa(tunnelPort) + "}}::cyan\n\n")
 
-	spinner := spinner.New()
-	spinner.Start("Waiting for tunnel to be ready")
+	spinnerObj := spinner.New()
+	spinnerObj.Start("Waiting for tunnel to be ready")
 
 	tunnel, err := localtunnel.New(
 		tunnelPort,
@@ -93,18 +95,23 @@ func startTunnel() {
 		},
 	)
 	if err != nil {
-		spinner.Error("Error creating tunnel : " + err.Error())
+		spinnerObj.Error("Error creating tunnel : " + err.Error())
 		//cfmt.Println("{{✖}}::red Error creating tunnel : " + err.Error() + "")
 		os.Exit(1)
 	}
-	defer tunnel.Close()
+	defer func(tunnel *localtunnel.LocalTunnel) {
+		localTunnelErr := tunnel.Close()
+		if localTunnelErr != nil {
+			fmt.Println("Error closing tunnel : " + localTunnelErr.Error())
+		}
+	}(tunnel)
 
-	spinner.UpdateMessage(cfmt.Sprint("Tunnel active at {{" + tunnel.URL() + "}}::cyan with an expiration of {{" + tunnelDuration + "}}::cyan"))
+	spinnerObj.UpdateMessage(cfmt.Sprint("Tunnel active at {{" + tunnel.URL() + "}}::cyan with an expiration of {{" + tunnelDuration + "}}::cyan"))
 	//cfmt.Println("{{✔}}::green Tunnel created at {{" + tunnel.URL() + "}}::cyan with an expiration of {{" + tunnelDuration + "}}::cyan")
 
 	tunnelTimeout, err := time.ParseDuration(tunnelDuration)
 	if err != nil {
-		cfmt.Println("{{✗}}::red Error parsing timeout")
+		_, _ = cfmt.Println("{{✗}}::red Error parsing timeout")
 		os.Exit(1)
 	}
 

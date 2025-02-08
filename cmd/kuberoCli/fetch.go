@@ -39,7 +39,7 @@ func init() {
 func fetchPipeline(pipelineName string) {
 	confirmation := promptLine("Do you want to fetch the pipeline '"+pipelineName+"'?", "[y,n]", "y")
 	if confirmation == "y" {
-		cfmt.Println("{{Fetching pipeline}}::yellow " + pipelineName)
+		_, _ = cfmt.Println("{{Fetching pipeline}}::yellow " + pipelineName)
 
 		var pipeline kuberoApi.PipelineCRD
 
@@ -51,15 +51,23 @@ func fetchPipeline(pipelineName string) {
 		p, pipelineErr := api.GetPipeline(pipelineName)
 
 		if pipelineErr != nil {
+			if p == nil {
+				_, _ = cfmt.Println("{{ERROR:}}::red Pipeline '" + pipelineName + "' not found ")
+				os.Exit(1)
+			}
 			if p.StatusCode() == 404 {
-				cfmt.Println("{{ERROR:}}::red Pipeline '" + pipelineName + "' not found ")
+				_, _ = cfmt.Println("{{ERROR:}}::red Pipeline '" + pipelineName + "' not found ")
 				os.Exit(1)
 			}
 			fmt.Println(pipelineErr)
 			os.Exit(1)
 		}
 
-		json.Unmarshal(p.Body(), &pipeline.Spec)
+		jsonUnmarshalErr := json.Unmarshal(p.Body(), &pipeline.Spec)
+		if jsonUnmarshalErr != nil {
+			fmt.Println(jsonUnmarshalErr)
+			return
+		}
 		writePipelineYaml(pipeline)
 
 	} else {
@@ -71,9 +79,9 @@ func fetchApp(appName string, stageName string, pipelineName string) {
 
 	confirmation := promptLine("Do you want to fetch the app '"+appName+"' from '"+pipelineName+"'?", "[y,n]", "y")
 	if confirmation == "y" {
-		cfmt.Println("{{Fetching app}}::yellow " + appName + "")
+		_, _ = cfmt.Println("{{Fetching app}}::yellow " + appName + "")
 	} else {
-		cfmt.Println("{{Aborted}}::red")
+		_, _ = cfmt.Println("{{Aborted}}::red")
 		return
 	}
 
@@ -89,15 +97,23 @@ func fetchApp(appName string, stageName string, pipelineName string) {
 	a, appErr := api.GetApp(pipelineName, stageName, appName)
 
 	if appErr != nil {
+		if a == nil {
+			_, _ = cfmt.Println("{{ERROR:}}::red App '" + appName + "' not found ")
+			os.Exit(1)
+		}
 		if a.StatusCode() == 404 {
-			cfmt.Println("{{ERROR:}}::red App '" + appName + "' not found ")
+			_, _ = cfmt.Println("{{ERROR:}}::red App '" + appName + "' not found ")
 			os.Exit(1)
 		}
 		fmt.Println(appErr)
 		os.Exit(1)
 	}
 
-	json.Unmarshal(a.Body(), &app)
+	jsonUnmarshalErr := json.Unmarshal(a.Body(), &app)
+	if jsonUnmarshalErr != nil {
+		fmt.Println(jsonUnmarshalErr)
+		return
+	}
 
 	writeAppYaml(app)
 
@@ -106,9 +122,9 @@ func fetchApp(appName string, stageName string, pipelineName string) {
 func fetchAllPipelines() {
 	confirmation := promptLine("Are you sure you want to fetch all pipelines?", "[y,n]", "n")
 	if confirmation == "y" {
-		cfmt.Println("{{Fetching all pipelines}}::yellow")
+		_, _ = cfmt.Println("{{Fetching all pipelines}}::yellow")
 	} else {
-		cfmt.Println("{{Aborted}}::red")
+		_, _ = cfmt.Println("{{Aborted}}::red")
 		return
 	}
 }

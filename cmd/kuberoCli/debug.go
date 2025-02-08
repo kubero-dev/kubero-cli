@@ -1,7 +1,8 @@
+package kuberoCli
+
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 */
-package kuberoCli
 
 import (
 	_ "embed"
@@ -27,16 +28,16 @@ var debugCmd = &cobra.Command{
 	- Kubernetes metrics server version
 	- Kubernetes cert-manager version`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cfmt.Println("{{Kubero CLI}}::bold")
+		_, _ = cfmt.Println("{{Kubero CLI}}::bold")
 		printCLIVersion()
 		printOsArch()
-		cfmt.Println("\n{{Kubernetes}}::bold")
+		_, _ = cfmt.Println("\n{{Kubernetes}}::bold")
 		printKubernetesVersion()
-		cfmt.Println("{{Kubero Operator}}::bold")
+		_, _ = cfmt.Println("{{Kubero Operator}}::bold")
 		checkKuberoOperator()
-		cfmt.Println("{{\nKubero UI}}::bold")
+		_, _ = cfmt.Println("{{\nKubero UI}}::bold")
 		checkKuberoUI()
-		cfmt.Println("{{\nCert Manager}}::bold")
+		_, _ = cfmt.Println("{{\nCert Manager}}::bold")
 		checkCertManager()
 	},
 }
@@ -46,13 +47,13 @@ func init() {
 }
 
 func printCLIVersion() {
-	cfmt.Println("kuberoCLIVersion: ", kuberoCliVersion)
+	_, _ = cfmt.Println("kuberoCLIVersion: ", kuberoCliVersion)
 }
 
 func printOsArch() {
-	cfmt.Println("OS: ", runtime.GOOS)
-	cfmt.Println("Arch: ", runtime.GOARCH)
-	cfmt.Println("goVersion: ", runtime.Version())
+	_, _ = cfmt.Println("OS: ", runtime.GOOS)
+	_, _ = cfmt.Println("Arch: ", runtime.GOARCH)
+	_, _ = cfmt.Println("goVersion: ", runtime.Version())
 }
 
 func printKubernetesVersion() {
@@ -62,42 +63,42 @@ func printKubernetesVersion() {
 		os.Exit(1)
 	}
 	version, _ := exec.Command("kubectl", "version", "-o", "yaml").Output()
-	cfmt.Println(string(version))
+	_, _ = cfmt.Println(string(version))
 }
 
 func checkKuberoOperator() {
 	cmdOut, _ := exec.Command("kubectl", "get", "deployments.apps", "-n", "kubero-operator-system").Output()
-	cfmt.Print(string(cmdOut))
+	_, _ = cfmt.Print(string(cmdOut))
 
-	cfmt.Println("{{\nKubero Operator Image}}::bold")
+	_, _ = cfmt.Println("{{\nKubero Operator Image}}::bold")
 	cmdOut, _ = exec.Command("kubectl", "get", "deployment", "kubero-operator-controller-manager", "-o=jsonpath={$.spec.template.spec.containers[:1].image}", "-n", "kubero-operator-system").Output()
-	cfmt.Print(string(cmdOut))
-	cfmt.Println("")
+	_, _ = cfmt.Print(string(cmdOut))
+	_, _ = cfmt.Println("")
 }
 
 func checkKuberoUI() {
 	cmdOut, _ := exec.Command("kubectl", "get", "deployments.apps", "-n", "kubero").Output()
-	cfmt.Print(string(cmdOut))
+	_, _ = cfmt.Print(string(cmdOut))
 
-	cfmt.Println("{{\nKubero UI Ingress}}::bold")
+	_, _ = cfmt.Println("{{\nKubero UI Ingress}}::bold")
 	cmdOut, _ = exec.Command("kubectl", "get", "ingress", "-n", "kubero").Output()
-	cfmt.Print(string(cmdOut))
+	_, _ = cfmt.Print(string(cmdOut))
 
-	cfmt.Println("{{\nKubero UI Secrets}}::bold")
+	_, _ = cfmt.Println("{{\nKubero UI Secrets}}::bold")
 	cmdOut, _ = exec.Command("kubectl", "get", "secrets", "-n", "kubero").Output()
-	cfmt.Print(string(cmdOut))
+	_, _ = cfmt.Print(string(cmdOut))
 
-	cfmt.Println("{{\nKubero UI Image}}::bold")
+	_, _ = cfmt.Println("{{\nKubero UI Image}}::bold")
 	cmdOut, _ = exec.Command("kubectl", "get", "deployment", "kubero", "-o=jsonpath={$.spec.template.spec.containers[:1].image}", "-n", "kubero").Output()
-	cfmt.Print(string(cmdOut))
-	cfmt.Println("")
+	_, _ = cfmt.Print(string(cmdOut))
+	_, _ = cfmt.Println("")
 }
 
 func checkCertManager() {
 	cmdOut, _ := exec.Command("kubectl", "get", "deployments.apps", "-n", "cert-manager").Output()
-	cfmt.Print(string(cmdOut))
+	_, _ = cfmt.Print(string(cmdOut))
 
-	cfmt.Println("{{\nCert Manager Cluster Issuers}}::bold")
+	_, _ = cfmt.Println("{{\nCert Manager Cluster Issuers}}::bold")
 	cmdOut, _ = exec.Command("kubectl", "get", "clusterissuers.cert-manager.io").Output()
-	cfmt.Print(string(cmdOut))
+	_, _ = cfmt.Print(string(cmdOut))
 }
