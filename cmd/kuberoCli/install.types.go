@@ -1,8 +1,9 @@
 package kuberoCli
 
 import (
-	"gorm.io/gorm"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type DigitalOceanKubernetesConfig struct {
@@ -224,10 +225,26 @@ type KuberoUIConfig struct {
 	} `yaml:"spec" gorm:"embedded"`
 }
 
+type NotificationsConfig struct {
+	Enabled   bool     `yaml:"enabled" gorm:"column:enabled"`
+	Name      string   `yaml:"name" gorm:"column:name"`
+	Type      string   `yaml:"type" gorm:"column:type"`
+	Pipelines []string `yaml:"pipelines" gorm:"column:pipelines"`
+	Events    []string `yaml:"events" gorm:"column:events"`
+	Config    struct {
+		Url     string `yaml:"url" gorm:"column:url"`
+		Channel string `yaml:"channel,omitempty" gorm:"column:channel"`
+		Secret  string `yaml:"secret,omitempty" gorm:"column:secret"`
+	} `yaml:"config" gorm:"embedded"`
+}
+
 type KuberoConfigfile struct {
 	Kubero struct {
 		Readonly bool `yaml:"readonly" gorm:"column:readonly"`
-		Console  struct {
+		Admin    struct {
+			Disabled bool `yaml:"disabled" gorm:"column:enabled"`
+		} `yaml:"admin" gorm:"embedded"`
+		Console struct {
 			Enabled bool `yaml:"enabled" gorm:"column:enabled"`
 		} `yaml:"console" gorm:"embedded"`
 		Banner struct {
@@ -237,7 +254,8 @@ type KuberoConfigfile struct {
 			Fontcolor string `yaml:"fontcolor" gorm:"column:fontcolor"`
 		} `yaml:"banner" gorm:"embedded"`
 	} `yaml:"kubero" gorm:"embedded"`
-	ClusterIssuer string `yaml:"clusterIssuer" gorm:"column:clusterIssuer"`
+	Notifications []NotificationsConfig `yaml:"notifications" gorm:"embedded"`
+	ClusterIssuer string                `yaml:"clusterIssuer" gorm:"column:clusterIssuer"`
 	Templates     struct {
 		Enabled  bool `yaml:"enabled" gorm:"column:enabled"`
 		Catalogs []struct {
