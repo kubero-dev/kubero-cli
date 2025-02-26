@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"reflect"
 	"strings"
@@ -24,8 +23,6 @@ import (
 	"github.com/spf13/cobra"
 	_ "github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
 )
 
 var (
@@ -42,7 +39,6 @@ var (
 	kuberoCliVersion    string
 	pipelineConfig      *viper.Viper
 	credentialsConfig   *viper.Viper
-	db                  *gorm.DB
 )
 
 var rootCmd = &cobra.Command{
@@ -55,7 +51,7 @@ var rootCmd = &cobra.Command{
 	|  |\   \'  ''  '| '-' |\   --.|  |   ' '-' '
 	'--' '--' '----'  '---'  '----''--'    '---'
 Documentation:
-  https://docs.kubero.dev
+  https://www.kubero.dev/docs
 `,
 	Example: `kubero install`,
 	Aliases: []string{"kbr"},
@@ -78,20 +74,6 @@ func Execute() {
 
 func init() {
 	rootCmd.CompletionOptions.HiddenDefaultCmd = true
-	initDB()
-}
-
-func initDB() {
-	var err error
-	db, err = gorm.Open(sqlite.Open("kubero.db"), &gorm.Config{})
-	if err != nil {
-		log.Fatal("Failed to connect to database:", err)
-	}
-	autoMigrateErr := db.AutoMigrate(&Instance{})
-	if autoMigrateErr != nil {
-		log.Fatal("Failed to migrate database:", autoMigrateErr)
-		return
-	}
 }
 
 func printCLI(table *tablewriter.Table, r *resty.Response) {
@@ -105,14 +87,6 @@ func printCLI(table *tablewriter.Table, r *resty.Response) {
 func promptWarning(msg string) {
 	_, _ = cfmt.Println("{{\n⚠️   " + msg + ".\n}}::yellow")
 }
-
-//func promptBanner(msg string) {
-//	_, _ = cfmt.Printf(`
-//    {{                                                                            }}::bgRed
-//    {{  %-72s  }}::bgRed|#ffffff
-//    {{                                                                            }}::bgRed
-//	`, msg)
-//}
 
 func promptLine(question, options, def string) string {
 	if def != "" && force {
