@@ -82,7 +82,7 @@ func createInstanceForm() {
 	fmt.Println("Create a new instance")
 
 	instanceName := promptLine("Enter the name of the instance", "", "")
-	instanceApiurl := promptLine("Enter the API URL of the instance", "", "http://localhost:80")
+	instanceApiurl := promptLine("Enter the API URL of the instance", "", "http://kubero.localhost:80")
 	instancePath := viper.ConfigFileUsed()
 
 	personalInstanceList := viper.GetStringMap("instances")
@@ -99,6 +99,8 @@ func createInstanceForm() {
 
 	setCurrentInstance(instanceName)
 
+	// reqiored to login to the new instance
+	api.SetApiUrl(instanceApiurl, "")
 }
 
 func setCurrentInstance(instanceName string) {
@@ -110,6 +112,7 @@ func setCurrentInstance(instanceName string) {
 		fmt.Println("Failed to save configuration:", writeConfigErr)
 		return
 	}
+	api.SetApiUrl(currentInstance.ApiUrl, credentialsConfig.GetString(instanceName))
 }
 
 func deleteInstanceForm() {

@@ -1,9 +1,10 @@
 package kuberoCli
 
 import (
-	"gorm.io/gorm"
 	"kubero/pkg/kuberoApi"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type Pipeline struct {
@@ -270,7 +271,6 @@ type appShort struct {
 }
 
 type Instance struct {
-	gorm.Model
 	Name       string `json:"-" yaml:"-"`
 	ApiUrl     string `json:"apiurl" yaml:"apiurl" gorm:"column:apiurl"`
 	IacBaseDir string `json:"iacBaseDir,omitempty" yaml:"iacBaseDir,omitempty" gorm:"column:iacBaseDir"`
@@ -279,7 +279,7 @@ type Instance struct {
 		Subdomain string `json:"subdomain" yaml:"subdomain" gorm:"column:subdomain"`
 		Port      int    `json:"port" yaml:"port" gorm:"column:port"`
 		Host      string `json:"host" yaml:"host" gorm:"column:host"`
-	} `json:"tunnel,omitempty" yaml:"tunnel,omitempty" gorm:"embedded"`
+	} `json:"tunnel,omitempty" yaml:"tunnel,omitempty"`
 }
 
 type Config struct {

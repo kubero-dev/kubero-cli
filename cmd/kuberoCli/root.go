@@ -29,7 +29,6 @@ var (
 	outputFormat        string
 	force               bool
 	repoSimpleList      []string
-	client              *resty.Request
 	api                 *kuberoApi.KuberoClient
 	contextSimpleList   []string
 	currentInstanceName string
@@ -65,7 +64,12 @@ func Execute() {
 	loadCLIConfig()
 	loadCredentials()
 	api = new(kuberoApi.KuberoClient)
-	client = api.Init(currentInstance.ApiUrl, credentialsConfig.GetString(currentInstanceName))
+
+	//fmt.Println("debug currentInstance", currentInstance.Name)
+	//fmt.Println("debug ApiUrl", currentInstance.ApiUrl)
+	//fmt.Println("debug credentialsConfig", credentialsConfig.GetString(currentInstance.Name))
+
+	api.Init(currentInstance.ApiUrl, credentialsConfig.GetString(currentInstanceName))
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)

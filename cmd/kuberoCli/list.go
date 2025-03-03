@@ -22,7 +22,9 @@ var listCmd = &cobra.Command{
 
 		if pipelineName != "" {
 			// get a single pipeline
-			pipelineResp, err := client.Get("/api/cli/pipelines/" + pipelineName)
+
+			pipelineResp, err := api.GetPipeline(pipelineName)
+			//pipelineResp, err := client.Get("/api/cli/pipelines/" + pipelineName)
 			if pipelineResp.StatusCode() == 404 {
 				_, _ = cfmt.Println("{{  Pipeline not found}}::red")
 				os.Exit(1)
@@ -37,7 +39,8 @@ var listCmd = &cobra.Command{
 			appsList()
 		} else {
 			// get the pipelines
-			pipelineListResp, err := client.Get("/api/cli/pipelines")
+			pipelineListResp, err := api.GetPipelines()
+			//pipelineListResp, err := client.Get("/api/cli/pipelines")
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
