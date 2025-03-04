@@ -3,8 +3,11 @@ package kuberoCli
 import (
 	"encoding/json"
 	"fmt"
+	"syscall"
 
+	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 )
 
 type Access struct {
@@ -15,9 +18,10 @@ type Access struct {
 
 // loginCmd represents the login command
 var loginCmd = &cobra.Command{
-	Use:   "login",
-	Short: "Login to your Kubero instance",
-	Long:  `Use the login subcommand to login to your Kubero instance.`,
+	Use:     "login",
+	Aliases: []string{"li"},
+	Short:   "Login to your Kubero instance",
+	Long:    `Use the login subcommand to login to your Kubero instance.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ensureInstanceOrCreate()
 		login("", "")
@@ -62,7 +66,15 @@ func login(user string, pass string) {
 	}
 
 	if pass == "" {
-		pass = promptLine("Password", "", "")
+		//fmt.Print("Password: ")
+		cfmt.Print("\n{{?}}::green|bold {{Password}}::bold   : ")
+		bytepw, err := term.ReadPassword(int(syscall.Stdin))
+		if err != nil {
+			fmt.Println("Error reading password: ", err)
+			return
+		}
+		pass = string(bytepw)
+		fmt.Print("XXXXXXXXXXXXXXX\n\n")
 	}
 
 	res, err := api.Login(user, pass)
@@ -76,7 +88,7 @@ func login(user string, pass string) {
 		var a Access
 		json.Unmarshal(res.Body(), &a)
 
-		fmt.Println("Login successful")
+		cfmt.Print("  {{Login successful}}::green|bold\n\n")
 		fmt.Println("Access token: ", a.AccessToken)
 
 		setKuberoCredentials(a.AccessToken)

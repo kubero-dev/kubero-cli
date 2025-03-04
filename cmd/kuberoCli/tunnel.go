@@ -26,9 +26,10 @@ var tunnelDuration string
 
 // tunnelCmd represents the tunnel command
 var tunnelCmd = &cobra.Command{
-	Use:   "tunnel",
-	Short: cfmt.Sprint("Create a tunnel to the cluster in NATed infrastructures {{[BETA]}}::cyan "),
-	Long:  `Use the tunnel subcommand to create a tunnel to the cluster in NATed infrastructures.`,
+	Use:     "tunnel",
+	Aliases: []string{"t"},
+	Short:   cfmt.Sprint("Create a tunnel to the cluster in NATed infrastructures {{[BETA]}}::cyan "),
+	Long:    `Use the tunnel subcommand to create a tunnel to the cluster in NATed infrastructures.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		startTunnel()
 	},

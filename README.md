@@ -159,10 +159,10 @@ Kubero CLI currently supports the following cloud providers:
 ```plaintext
 kubero
 ├── install                # Create a Kubernetes cluster and install Kubero with all required components
-├── list                   # List all running clusters
-├── login                  # Log in to Kubero and save credentials
-├── logout                 # Log out from Kubero and remove saved credentials
-├── create                 # Create new app and pipeline configurations
+├── list (ls)              # List all running pipelines
+├── login (li)             # Log in to Kubero and save credentials
+├── logout (lo)            # Log out from Kubero and remove saved credentials
+├── create (cr)            # Create new app and pipeline configurations
 │   ├── app
 │   └── pipeline
 ├── up                     # Deploy apps and pipelines
@@ -175,8 +175,8 @@ kubero
 │   ├── app
 │   └── pipeline
 ├── dashboard              # Open the Kubero dashboard
-├── tunnel                 # Open a tunnel to a NAT-ed cluster
-├── instance               # Manage Kubero instances
+├── tunnel (t)             # Open a tunnel to a NAT-ed cluster
+├── instance (i)           # Manage Kubero instances
 │   ├── create             # Create an instance configuration
 │   ├── delete             # Delete an instance configuration
 │   └── select             # Select an active instance
