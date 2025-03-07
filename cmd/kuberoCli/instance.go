@@ -17,7 +17,7 @@ import (
 // instanceCmd represents the instance command
 var instanceCmd = &cobra.Command{
 	Use:     "instance",
-	Aliases: []string{"i"},
+	Aliases: []string{"i", "instances"},
 	Short:   "List available instances",
 	Long:    `Print a list of available instances.`,
 	Run: func(cmd *cobra.Command, args []string) {

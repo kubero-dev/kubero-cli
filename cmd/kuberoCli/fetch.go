@@ -12,8 +12,8 @@ import (
 
 // fetchCmd represents the fetch command
 var fetchCmd = &cobra.Command{
-	Use:     "fetch",
-	Aliases: []string{"pull", "fe"},
+	Use:     "iac:fetch",
+	Aliases: []string{"iac:pull", "iac:fe"},
 	Short:   "Fetch your remote pipelines and apps to your local repository",
 	Long:    `Use the pipeline or app subcommand to fetch your pipelines and apps to your local repository`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -120,11 +120,20 @@ func fetchApp(appName string, stageName string, pipelineName string) {
 }
 
 func fetchAllPipelines() {
-	confirmation := promptLine("Are you sure you want to fetch all pipelines?", "[y,n]", "n")
-	if confirmation == "y" {
-		_, _ = cfmt.Println("{{Fetching all pipelines}}::yellow")
+
+	confirmation := promptLine("Fetch App or Pipeline?", "[app,pipeline]", "app")
+	if confirmation == "app" {
+		_, _ = cfmt.Println("{{Fetching app}}::yellow")
+		fetchAppCmd.Run(fetchAppCmd, []string{})
 	} else {
-		_, _ = cfmt.Println("{{Aborted}}::red")
-		return
+		_, _ = cfmt.Println("{{Fetching pipelines}}::yellow")
+		pipelinesList := getAllRemotePipelines()
+		if len(pipelinesList) == 0 {
+			_, _ = cfmt.Println("{{ERROR:}}::red No pipelines found")
+			os.Exit(1)
+		}
+		for _, pipeline := range pipelinesList {
+			fetchPipeline(pipeline)
+		}
 	}
 }

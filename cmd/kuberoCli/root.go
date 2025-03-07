@@ -2,6 +2,7 @@ package kuberoCli
 
 import (
 	"bufio"
+	"bytes"
 	_ "embed"
 	"encoding/json"
 	"errors"
@@ -354,8 +355,8 @@ func ensureAppNameIsSet() {
 func ensureStageNameIsSet() {
 	if stageName == "" {
 		fmt.Println("")
-		pipelineConfig := loadPipelineConfig(pipelineName)
-		availablePhases := getPipelinePhases(pipelineConfig)
+		pipelineConfig := loadPipelineConfig(pipelineName, false)
+		availablePhases := getPipelinePhasesFromCRD(pipelineConfig)
 		prompt := &survey.Select{
 			Message: "Select a stage",
 			Options: availablePhases,
@@ -363,6 +364,7 @@ func ensureStageNameIsSet() {
 		askOneErr := survey.AskOne(prompt, &stageName)
 		if askOneErr != nil {
 			fmt.Println("Error while selecting stage:", askOneErr)
+			os.Exit(1)
 			return
 		}
 	}
@@ -381,4 +383,10 @@ func ensureAppNameIsSelected(availableApps []string) {
 			return
 		}
 	}
+}
+
+func prettyPrintJson(data []byte) {
+	var prettyJSON bytes.Buffer
+	json.Indent(&prettyJSON, data, "", "\t")
+	fmt.Println(prettyJSON.String())
 }

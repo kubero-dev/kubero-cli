@@ -129,7 +129,7 @@ type App struct {
 			Repository string `json:"repository" gorm:"column:repository"`
 			Tag        string `json:"tag" gorm:"column:tag"`
 		} `json:"build" gorm:"embedded"`
-		ContainerPort int `json:"containerPort" gorm:"column:containerPort"`
+		ContainerPort string `json:"containerPort" gorm:"column:containerPort"`
 		Fetch         struct {
 			Repository string `json:"repository" gorm:"column:repository"`
 			Tag        string `json:"tag" gorm:"column:tag"`
@@ -168,8 +168,8 @@ type App struct {
 	} `json:"podAnnotations" gorm:"-"`
 	PodSecurityContext struct {
 	} `json:"podSecurityContext" gorm:"-"`
-	PodSize      string `json:"podsize" gorm:"column:podsize"`
-	ReplicaCount int    `json:"replicaCount" gorm:"column:replicaCount"`
+	PodSize      PodSize `json:"podsize" gorm:"column:podsize"`
+	ReplicaCount int     `json:"replicaCount" gorm:"column:replicaCount"`
 	Service      struct {
 		Port int    `json:"port" gorm:"column:port"`
 		Type string `json:"type" gorm:"column:type"`

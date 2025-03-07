@@ -133,9 +133,9 @@ func (k *KuberoClient) GetPipelines() (*resty.Response, error) {
 	return res, err
 }
 
-func (k *KuberoClient) DeployApp(app AppCRD) (*resty.Response, error) {
+func (k *KuberoClient) DeployApp(pipelineName string, phaseName string, appName string, app AppCRD) (*resty.Response, error) {
 	k.client.SetBody(app.Spec)
-	res, err := k.client.Post("/api/apps")
+	res, err := k.client.Post("/api/apps/" + pipelineName + "/" + phaseName + "/" + appName)
 
 	return res, err
 }
@@ -159,7 +159,7 @@ func (k *KuberoClient) GetBuildpacks() (*resty.Response, error) {
 }
 
 func (k *KuberoClient) GetPodsize() (*resty.Response, error) {
-	res, err := k.client.Get("/api/config/podsize")
+	res, err := k.client.Get("/api/config/podsizes")
 
 	return res, err
 }
