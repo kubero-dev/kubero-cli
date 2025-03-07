@@ -21,8 +21,8 @@ var appName string
 
 // pipelineCmd represents the pipeline command
 var createPipelineCmd = &cobra.Command{
-	Use:     "pipeline",
-	Aliases: []string{"pl"},
+	Use:     "create",
+	Aliases: []string{"c"},
 	Short:   "Create a new pipeline",
 	Long:    `Create a new Pipeline`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -33,9 +33,10 @@ var createPipelineCmd = &cobra.Command{
 }
 
 func init() {
-	createCmd.AddCommand(createPipelineCmd)
+	pipelineCmd.AddCommand(createPipelineCmd)
 }
 
+/*
 func createPipelineAndApp() {
 	createPipelineAndApp := promptLine("Create a new pipeline", "[y,n]", "y")
 	if createPipelineAndApp == "y" {
@@ -48,6 +49,7 @@ func createPipelineAndApp() {
 	ensureAppNameIsSet()
 	createApp()
 }
+*/
 
 func createPipeline() kuberoApi.PipelineCRD {
 
