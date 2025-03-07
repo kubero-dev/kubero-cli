@@ -1,9 +1,10 @@
 package kuberoCli
 
 import (
-	"gorm.io/gorm"
 	"kubero/pkg/kuberoApi"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type Pipeline struct {
@@ -128,7 +129,7 @@ type App struct {
 			Repository string `json:"repository" gorm:"column:repository"`
 			Tag        string `json:"tag" gorm:"column:tag"`
 		} `json:"build" gorm:"embedded"`
-		ContainerPort int `json:"containerPort" gorm:"column:containerPort"`
+		ContainerPort string `json:"containerPort" gorm:"column:containerPort"`
 		Fetch         struct {
 			Repository string `json:"repository" gorm:"column:repository"`
 			Tag        string `json:"tag" gorm:"column:tag"`
@@ -167,8 +168,8 @@ type App struct {
 	} `json:"podAnnotations" gorm:"-"`
 	PodSecurityContext struct {
 	} `json:"podSecurityContext" gorm:"-"`
-	PodSize      string `json:"podsize" gorm:"column:podsize"`
-	ReplicaCount int    `json:"replicaCount" gorm:"column:replicaCount"`
+	PodSize      PodSize `json:"podsize" gorm:"column:podsize"`
+	ReplicaCount int     `json:"replicaCount" gorm:"column:replicaCount"`
 	Service      struct {
 		Port int    `json:"port" gorm:"column:port"`
 		Type string `json:"type" gorm:"column:type"`
@@ -270,7 +271,6 @@ type appShort struct {
 }
 
 type Instance struct {
-	gorm.Model
 	Name       string `json:"-" yaml:"-"`
 	ApiUrl     string `json:"apiurl" yaml:"apiurl" gorm:"column:apiurl"`
 	IacBaseDir string `json:"iacBaseDir,omitempty" yaml:"iacBaseDir,omitempty" gorm:"column:iacBaseDir"`
@@ -279,7 +279,7 @@ type Instance struct {
 		Subdomain string `json:"subdomain" yaml:"subdomain" gorm:"column:subdomain"`
 		Port      int    `json:"port" yaml:"port" gorm:"column:port"`
 		Host      string `json:"host" yaml:"host" gorm:"column:host"`
-	} `json:"tunnel,omitempty" yaml:"tunnel,omitempty" gorm:"embedded"`
+	} `json:"tunnel,omitempty" yaml:"tunnel,omitempty"`
 }
 
 type Config struct {

@@ -6,8 +6,8 @@ import (
 
 // downCmd represents the down command
 var downCmd = &cobra.Command{
-	Use:     "down",
-	Aliases: []string{"undeploy", "dn"},
+	Use:     "iac:down",
+	Aliases: []string{"iac:undeploy", "iac:dn"},
 	Short:   "Undeploy your pipelines and apps from the cluster",
 	Long: `Use the pipeline or app subcommand to undeploy your pipelines and apps from the cluster
 Subcommands:

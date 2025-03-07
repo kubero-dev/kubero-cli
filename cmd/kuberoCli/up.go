@@ -7,8 +7,8 @@ import (
 
 // upCmd represents the up command
 var upCmd = &cobra.Command{
-	Use:     "up",
-	Aliases: []string{"deploy", "dp"},
+	Use:     "iac:up",
+	Aliases: []string{"iac:deploy", "iac:dp"},
 	Short:   "Deploy your pipelines and apps to the cluster",
 	Long:    ``,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -39,7 +39,7 @@ func init() {
 func upPipeline() {
 	confirmationLine("Are you sure you want to deploy the pipeline '"+pipelineName+"'?", "y")
 
-	pipeline := loadLocalPipeline(pipelineName)
+	pipeline := loadPipelineConfig(pipelineName, true)
 	_, deployPipelineErr := api.DeployPipeline(pipeline)
 	if deployPipelineErr != nil {
 		_, _ = cfmt.Println("{{Error deploying pipeline}}::red", deployPipelineErr)
@@ -53,7 +53,7 @@ func upApp() {
 	app.Spec.Pipeline = pipelineName             // ensure pipeline is set
 	app.Spec.Phase = stageName                   // ensure stage is set
 	app.Spec.Security.VulnerabilityScans = false // TODO: ask for this
-	_, DeployAppErr := api.DeployApp(app)
+	_, DeployAppErr := api.DeployApp(pipelineName, stageName, appName, app)
 	if DeployAppErr != nil {
 		_, _ = cfmt.Println("{{Error deploying app}}::red", DeployAppErr)
 		return
