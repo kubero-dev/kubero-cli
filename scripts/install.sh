@@ -37,12 +37,15 @@ _about='
 set -e
 
 # Define variables
-APP_NAME="$(basename "$(dirname "$(realpath "$0")")")"
+#APP_NAME="$(basename "$(dirname "$(realpath "$0")")")"
+
+APP_NAME="kubero"
 CMD_PATH="$(dirname "$(realpath "$(dirname "$0")")")/cmd"
 BUILD_PATH="$(dirname "$CMD_PATH")"
 BINARY="$BUILD_PATH/$APP_NAME"
 LOCAL_BIN="$HOME/.local/bin"
 GLOBAL_BIN="/usr/local/bin"
+
 SUCCESS="\033[0;32m"
 WARN="\033[0;33m"
 ERROR="\033[0;31m"
@@ -278,29 +281,40 @@ install_from_release() {
 printf '\33c\e[3J'
 
 # Print the about message
-printf "\n%s\n\n" "$_about"
+printf '\n%s\n\n' "$_about"
 
 # Check if the user has provided a command
-case "$1" in
-    build)
-        build_and_validate
+case $1 in
+    "build"|"BUILD"|"-b"|"-B")
+
+        build_and_validate || exit 1
+
         ;;
-    install)
-        log info "Do you want to build locally or download the precompiled binary? (build/download)"
-        read -r choice
-        if [ "$choice" == "download" ]; then
-            install_from_release
+    "install"|"INSTALL"|"-i"|"-I")
+
+        _choice=
+
+        _c=$(read -r -n 1 -p "Do you want to build locally or download the precompiled binary? (locally/download) [locally]: " _choice; echo "${_choice:-locally}")
+
+        if [[ $_c =~ ^[Dd] ]]; then
+            install_from_release || exit 1
         else
-            build_and_validate
-            install_binary
+            build_and_validate || exit 1
+            install_binary || exit 1
         fi
+
         summary
+
         ;;
-    clean)
-        clean
+    "clean"|"CLEAN"|"-c"|"-C")
+
+        clean || exit 1
+
         ;;
     *)
         echo "Usage: $0 {build|install|clean}"
         exit 1
         ;;
 esac
+
+exit $?
