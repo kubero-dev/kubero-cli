@@ -15,9 +15,8 @@ A powerful and user-friendly Command Line Interface (CLI) for [Kubero](https://g
 - [Features](#features)
 - [Installation](#installation)
    - [Supported Platforms](#supported-platforms)
-   - [1. Shortcut Installation](#1-shortcut-installation)
+   - [1. Installation with Makefile](#1-installation-with-makefile)
    - [2. Homebrew Installation](#2-homebrew-installation)
-   - [3. Build from Source](#3-build-from-source)
 - [Supported Providers](#supported-providers)
 - [Usage](#usage)
    - [Command Overview](#command-overview)
@@ -40,6 +39,8 @@ A powerful and user-friendly Command Line Interface (CLI) for [Kubero](https://g
 - **Pipeline Integration:** Seamlessly integrate CI/CD pipelines.
 - **User-Friendly Commands:** Intuitive CLI commands for efficient workflows.
 - **Dashboard Access:** Easy access to the Kubero dashboard for monitoring.
+ 
+<br/>
 
 ---
 
@@ -50,40 +51,9 @@ A powerful and user-friendly Command Line Interface (CLI) for [Kubero](https://g
 - **macOS**
 - **Linux**
 
-### 1. Shortcut Installation
+### 1. Installation with Makefile
 
-Install Kubero CLI with a single command:
-
-```shell
-curl -fsSL get.kubero.dev | bash
-```
-
-### 2. Homebrew Installation
-
-If Homebrew is not installed, install it first:
-
-```shell
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
-
-Install Kubero CLI via Homebrew:
-
-```shell
-brew tap kubero-dev/kubero
-brew install kubero-cli
-```
-
-### 3. Build from Source
-
-For advanced use cases, build and package the binary manually.
-
-#### Requirements
-
-- [Git](https://git-scm.com/downloads)
-- [Go](https://go.dev/doc/install)
-- [UPX](https://github.com/upx/upx/releases/)
-
-#### Steps
+With the updated workflow, installation is streamlined using the `Makefile`. Follow these steps:
 
 1. **Clone the Repository:**
 
@@ -91,45 +61,43 @@ For advanced use cases, build and package the binary manually.
    git clone https://github.com/kubero-dev/kubero-cli.git
    ```
 
+   Placeholder for print: ![Clone the Repository](#)
+
 2. **Navigate to the Project Directory:**
 
    ```shell
    cd kubero-cli
    ```
 
-3. **Create a Version Tag (Optional):**
+3. **Run the Build Process:**
 
    ```shell
-   git tag -a v1.0 -m "Version 1.0"
+   make build
    ```
 
-4. **Build and Package the Binary:**
+   Placeholder for print: ![Make Build Process](#)
+
+4. **Install the Binary:**
 
    ```shell
-   cd cmd
-   go build -ldflags "-s -w -X main.version=$(git describe --tags --abbrev=0) -X main.commit=$(git rev-parse --short HEAD) -X main.date=$(date +%Y-%m-%d)" -trimpath -o kubero-cli
-   upx kubero-cli
-   mv kubero-cli ../kubero
-   cd ..
+   make install
    ```
 
-5. **Move the Binary to Your PATH:**
+   Placeholder for print: ![Make Install Process](#)
 
-   ```shell
-   sudo mv kubero /usr/local/bin/
-   ```
-
-6. **Reload Shell Configuration:**
-
-   ```shell
-   source "$HOME/.$(basename ${SHELL})rc"
-   ```
-
-7. **Verify Installation:**
+5. **Verify Installation:**
 
    ```shell
    kubero --version
    ```
+
+   Placeholder for print: ![Version Check](#)
+
+### 2. Homebrew Installation
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Coming soon!!](https://github.com/kubero-dev/kubero-cli)
+ 
 
 ---
 
