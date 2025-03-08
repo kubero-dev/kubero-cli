@@ -48,7 +48,7 @@ build-dev:
 install:
 	$(call log, Installing $(BINARY_NAME) )
 	$(call break, b )
-	@sh $(INSTALL_SCRIPT) install $(ARGS) || exit 1
+	@bash $(INSTALL_SCRIPT) install $(ARGS)
 	$(call break, b )
 	$(call success, Installation completed )
 

@@ -247,28 +247,61 @@ check_path() {
 
 # Download the binary from the release URL
 download_binary() {
+    # Obtem o sistema operacional e a arquitetura
     os=$(get_os)
     arch=$(get_arch)
 
+    # Validação: Verificar se o sistema operacional ou a arquitetura são suportados
     if [ "$os" == "unsupported" ] || [ "$arch" == "unsupported" ]; then
-        log "error" "Unsupported OS or architecture."
+        log "error" "Unsupported OS or architecture: OS=$os ARCH=$arch."
         exit 1
     fi
 
-    version=$(curl -s https://github.com/kubero-dev/kubero-cli/releases/latest | grep "tag_name" | cut -d '"' -f 4) || return 1
-    release_url="https://github.com/kubero-dev/kubero-cli/releases/${version}/download/kubero-cli_${os}_${arch}.tar.gz" || return 1
+    # Obter a versão mais recente de forma robusta (fallback para "latest")
+    version=$(curl -s https://api.github.com/repos/kubero-dev/kubero-cli/releases/latest | \
+        grep "tag_name" | cut -d '"' -f 4 || echo "latest")
 
-    log "info" "Downloading binary for $os/$arch (version $version)..."
-    if curl -L -o "${APP_NAME}.tar.gz" "$release_url"; then
-        log "error" "Failed to download binary."
+    if [ -z "$version" ]; then
+        log "error" "Failed to determine the latest version."
         exit 1
     fi
 
-    log "info" "Extracting binary..."
-    tar -xzf "${APP_NAME}.tar.gz" -C "$(dirname "$BINARY")"
-    rm -f "${APP_NAME}.tar.gz"
+    # Construir a URL de download
+    release_url="https://github.com/kubero-dev/kubero-cli/releases/download/${version}/kubero-cli_${os}_${arch}.tar.gz"
+    log "info" "Downloading Kubero CLI binary for OS=$os, ARCH=$arch, Version=$version..."
+    log "info" "Release URL: $release_url"
 
-    log "success" "Download and extraction complete!"
+    # Diretório temporário para baixar o arquivo
+    temp_dir=$(mktemp -d || exit 1)
+    archive_path="${temp_dir}/${APP_NAME}.tar.gz"
+
+    # Realizar o download e validar sucesso
+    if ! curl -L -o "$archive_path" "$release_url"; then
+        log "error" "Failed to download the binary from: $release_url"
+        rm -rf "$temp_dir"
+        exit 1
+    fi
+    log "success" "Binary downloaded successfully."
+
+    # Extração do arquivo para o diretório binário
+    log "info" "Extracting binary to: $(dirname "$BINARY")"
+    if ! tar -xzf "$archive_path" -C "$(dirname "$BINARY")"; then
+        log "error" "Failed to extract the binary from: $archive_path"
+        rm -rf "$temp_dir"
+        exit 1
+    fi
+
+    # Limpar artefatos temporários
+    rm -rf "$temp_dir"
+    log "success" "Binary extracted successfully."
+
+    # Verificar se o binário foi extraído com sucesso
+    if [ ! -f "$BINARY" ]; then
+        log "error" "Binary not found after extraction: $BINARY"
+        exit 1
+    fi
+
+    log "success" "Download and extraction of Kubero CLI completed!"
 }
 
 # Install the binary from the release URL
@@ -284,37 +317,35 @@ printf '\33c\e[3J'
 printf '\n%s\n\n' "$_about"
 
 # Check if the user has provided a command
-case $1 in
-    "build"|"BUILD"|"-b"|"-B")
-
+case "$1" in
+    build|BUILD|"-b"|"-B")
+        log "info" "Executing build command..."
         build_and_validate || exit 1
-
         ;;
-    "install"|"INSTALL"|"-i"|"-I")
-
-        _choice=
-
-        _c=$(read -r -n 1 -p "Do you want to build locally or download the precompiled binary? (locally/download) [locally]: " _choice; echo "${_choice:-locally}")
-
-        if [[ $_c =~ ^[Dd] ]]; then
+    install|INSTALL|"-i"|"-I")
+        log "info" "Executing install command..."
+        read -r -p "Do you want to download the precompiled binary? [y/N] (No will build locally): " _c </dev/tty
+        log "info" "User choice: $_c"
+        if [[ $_c =~ ^[Yy]+$ ]]; then
+            log "info" "Downloading precompiled binary..."
             install_from_release || exit 1
         else
+            log "info" "Building locally..."
             build_and_validate || exit 1
             install_binary || exit 1
         fi
-
         summary
-
         ;;
-    "clean"|"CLEAN"|"-c"|"-C")
-
+    clean|CLEAN|"-c"|"-C")
+        log "info" "Executing clean command..."
         clean || exit 1
-
         ;;
     *)
+        log "error" "Invalid command: $1"
         echo "Usage: $0 {build|install|clean}"
         exit 1
         ;;
 esac
 
 exit $?
+
