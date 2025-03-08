@@ -61,7 +61,7 @@ With the updated workflow, installation is streamlined using the `Makefile`. Fol
    git clone https://github.com/kubero-dev/kubero-cli.git
    ```
 
-   Placeholder for print: ![Clone the Repository](#)
+[//]: # (   ![Clone the Repository]&#40;#&#41;)
 
 2. **Navigate to the Project Directory:**
 
@@ -75,7 +75,7 @@ With the updated workflow, installation is streamlined using the `Makefile`. Fol
    make build
    ```
 
-   Placeholder for print: ![Make Build Process](#)
+[//]: # (   ![Make Build Process]&#40;#&#41;)
 
 4. **Install the Binary:**
 
@@ -83,7 +83,7 @@ With the updated workflow, installation is streamlined using the `Makefile`. Fol
    make install
    ```
 
-   Placeholder for print: ![Make Install Process](#)
+[//]: # (   ![Make Install Process]&#40;#&#41;)
 
 5. **Verify Installation:**
 
@@ -91,7 +91,7 @@ With the updated workflow, installation is streamlined using the `Makefile`. Fol
    kubero --version
    ```
 
-   Placeholder for print: ![Version Check](#)
+[//]: # (   ![Version Check]&#40;#&#41;)
 
 ### 2. Homebrew Installation
 
