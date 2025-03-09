@@ -159,33 +159,76 @@ Kubero CLI currently supports the following cloud providers:
 ```plaintext
 kubero
 ├── install                # Create a Kubernetes cluster and install Kubero with all required components
-├── list                   # List all running clusters
-├── login                  # Log in to Kubero and save credentials
-├── logout                 # Log out from Kubero and remove saved credentials
-├── create                 # Create new app and pipeline configurations
-│   ├── app
-│   └── pipeline
-├── up                     # Deploy apps and pipelines
-│   ├── app
-│   └── pipeline
-├── down                   # Remove apps and pipelines
-│   ├── app
-│   └── pipeline
-├── fetch                  # Sync configurations to local files
-│   ├── app
-│   └── pipeline
-├── dashboard              # Open the Kubero dashboard
-├── tunnel                 # Open a tunnel to a NAT-ed cluster
-├── instance               # Manage Kubero instances
-│   ├── create             # Create an instance configuration
-│   ├── delete             # Delete an instance configuration
-│   └── select             # Select an active instance
+|                          # Can also be used to install Kubero on an existing cluster
+├── login (li)             # Log in to Kubero and save credentials
+├── logout (lo)            # Log out from Kubero and remove saved credentials
+├── clusters (cl)          # List Kubero cluster
+│   ├── create             # Create a cluster configuration
+│   ├── delete             # Delete a cluster configuration
+│   └── select             # Select a cluster
+├── app (a)                # List Kubero apps
+│   ├── create             # Create an app
+│   ├── delete             # Delete an app
+│   ├── iac:fetch          # Fetch an app as code configuration
+│   └── iac:up             # Deploy a app configuration (Infrastructure as Code)
+├── pipeline (p)           # List Kubero pipelines
+│   ├── create             # Create a pipeline
+│   ├── delete             # Delete a pipeline
+│   ├── iac:fetch          # Fetch a pipeline as code configuration
+│   └── iac:up             # Deploy a pipeline configuration (Infrastructure as Code)
 ├── config                 # View available configurations
 │   ├── addons             # List addons
 │   ├── buildpacks         # List buildpacks
 │   └── podsizes           # List pod size configurations
+├── dashboard (db)         # Open the Kubero dashboard
+├── debug                  # Gather debug information
+├── tunnel (t)             # Open a tunnel to a NAT-ed cluster
+├── iac:down               # Remove apps and pipelines
+│   ├── app
+│   └── pipeline
+├── iac:fetch              # Sync configurations to local files
+│   ├── app
+│   └── pipeline
 └── help                   # Display help for commands
 ```
+
+### Usage with most common commands
+Create a new cluster and install Kubero:
+
+```shell
+kubero install
+```
+
+Create a new app configuration:
+
+```shell
+kubero create app
+```
+
+Deploy an app:
+
+```shell
+kubero destroy app
+```
+
+List all running pipelines:
+
+```shell
+kubero list
+```
+
+Open the Kubero dashboard:
+
+```shell
+kubero dashboard
+```
+
+For more information, use the `--help` flag with any command:
+
+```shell
+kubero --help
+```
+
 
 ---
 
