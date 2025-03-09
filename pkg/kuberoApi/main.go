@@ -122,7 +122,6 @@ func (k *KuberoClient) validateToken() bool {
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
 		if exp, ok := claims["exp"].(float64); ok {
-			fmt.Println("Token expiration time:", exp)
 			if exp < 0 {
 				fmt.Println("Token expired")
 				return false
@@ -151,7 +150,7 @@ func (k *KuberoClient) DeployPipeline(pipeline PipelineCRD) (*resty.Response, er
 	return res, err
 }
 
-func (k *KuberoClient) UnDeployPipeline(pipelineName string) (*resty.Response, error) {
+func (k *KuberoClient) DeletePipeline(pipelineName string) (*resty.Response, error) {
 	res, err := k.client.Delete("/api/pipelines/" + pipelineName)
 
 	return res, err
@@ -163,7 +162,7 @@ func (k *KuberoClient) GetPipeline(pipelineName string) (*resty.Response, error)
 	return res, err
 }
 
-func (k *KuberoClient) UnDeployApp(pipelineName string, stageName string, appName string) (*resty.Response, error) {
+func (k *KuberoClient) DeleteApp(pipelineName string, stageName string, appName string) (*resty.Response, error) {
 	res, err := k.client.Delete("/api/pipelines/" + pipelineName + "/" + stageName + "/" + appName)
 
 	return res, err
@@ -229,7 +228,20 @@ func (k *KuberoClient) GetRepositories() (*resty.Response, error) {
 }
 
 func (k *KuberoClient) GetContexts() (*resty.Response, error) {
-	res, err := k.client.Get("/api/config/k8s/context")
+	res, err := k.client.Get("/api/kubernetes/context")
+
+	return res, err
+}
+
+func (k *KuberoClient) GetEvents() (*resty.Response, error) {
+	k.client.QueryParam.Add("namespace", "")
+	res, err := k.client.Get("/api/kubernetes/namespace")
+
+	return res, err
+}
+
+func (k *KuberoClient) GetLogs(pipelineName string, phaseName string, appName string, container string) (*resty.Response, error) {
+	res, err := k.client.Get("/api/logs/" + pipelineName + "/" + phaseName + "/" + appName + "/" + container + "/history")
 
 	return res, err
 }

@@ -15,10 +15,10 @@ import (
 )
 
 // instanceCmd represents the instance command
-var instanceCmd = &cobra.Command{
-	Use:     "instance",
-	Aliases: []string{"i", "instances"},
-	Short:   "List available instances",
+var remoteCmd = &cobra.Command{
+	Use:     "remote",
+	Aliases: []string{"cl", "clusters"},
+	Short:   "Manage multiple Kubero instances",
 	Long:    `Print a list of available instances.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		/*
@@ -36,7 +36,7 @@ var instanceCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(instanceCmd)
+	rootCmd.AddCommand(remoteCmd)
 }
 
 func printInstanceList() {

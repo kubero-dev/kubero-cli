@@ -6,7 +6,6 @@ import (
 	"kubero/pkg/kuberoApi"
 	"log"
 	"os"
-	"strconv"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/i582/cfmt/cmd/cfmt"
@@ -23,10 +22,8 @@ var pipelineCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if pipelineName != "" {
-			// get a single pipeline
 
 			pipelineResp, err := api.GetPipeline(pipelineName)
-			//pipelineResp, err := client.Get("/api/cli/pipelines/" + pipelineName)
 			if pipelineResp.StatusCode() == 404 {
 				_, _ = cfmt.Println("{{  Pipeline not found}}::red")
 				os.Exit(1)
@@ -58,6 +55,8 @@ func init() {
 	pipelineCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "table", "output format [table, json]")
 }
 
+/*
+// not implemented yet
 func loadAllLocalPipelines() pipelinesConfigsList {
 	pipelines := getAllLocalPipelines()
 
@@ -69,8 +68,8 @@ func loadAllLocalPipelines() pipelinesConfigsList {
 	}
 
 	return pipelinesConfigsList
-
 }
+*/
 
 func printPipeline(r *resty.Response) {
 	//fmt.Println(r)
@@ -189,6 +188,8 @@ func getAllLocalPipelines() []string {
 	return pipelineNames
 }
 
+/*
+// not implemented yet
 func getPipelinePhases(pipelineConfig *viper.Viper) []string {
 	var phases []string
 
@@ -204,6 +205,7 @@ func getPipelinePhases(pipelineConfig *viper.Viper) []string {
 	}
 	return phases
 }
+*/
 
 func getPipelinePhasesFromCRD(pipelineCRD kuberoApi.PipelineCRD) []string {
 	var phases []string

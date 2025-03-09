@@ -11,7 +11,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// appCmd represents the app command
 var createAppCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new app in a Pipeline",
@@ -96,7 +95,7 @@ func createRemoteApp() {
 
 }
 
-func createApp() {
+func creatIacApp() {
 
 	appCRD := appForm()
 
