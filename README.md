@@ -39,7 +39,9 @@ A powerful and user-friendly Command Line Interface (CLI) for [Kubero](https://g
 - **Pipeline Integration:** Seamlessly integrate CI/CD pipelines.
 - **User-Friendly Commands:** Intuitive CLI commands for efficient workflows.
 - **Dashboard Access:** Easy access to the Kubero dashboard for monitoring.
- 
+- **Automated RSA Certificate Generation:** Securely generate encrypted RSA certificates with random passwords stored in a keyring.
+- **Separate Test Flow:** Handle test logic separately from the core logic for better modularity.
+
 <br/>
 
 ---

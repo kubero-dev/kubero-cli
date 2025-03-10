@@ -34,7 +34,6 @@ build:
 	$(call break, b )
 	$(call success, Compressed $(BINARY_NAME) )
 
-
 # Build the binary using the install script
 build-dev:
 	@if [ -f $(BINARY_NAME) ]; then rm $(BINARY_NAME); fi
@@ -60,6 +59,14 @@ clean:
 	$(call break, b )
 	$(call success, Cleaned up build artifacts)
 
+# Run tests
+test:
+	$(call log, Running tests)
+	$(call break, b )
+	@go test ./... -v || exit 1
+	$(call break, b )
+	$(call success, Tests completed successfully)
+
 # Display this help message
 help:
 	$(call log, $(APP_NAME) Makefile )
@@ -72,6 +79,7 @@ help:
 	$(call log,   make build-dev  - Build the binary without compressing it)
 	$(call log,   make install    - Install the binary and configure environment)
 	$(call log,   make clean      - Clean up build artifacts)
+	$(call log,   make test       - Run tests)
 	$(call log,   make help       - Display this help message)
 	$(call break, b )
 	$(call log, Usage with arguments: )
