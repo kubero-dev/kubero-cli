@@ -34,7 +34,7 @@ func NewViperConfig(path, name string) IConfigManager {
 	if loadConfigsErr := vpCfg.LoadConfig(); loadConfigsErr != nil {
 		// Attempt to resolve the config file across multiple directories and methods.
 		// If all attempts fail, terminate with a clear error message (critical for app functionality).
-		log.Fatal("Error reloading configs!", map[string]interface{}{
+		log.Debug("Error loading configs!", map[string]interface{}{
 			"context": "kubero-cli",
 			"pkg":     "config",
 			"method":  "NewViperConfig",
@@ -230,7 +230,7 @@ func (v *ConfigManager) GetCredentialsManager() *CredentialsManager {
 		if loadCredentialsErr := v.credentialsManager.LoadCredentials(); loadCredentialsErr != nil {
 			// Attempt to resolve the config file across multiple directories and methods.
 			// If all attempts fail, terminate with a clear error message (critical for app functionality).
-			log.Error("Error loading credentials!", map[string]interface{}{
+			log.Debug("Error loading credentials!", map[string]interface{}{
 				"context": "kubero-cli",
 				"pkg":     "config",
 				"method":  "GetCredentialsManager",

@@ -15,7 +15,6 @@ import (
 	"github.com/spf13/cobra"
 	_ "github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"os"
 	"path/filepath"
@@ -93,29 +92,6 @@ func (k *KuberoClient) Execute() {
 	}
 }
 
-func (k *KuberoClient) initDB() error {
-	var err error
-	k.db, err = gorm.Open(sqlite.Open("kubero.db"), &gorm.Config{})
-	if err != nil {
-		log.Error("Failed to connect to local database.", map[string]interface{}{
-			"context": "kubero-cli",
-			"action":  "initDB",
-			"error":   err.Error(),
-		})
-		return err
-	}
-	autoMigrateErr := k.db.AutoMigrate(&t.Instance{})
-	if autoMigrateErr != nil {
-		log.Error("Failed to auto migrate the database.", map[string]interface{}{
-			"context": "kubero-cli",
-			"action":  "initDB",
-			"error":   autoMigrateErr.Error(),
-		})
-		return autoMigrateErr
-	}
-	return nil
-}
-
 func (k *KuberoClient) initConfig() error {
 	name := ""
 	path := os.Getenv("KUBERO_CONFIG_PATH")
@@ -129,30 +105,35 @@ func (k *KuberoClient) initConfig() error {
 
 	k.configMgr = c.NewViperConfig(path, name)
 	if loadErr := k.configMgr.LoadConfig(); loadErr != nil {
-		log.Error("Failed to load configuration.", map[string]interface{}{
+		log.Debug("Failed to load configuration.", map[string]interface{}{
 			"context": "kubero-cli",
 			"action":  "initConfig",
+			"stage":   "loadConfig",
 			"error":   loadErr.Error(),
 		})
-		return loadErr
+		//return loadErr
 	}
 	if loadErr := k.configMgr.GetCredentialsManager().LoadCredentials(); loadErr != nil {
-		log.Error("Failed to load credentials.", map[string]interface{}{
+		log.Debug("Failed to load credentials.", map[string]interface{}{
 			"context": "kubero-cli",
 			"action":  "initConfig",
+			"stage":   "loadCredentials",
 			"error":   loadErr.Error(),
 		})
-		return loadErr
+		//return loadErr
 	}
-	plName := k.configMgr.GetProp("pipelineName").(string)
-	if plName != "" {
-		if _, loadErr := k.configMgr.LoadPLConfigs(plName); loadErr != nil {
-			log.Error("Failed to load pipeline configuration.", map[string]interface{}{
-				"context": "kubero-cli",
-				"action":  "initConfig",
-				"error":   loadErr.Error(),
-			})
-			return loadErr
+	plName := k.configMgr.GetProp("pipelineName")
+	if plName != nil {
+		if stPlName, ok := plName.(string); ok && stPlName != "" {
+			if _, loadErr := k.configMgr.LoadPLConfigs(stPlName); loadErr != nil {
+				log.Debug("Failed to load pipeline configuration.", map[string]interface{}{
+					"context": "kubero-cli",
+					"action":  "initConfig",
+					"stage":   "loadPLConfigs",
+					"error":   loadErr.Error(),
+				})
+				//return loadErr
+			}
 		}
 	}
 	if k.configMgr.GetProp("instanceName") != nil {
@@ -170,7 +151,6 @@ func (k *KuberoClient) init() {
 	once.Do(func() {
 		k.log = log.Logger()
 		k.rootCmd = k.Command()
-		_ = k.initDB()
 		_ = k.initConfig()
 		//k.initAPI()
 	})
