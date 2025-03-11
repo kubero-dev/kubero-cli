@@ -2,8 +2,9 @@ package pipeline
 
 import (
 	"encoding/json"
+	a "github.com/faelmori/kubero-cli/internal/api"
+	c "github.com/faelmori/kubero-cli/internal/config"
 	"github.com/faelmori/kubero-cli/internal/log"
-	"github.com/faelmori/kubero-cli/pkg/kuberoApi"
 	"github.com/faelmori/kubero-cli/types"
 	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/olekukonko/tablewriter"
@@ -13,7 +14,7 @@ import (
 )
 
 func (m *ManagerPipeline) AppsList(pipelineName, outputFormat string) error {
-	api := kuberoApi.NewKuberoClient()
+	api := a.NewClient()
 	pipelineResp, _ := api.GetPipelineApps(pipelineName)
 
 	var pl types.PipelineSpec
@@ -59,7 +60,7 @@ func (m *ManagerPipeline) AppsList(pipelineName, outputFormat string) error {
 }
 
 func (m *ManagerPipeline) GetAllRemoteApps() []string {
-	api := kuberoApi.NewKuberoClient()
+	api := a.NewClient()
 	apps, _ := api.GetApps()
 	var appShortList []types.AppShort
 	jsonUnmarshalErr := json.Unmarshal(apps.Body(), &appShortList)
@@ -87,8 +88,8 @@ func (m *ManagerPipeline) GetAllRemoteApps() []string {
 }
 
 func (m *ManagerPipeline) GetAllLocalApps() []string {
-
-	baseDir := m.GetIACBaseDir()
+	cfg := c.NewViperConfig("", "")
+	baseDir := cfg.GetIACBaseDir()
 	dir := baseDir + "/" + m.pipelineName + "/" + m.stageName
 
 	var appsList []string
@@ -127,8 +128,9 @@ func (m *ManagerPipeline) LoadLocalApp(pipelineName string, stageName string, ap
 }
 
 func (m *ManagerPipeline) LoadAppConfig(pipelineName string, stageName string, appName string) *viper.Viper {
+	cfg := c.NewViperConfig("", "")
+	baseDir := cfg.GetIACBaseDir()
 
-	baseDir := m.GetIACBaseDir()
 	dir := baseDir + "/" + pipelineName + "/" + stageName
 
 	appConfig := viper.New()
