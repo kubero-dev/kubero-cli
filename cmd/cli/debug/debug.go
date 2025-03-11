@@ -1,6 +1,7 @@
 package debug
 
 import (
+	"github.com/faelmori/kubero-cli/cmd/common"
 	"github.com/faelmori/kubero-cli/internal/debug"
 	"github.com/spf13/cobra"
 )
@@ -31,6 +32,17 @@ func cmdDebug() *cobra.Command {
     - Kubero operator namespace
     - Kubernetes metrics server version
     - Kubernetes cert-manager version`,
+		Annotations: common.GetDescriptions([]string{
+			"Print debug information",
+			`This command will print debug information like:
+    - Kubero CLI version
+    - OS/Arch
+    - Kubernetes version
+    - Kubero operator version
+    - Kubero operator namespace
+    - Kubernetes metrics server version
+    - Kubernetes cert-manager version`,
+		}, false),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			d := debug.NewDebug()
 			return d.Run()

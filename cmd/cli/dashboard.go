@@ -5,6 +5,7 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 */
 
 import (
+	"github.com/faelmori/kubero-cli/cmd/common"
 	"github.com/faelmori/kubero-cli/internal/config"
 	"github.com/faelmori/kubero-cli/internal/log"
 	"github.com/pkg/browser"
@@ -26,6 +27,10 @@ func cmdDashboard() *cobra.Command {
 		Aliases: []string{"db"},
 		Short:   "Opens the Kubero dashboard in your browser",
 		Long:    `Use the dashboard subcommand to open the Kubero dashboard in your browser.`,
+		Annotations: common.GetDescriptions([]string{
+			"Opens the Kubero dashboard in your browser",
+			`Use the dashboard subcommand to open the Kubero dashboard in your browser.`,
+		}, false),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			path := filepath.Dir(configPath)
 			file := filepath.Base(configPath)

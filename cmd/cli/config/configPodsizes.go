@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/faelmori/kubero-cli/cmd/common"
 	a "github.com/faelmori/kubero-cli/internal/api"
 	u "github.com/faelmori/kubero-cli/internal/utils"
 	t "github.com/faelmori/kubero-cli/types"
@@ -23,6 +24,13 @@ func cmdPodSizes() *cobra.Command {
 	var podSizesCmd = &cobra.Command{
 		Use:   "podsizes",
 		Short: "List the available pod sizes",
+		Long: `List the available pod sizes. This command will list all available pod sizes.
+You can use the 'config' command to show your current configuration.`,
+		Annotations: common.GetDescriptions([]string{
+			"List the available pod sizes",
+			`List the available pod sizes. This command will list all available pod sizes.
+You can use the 'config' command to show your current configuration.`,
+		}, false),
 		Run: func(cmd *cobra.Command, args []string) {
 			client := a.NewClient()
 			resp, _ := client.GetPodsize()

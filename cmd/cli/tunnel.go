@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"github.com/faelmori/kubero-cli/cmd/common"
 	"github.com/faelmori/kubero-cli/internal/network"
 	"github.com/i582/cfmt/cmd/cfmt"
 
@@ -23,6 +24,10 @@ func cmdTunnel() *cobra.Command {
 		Use:   "tunnel",
 		Short: cfmt.Sprint("Create a tunnel to the cluster in NATed infrastructures {{[BETA]}}::cyan "),
 		Long:  `Use the tunnel subcommand to create a tunnel to the cluster in NATed infrastructures.`,
+		Annotations: common.GetDescriptions([]string{
+			cfmt.Sprint("Create a tunnel to the cluster in NATed infrastructures {{[BETA]}}::cyan "),
+			`Use the tunnel subcommand to create a tunnel to the cluster in NATed infrastructures.`,
+		}, false),
 		Run: func(cmd *cobra.Command, args []string) {
 			tunnel := network.NewTunnel(tunnelPort, tunnelHost, tunnelSubdomain, tunnelDuration)
 			tunnel.StartTunnel()

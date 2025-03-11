@@ -6,10 +6,18 @@ import (
 )
 
 func FetchPipelineCmds() []*cobra.Command {
+	appFetchRootCmd := &cobra.Command{
+		Use:   "fetch",
+		Short: "Fetch your remote pipelines and apps to your local repository",
+		Long: `Use the pipeline or app subcommand to fetch your pipelines and apps to your local repository
+Subcommands:
+  kubero fetch [pipeline|app]`,
+	}
+	appFetchRootCmd.AddCommand(cmdFetchPL())
+	appFetchRootCmd.AddCommand(cmdFetchApp())
+	appFetchRootCmd.AddCommand(cmdFetchPipelinePL())
 	return []*cobra.Command{
-		cmdFetchPL(),
-		cmdFetchApp(),
-		cmdFetchPipelinePL(),
+		appFetchRootCmd,
 	}
 }
 

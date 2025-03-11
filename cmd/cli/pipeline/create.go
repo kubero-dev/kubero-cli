@@ -6,15 +6,28 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 
 import (
 	"fmt"
+	"github.com/faelmori/kubero-cli/cmd/common"
 	"github.com/faelmori/kubero-cli/internal/pipeline"
 	"github.com/spf13/cobra"
 )
 
 func CreateCmds() []*cobra.Command {
+	createRootCmd := &cobra.Command{
+		Use:     "create",
+		Aliases: []string{"cr", "add", "new"},
+		Short:   "Create a new pipeline and/or app",
+		Long:    `Initiate a new pipeline and app in your current repository.`,
+		Annotations: common.GetDescriptions([]string{
+			"Create a new pipeline and/or app",
+			`Initiate a new pipeline and app in your current repository.`,
+		}, false),
+	}
+	createRootCmd.AddCommand(cmdCreatePipeline())
+	createRootCmd.AddCommand(cmdCreateApp())
+	createRootCmd.AddCommand(cmdCreate())
+
 	return []*cobra.Command{
-		cmdCreate(),
-		cmdCreatePipeline(),
-		cmdCreateApp(),
+		createRootCmd,
 	}
 }
 

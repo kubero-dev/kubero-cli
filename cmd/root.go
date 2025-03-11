@@ -6,7 +6,9 @@ import (
 	"github.com/faelmori/kubero-cli/cmd/cli/config"
 	"github.com/faelmori/kubero-cli/cmd/cli/debug"
 	"github.com/faelmori/kubero-cli/cmd/cli/install"
+	"github.com/faelmori/kubero-cli/cmd/cli/instance"
 	"github.com/faelmori/kubero-cli/cmd/cli/pipeline"
+	"github.com/faelmori/kubero-cli/cmd/common"
 	a "github.com/faelmori/kubero-cli/internal/api"
 	c "github.com/faelmori/kubero-cli/internal/config"
 	"github.com/faelmori/kubero-cli/internal/log"
@@ -50,30 +52,55 @@ func (k *KuberoClient) Command() *cobra.Command {
 	var rootCmd = &cobra.Command{
 		Use:   "kubero",
 		Short: "Kubero is a platform as a service (PaaS) that enables developers to build, run, and operate applications on Kubernetes.",
-		Long: `
-	,--. ,--.        ,--.
-	|  .'   /,--.,--.|  |-.  ,---. ,--.--. ,---.
-	|  .   ' |  ||  || .-. '| .-. :|  .--'| .-. |
-	|  |\   \'  ''  '| '-' |\   --.|  |   ' '-' '
-	'--' '--' '----'  '---'  '----''--'    '---'
-Documentation:
-  https://docs.kubero.dev
-`,
-		Example: `kubero install`,
-		Aliases: []string{"kbr"},
+		Annotations: common.GetDescriptions(
+			[]string{
+				"Kubero is a platform as a service (PaaS) that enables developers to build, run, and operate applications on Kubernetes.",
+				"Kubero is a platform as a service (PaaS) that enables developers to build, run, and operate applications on Kubernetes.",
+			}, false,
+		),
+		Example: common.ConcatenateExamples("kubero install", "kubero pipeline create", "kubero net dashboard"),
 	}
 
-	rootCmd.AddCommand(install.InstallCmds()...)
 	rootCmd.AddCommand(config.ConfigCmds()...)
 	rootCmd.AddCommand(debug.DebugCmds()...)
-	rootCmd.AddCommand(pipeline.FetchPipelineCmds()...)
-	rootCmd.AddCommand(pipeline.PipelineListCmds()...)
-	rootCmd.AddCommand(pipeline.PipelineDownCmds()...)
-	rootCmd.AddCommand(cli.TunnelCmds()...)
+
+	rootCmd.AddCommand(install.InstallCmds()...)
+
+	plRootCmd := &cobra.Command{
+		Use:   "pipeline",
+		Short: "Pipeline commands",
+		Long: `Pipeline commands. Use the pipeline subcommand to manage your pipelines.
+Subcommands:
+  kubero pipeline [create|fetch|list|down]`,
+	}
+
+	plRootCmd.AddCommand(instance.InstanceCmds()...)
+	plRootCmd.AddCommand(pipeline.CreateCmds()...)
+	plRootCmd.AddCommand(pipeline.FetchPipelineCmds()...)
+	plRootCmd.AddCommand(pipeline.PipelineListCmds()...)
+	plRootCmd.AddCommand(pipeline.PipelineDownCmds()...)
+
+	rootCmd.AddCommand(plRootCmd)
+
+	netRootCmd := &cobra.Command{
+		Use:   "net",
+		Short: "Network commands",
+		Long: `Network commands. Use the net subcommand to manage your network.
+Subcommands:
+  kubero net [dashboard|login|tunnel]`,
+	}
+
+	netRootCmd.AddCommand(cli.DashboardCmds()...)
+	netRootCmd.AddCommand(cli.LoginCmds()...)
+	netRootCmd.AddCommand(cli.TunnelCmds()...)
+
+	rootCmd.AddCommand(netRootCmd)
 
 	for _, cmd := range rootCmd.Commands() {
-		SetUsageDefinition(cmd)
+		SetUsageDefinition(cmd, true)
 	}
+
+	SetUsageDefinition(rootCmd, false)
 
 	rootCmd.CompletionOptions.HiddenDefaultCmd = false
 

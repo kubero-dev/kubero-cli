@@ -6,10 +6,19 @@ import (
 )
 
 func PipelineDownCmds() []*cobra.Command {
+	plDownRootCmd := &cobra.Command{
+		Use:   "down",
+		Short: "Undeploy your pipelines and apps from the cluster",
+		Long: `Use the pipeline or app subcommand to undeploy your pipelines and apps from the cluster
+Subcommands:
+  kubero down [pipeline|app]`,
+	}
+	plDownRootCmd.AddCommand(cmdDownPL())
+	plDownRootCmd.AddCommand(cmdDownAppPL())
+	plDownRootCmd.AddCommand(cmdDownPipelinePL())
+
 	return []*cobra.Command{
-		cmdDownPL(),
-		cmdDownAppPL(),
-		cmdDownPipelinePL(),
+		plDownRootCmd,
 	}
 }
 

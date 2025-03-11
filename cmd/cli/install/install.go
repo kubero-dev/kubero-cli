@@ -1,15 +1,17 @@
 package install
 
 import (
+	"github.com/faelmori/kubero-cli/cmd/common"
 	"github.com/faelmori/kubero-cli/internal/install"
 	"github.com/spf13/cobra"
 )
 
 func InstallCmds() []*cobra.Command {
+	installRootCmd := cmdInstall()
+	installRootCmd.AddCommand(cmdInstallMetrics())
+	installRootCmd.AddCommand(cmdInstallCertManager())
 	return []*cobra.Command{
-		cmdInstall(),
-		cmdInstallMetrics(),
-		cmdInstallCertManager(),
+		installRootCmd,
 	}
 }
 
@@ -34,6 +36,15 @@ for kubero on any kubernetes cluster.
 required binaries:
  - kubectl
  - kind (optional)`,
+		Annotations: common.GetDescriptions([]string{
+			"Create a Kubernetes cluster and install all required components for kubero",
+			`This command will create a kubernetes cluster and install all required components 
+for kubero on any kubernetes cluster.
+
+required binaries:
+ - kubectl
+ - kind (optional)`,
+		}, false),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			insMgr := install.NewManagerInstall(installOlm, argComponent, clusterType, argAdminPassword, argAdminUser, argApiToken, argPort, argPortSecure)
 			_ = insMgr.FullInstallation()
@@ -58,6 +69,10 @@ func cmdInstallMetrics() *cobra.Command {
 		Use:   "metrics",
 		Short: "Install metrics for kubero",
 		Long:  `Install metrics for kubero`,
+		Annotations: common.GetDescriptions([]string{
+			"Install metrics for kubero",
+			`Install metrics for kubero`,
+		}, false),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// This logic didn't need any parameters, so I removed them and kept just the function call with component name self-contained
 			insMgr := install.NewManagerInstall(false, "metrics", "", "", "", "", "", "")
@@ -75,6 +90,10 @@ func cmdInstallCertManager() *cobra.Command {
 		Use:   "cert-manager",
 		Short: "Install cert-manager for kubero",
 		Long:  `Install cert-manager for kubero`,
+		Annotations: common.GetDescriptions([]string{
+			"Install cert-manager for kubero",
+			`Install cert-manager for kubero`,
+		}, false),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// This logic contains some installOlm use case, so I kept it
 			insMgr := install.NewManagerInstall(installOlm, "certManager", "", "", "", "", "", "")

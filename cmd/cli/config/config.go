@@ -2,16 +2,21 @@ package config
 
 import (
 	"fmt"
+	"github.com/faelmori/kubero-cli/cmd/common"
 	"github.com/faelmori/kubero-cli/internal/config"
 	"github.com/spf13/cobra"
 	"path/filepath"
 )
 
 func ConfigCmds() []*cobra.Command {
+	cfgRootCmd := cmdConfigCli()
+	cfgRootCmd.AddCommand(cmdConfigSet())
+	cfgRootCmd.AddCommand(cmdConfigGet())
+	cfgRootCmd.AddCommand(ConfigAddonsCmds()...)
+	cfgRootCmd.AddCommand(ConfigBuildpacksCmds()...)
+	cfgRootCmd.AddCommand(ConfigPodsizesCmds()...)
 	return []*cobra.Command{
-		cmdConfigCli(),
-		cmdConfigSet(),
-		cmdConfigGet(),
+		cfgRootCmd,
 	}
 }
 
@@ -23,6 +28,11 @@ func cmdConfigCli() *cobra.Command {
 		Short: "Show your configuration",
 		Long: `Show your configuration. This command will show your current configuration.
 You can use the 'config set' command to set a new configuration.`,
+		Annotations: common.GetDescriptions([]string{
+			"Show your configuration",
+			`Show your configuration. This command will show your current configuration.
+You can use the 'config set' command to set a new configuration.`,
+		}, false),
 		Run: func(cmd *cobra.Command, args []string) {
 			pt := filepath.Dir(path)
 			nm := filepath.Base(path)
@@ -49,6 +59,11 @@ func cmdConfigSet() *cobra.Command {
 		Short: "Set a new configuration",
 		Long: `Set a new configuration. This command will set a new configuration.
 You can use the 'config' command to show your current configuration.`,
+		Annotations: common.GetDescriptions([]string{
+			"Set a new configuration",
+			`Set a new configuration. This command will set a new configuration.
+You can use the 'config' command to show your current configuration.`,
+		}, false),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			pt := filepath.Dir(path)
 			nm := filepath.Base(path)
@@ -78,6 +93,11 @@ func cmdConfigGet() *cobra.Command {
 		Short: "Get a configuration",
 		Long: `Get a configuration. This command will get a configuration.
 You can use the 'config' command to show your current configuration.`,
+		Annotations: common.GetDescriptions([]string{
+			"Get a configuration",
+			`Get a configuration. This command will get a configuration.
+You can use the 'config' command to show your current configuration.`,
+		}, false),
 		Run: func(cmd *cobra.Command, args []string) {
 			pt := filepath.Dir(path)
 			nm := filepath.Base(path)
