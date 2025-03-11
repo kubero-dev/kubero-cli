@@ -1,6 +1,7 @@
 package install
 
 import (
+	"github.com/faelmori/kubero-cli/internal/log"
 	"github.com/faelmori/kubero-cli/internal/utils"
 	"github.com/spf13/cobra"
 	"math/rand"
@@ -13,13 +14,9 @@ var (
 	selectFromList = prompt.SelectFromList
 )
 
-var (
-	installOlm          bool
-	monitoringInstalled bool
-)
+var installOlm bool
 var (
 	argComponent     string
-	argDomain        string
 	clusterType      string
 	argAdminPassword string
 	argAdminUser     string
@@ -41,57 +38,108 @@ for kubero on any kubernetes cluster.
 required binaries:
  - kubectl
  - kind (optional)`,
-	Run: func(cmd *cobra.Command, args []string) {
-		rand.New(rand.NewSource(time.Now().UnixNano()))
-
-		utils.CheckAllBinaries()
-
-		switch argComponent {
-		case "metrics":
-			installMetrics()
-			return
-		case "certManager":
-			installCertManager()
-			return
-		case "olm":
-			installKuberoOLMOperator()
-			//installOLM()
-			return
-		case "kubero-operator":
-			installKuberoOperator()
-			return
-		case "kubero-ui":
-			installKuberoUi()
-			return
-		case "ingress":
-			installIngress()
-			return
-		case "monitoring":
-			installMonitoring()
-			return
-		case "kubernetes":
-			installKubernetes()
-			//checkCluster()
-			return
-		case "":
-			//printInstallSteps()
-			installKubernetes() // 1
-			//checkCluster()          //
-			//installOLM()            // 2
-			installKuberoOperator() // 3
-			installIngress()        // 4
-			installMetrics()        // 5
-			installCertManager()    // 6
-			installMonitoring()     // 7
-			installKuberoUi()       // 8
-			//writeCLIConfig()        // 9
-			//printDNSinfo()
-			//finalMessage()
-			return
-		default:
-			return
-		}
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return NewManagerInstall().runAll()
 	},
 }
 
-type ManagerInstall struct{}
+type ManagerInstall struct {
+	cmd *cobra.Command
+}
+
+func NewManagerInstall() *ManagerInstall {
+	return &ManagerInstall{
+		cmd: installCmd,
+	}
+}
+
+func (m *ManagerInstall) InstallKubernetes() error        { return installKubernetes() }
+func (m *ManagerInstall) InstallKuberoOperator() error    { return installKuberoOperator() }
+func (m *ManagerInstall) InstallKuberoUi() error          { return installKuberoUi() }
+func (m *ManagerInstall) InstallIngress() error           { return installIngress() }
+func (m *ManagerInstall) InstallMetrics() error           { return installMetrics() }
+func (m *ManagerInstall) InstallCertManager() error       { return installCertManager() }
+func (m *ManagerInstall) InstallMonitoring() error        { return installMonitoring() }
+func (m *ManagerInstall) InstallKuberoOLMOperator() error { return installKuberoOLMOperator() }
+
+func (m *ManagerInstall) runAll() error {
+	rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	if checkAllBinariesErr := utils.CheckAllBinaries(); checkAllBinariesErr != nil {
+		log.Error("Failed to check all binaries")
+		return checkAllBinariesErr
+	}
+
+	switch argComponent {
+	case "metrics":
+		if insMetricsErr := installMetrics(); insMetricsErr != nil {
+			return insMetricsErr
+		}
+		return nil
+	case "certManager":
+		return installCertManager()
+	case "olm":
+		return installKuberoOLMOperator()
+	case "kubero-operator":
+		return installKuberoOperator()
+	case "kubero-ui":
+		return installKuberoUi()
+	case "ingress":
+		return installIngress()
+	case "monitoring":
+		return installMonitoring()
+	case "kubernetes":
+		return installKubernetes()
+	case "":
+		//printInstallSteps()
+		if insKu8sErr := installKubernetes(); insKu8sErr != nil { // 1
+			return insKu8sErr
+		}
+		if checkClusterErr := utils.CheckClusters(); checkClusterErr != nil { // 2
+			return checkClusterErr
+		}
+		if installOLMErr := installKuberoOLMOperator(); installOLMErr != nil { // 3
+			return installOLMErr
+		}
+		if insKubeOperErr := installKuberoOperator(); insKubeOperErr != nil { // 3
+			return insKubeOperErr
+		}
+		if installIngressErr := installIngress(); installIngressErr != nil { // 4
+			return installIngressErr
+		}
+		if insMetricsErr := installMetrics(); insMetricsErr != nil { // 5
+			return insMetricsErr
+		}
+		if installCertManagerErr := installCertManager(); installCertManagerErr != nil { // 6
+			return installCertManagerErr
+		}
+		if installMonitoringErr := installMonitoring(); installMonitoringErr != nil { // 7
+			return installMonitoringErr
+		}
+		if installKuberoUiErr := installKuberoUi(); installKuberoUiErr != nil { // 8
+			return installKuberoUiErr
+		}
+		//if installDNSErr := installDNS(); installDNSErr != nil { // 9
+		//	return installDNSErr
+		//}
+		//if writeKuberoConfigErr := writeCliConfig(); writeKuberoConfigErr != nil { // 10
+		//	return writeKuberoConfigErr
+		//}
+		//printDNSinfo()
+		//finalMessage()
+		return nil
+	default:
+		return nil
+	}
+}
+
+func init() {
+	installCmd.Flags().StringVarP(&argComponent, "component", "c", "", "Component to install")
+	installCmd.Flags().StringVarP(&clusterType, "cluster-type", "t", "", "Type of cluster to install")
+	installCmd.Flags().StringVarP(&argAdminPassword, "admin-password", "p", "", "Admin password for kubero")
+	installCmd.Flags().StringVarP(&argAdminUser, "admin-user", "u", "", "Admin user for kubero")
+	installCmd.Flags().StringVarP(&argApiToken, "api-token", "a", "", "Api token for kubero")
+	installCmd.Flags().StringVarP(&argPort, "port", "o", "", "Port for kubero")
+	installCmd.Flags().StringVarP(&argPortSecure, "port-secure", "s", "", "Secure port for kubero")
+	installCmd.Flags().BoolVarP(&installOlm, "olm", "l", false, "Install OLM for kubero")
+}

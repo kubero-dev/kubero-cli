@@ -4,7 +4,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
+	"github.com/faelmori/kubero-cli/internal/log"
+	"github.com/faelmori/kubero-cli/version"
 	"math/rand"
 	"os"
 	"strconv"
@@ -15,13 +16,13 @@ import (
 	"github.com/leaanthony/spinner"
 )
 
-func installLinode() {
+func installLinode() error {
 	// https://www.linode.com/docs/api/linode-kubernetes-engine-lke/#kubernetes-cluster-create
 	// https://www.linode.com/docs/api/linode-kubernetes-engine-lke/#kubernetes-cluster-view
 	// https://www.linode.com/docs/api/linode-kubernetes-engine-lke/#kubeconfig-view
 
-	_, _ = cfmt.Println("{{⚠ Installing Kubernetes on Linode is currently beta state in kubero-cli}}::yellow")
-	_, _ = cfmt.Println("{{  Please report if you run into errors}}::yellow")
+	log.Warn("Installing Kubernetes on Linode is currently beta state in kubero-cli")
+	log.Warn("Please report if you run into errors")
 
 	token := os.Getenv("LINODE_ACCESS_TOKEN")
 	if token == "" {
@@ -34,7 +35,7 @@ func installLinode() {
 		SetAuthToken(token).
 		SetHeader("Accept", "application/json").
 		SetHeader("Content-Type", "application/json").
-		SetHeader("User-Agent", "kubero-cli/"+kuberoCliVersion).
+		SetHeader("User-Agent", "kubero-cli/"+version.Version()).
 		SetBaseURL("https://api.linode.com/v4/lke/clusters")
 
 	var clusterConfig LinodeCreateClusterRequest
@@ -60,15 +61,15 @@ func installLinode() {
 	if clusterResponse.StatusCode() > 299 {
 		fmt.Println()
 		spinnerObj.Error("Failed to create Linode Kubernetes Cluster")
-		log.Fatal(clusterResponse.String())
+		return fmt.Errorf(fmt.Sprintf("Failed to create Linode Kubernetes Cluster: %s", clusterResponse.Status()))
 	}
 	spinnerObj.Success("Linode Kubernetes Cluster created")
 
 	var cluster LinodeCreateClusterResponse
 	jsonUnmarshalErr := json.Unmarshal(clusterResponse.Body(), &cluster)
 	if jsonUnmarshalErr != nil {
-		log.Fatal(jsonUnmarshalErr)
-		return
+		log.Error("Failed to unmarshal Linode Kubernetes Cluster response")
+		return jsonUnmarshalErr
 	}
 
 	// According to the docs, the cluster is ready after 2-5 minutes.
@@ -85,28 +86,31 @@ func installLinode() {
 		time.Sleep(15 * time.Second)
 		r, _ := api.R().SetResult(&LinodeKubeconfig).Get("/" + strconv.Itoa(cluster.ID) + "/kubeconfig")
 		if r.StatusCode() > 299 {
-			tellAChucknorrisJoke()
+			log.Warn("Linode Kubernetes Cluster is not ready yet")
 		}
 		if LinodeKubeconfig.Kubeconfig != "" {
 			spinnerObj.Success("Linode Kubernetes Cluster is ready")
 			break
 		}
 	}
-	kubeconfig, err := base64.StdEncoding.DecodeString(LinodeKubeconfig.Kubeconfig)
 
+	kubeconfig, err := base64.StdEncoding.DecodeString(LinodeKubeconfig.Kubeconfig)
 	if err != nil {
 		fmt.Println()
 		spinnerObj.Error("Failed to decode kubeconfig")
-		log.Fatal(err)
+		log.Error("Failed to decode kubeconfig")
+		return err
 	}
 
 	err = mergeKubeconfig(kubeconfig)
 	if err != nil {
 		fmt.Println()
 		spinnerObj.Error("Failed to merge kubeconfig")
-		log.Fatal(err)
+		log.Error("Failed to merge kubeconfig")
+		return err
 	}
 
 	spinnerObj.Success("Linode Kubernetes Cluster credentials set")
 
+	return nil
 }

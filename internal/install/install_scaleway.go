@@ -3,7 +3,8 @@ package install
 import (
 	"encoding/base64"
 	"encoding/json"
-	"log"
+	"github.com/faelmori/kubero-cli/internal/log"
+	"github.com/faelmori/kubero-cli/version"
 	"math/rand"
 	"os"
 	"strconv"
@@ -14,7 +15,7 @@ import (
 	"github.com/leaanthony/spinner"
 )
 
-func installScaleway() {
+func installScaleway() error {
 
 	// create the cluster
 	// https://api.scaleway.com/k8s/v1/regions/{region}/clusters/{cluster_id}/available-versions
@@ -25,8 +26,8 @@ func installScaleway() {
 	// get the kubeconfig
 	// https://api.scaleway.com/k8s/v1/regions/{region}/clusters/{cluster_id}/kubeconfig
 
-	// _, _ = cfmt.Println("{{⚠ Installing Kubernetes on Scaleway is currently beta state in kubero-cli}}::yellow")
-	// _, _ = cfmt.Println("{{  Please report if you run into errors}}::yellow")
+	log.Warn("Installing Kubernetes on Scaleway is currently beta state in kubero-cli")
+	log.Warn("Please report if you run into errors")
 
 	var cluster ScalewayCreate
 	/*
@@ -48,7 +49,7 @@ func installScaleway() {
 		SetHeader("X-Auth-Token", token).
 		SetHeader("Accept", "application/json").
 		SetHeader("Content-Type", "application/json").
-		SetHeader("User-Agent", "kubero-cli/"+kuberoCliVersion).
+		SetHeader("User-Agent", "kubero-cli/"+version.Version()).
 		SetBaseURL("https://api.scaleway.com/k8s/v1/regions")
 
 	cluster.Name = promptLine("Kubernetes Cluster Name", "", "kubero-"+strconv.Itoa(rand.Intn(1000)))
@@ -96,7 +97,7 @@ func installScaleway() {
 		jsonUnmarshalErr := json.Unmarshal(newCluster.Body(), &clusterResponse)
 		if jsonUnmarshalErr != nil {
 			_, _ = cfmt.Println("{{✗ Failed to create Scaleway Kubernetes cluster}}::red")
-			return
+			return jsonUnmarshalErr
 		}
 		_, _ = cfmt.Println("{{✓ Scaleway Kubernetes cluster created}}::lightGreen")
 	} else {
@@ -112,7 +113,7 @@ func installScaleway() {
 		jsonUnmarshalErr := json.Unmarshal(clusterStatus.Body(), &clusterStatusResponse)
 		if jsonUnmarshalErr != nil {
 			_, _ = cfmt.Println("{{✗ Failed to get Scaleway Kubernetes cluster status}}::red")
-			return
+			return jsonUnmarshalErr
 		}
 		if clusterStatusResponse.Status == "ready" {
 			spinnerObj.Success("Scaleway Kubernetes Cluster is ready")
@@ -127,7 +128,7 @@ func installScaleway() {
 	jsonUnmarshalErr := json.Unmarshal(k.Body(), &scalewayKubeconfigResponse)
 	if jsonUnmarshalErr != nil {
 		_, _ = cfmt.Println("{{✗ Failed to download kubeconfig}}::red")
-		return
+		return jsonUnmarshalErr
 	}
 	kubeconfig, _ := base64.StdEncoding.DecodeString(scalewayKubeconfigResponse.Content)
 
@@ -139,6 +140,7 @@ func installScaleway() {
 		_, _ = cfmt.Println("{{✓ Kubeconfig downloaded}}::lightGreen")
 	}
 
+	return nil
 }
 
 func getScalewayVersions(api *resty.Client, region string) []string {
@@ -163,4 +165,23 @@ func getScalewayVersions(api *resty.Client, region string) []string {
 	}
 
 	return versions
+}
+
+func mergeKubeconfig(kubeconfig []byte) error {
+	// get the current kubeconfig
+	home, _ := os.UserHomeDir()
+	kubeconfigPath := home + "/.kube/config"
+	kubeconfigFile, err := os.OpenFile(kubeconfigPath, os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer kubeconfigFile.Close()
+
+	// append the new kubeconfig
+	_, err = kubeconfigFile.Write(kubeconfig)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

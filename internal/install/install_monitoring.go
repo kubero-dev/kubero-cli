@@ -1,22 +1,24 @@
 package install
 
 import (
+	"github.com/faelmori/kubero-cli/internal/log"
 	"github.com/i582/cfmt/cmd/cfmt"
-	"log"
+	"github.com/leaanthony/spinner"
 	"os/exec"
 	"time"
 )
 
-func installMonitoring() {
+func installMonitoring() error {
 	install := promptLine("7) Install Monitoring", "[y,n]", "y")
 	if install != "y" {
-		return
+		log.Info("Skipping monitoring installation")
+		return nil
 	}
 
-	monitoringInstalled, _ := exec.Command("kubectl", "get", "deployments.apps", "monitoring-stack-operators").Output()
-	if len(monitoringInstalled) > 0 {
-		_, _ = cfmt.Println("{{✓ Monitoring is already installed}}::lightGreen")
-		return
+	monitoringInstalledCmd, _ := exec.Command("kubectl", "get", "deployments.apps", "monitoring-stack-operators").Output()
+	if len(monitoringInstalledCmd) > 0 {
+		log.Info("Monitoring is already installed")
+		return nil
 	}
 
 	monitoringSpinner := spinner.New("Install Monitoring")
@@ -26,7 +28,7 @@ func installMonitoring() {
 	_, monitoringErr := exec.Command("kubectl", "apply", "-f", monitoringUrl).Output()
 	if monitoringErr != nil {
 		monitoringSpinner.Error("Failed to run command. Try running this command manually: kubectl apply -f " + monitoringUrl)
-		log.Fatal(monitoringErr)
+		return monitoringErr
 	}
 
 	monitoringSpinner.UpdateMessage("Waiting for Monitoring to be ready")
@@ -34,7 +36,9 @@ func installMonitoring() {
 	_, monitoringWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/monitoring-stack-operators", "--timeout=180s").Output()
 	if monitoringWaitErr != nil {
 		monitoringSpinner.Error("Failed to run command. Try running it manually: kubectl wait --for=condition=available deployment/monitoring-stack-operators --timeout=180s")
-		log.Fatal(monitoringWaitErr)
+		return monitoringWaitErr
 	}
 	monitoringSpinner.Success("Monitoring installed")
+
+	return nil
 }

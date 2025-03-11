@@ -1,24 +1,23 @@
 package install
 
 import (
-	"github.com/i582/cfmt/cmd/cfmt"
-	"log"
-
+	"github.com/faelmori/kubero-cli/internal/log"
+	"github.com/leaanthony/spinner"
 	"os/exec"
 )
 
-func installIngress() {
+func installIngress() error {
 	ingressInstalled, _ := exec.Command("kubectl", "get", "ns", "ingress-nginx").Output()
 	if len(ingressInstalled) > 0 {
-		_, _ = cfmt.Println("{{✓ Ingress is already installed}}::lightGreen")
-		return
+		log.Info("Ingress is already installed")
+		return nil
 	}
 
 	ingressInstall := promptLine("4) Install Ingress", "[y,n]", "y")
 	if ingressInstall != "y" {
-		return
+		log.Println("Skipping Ingress installation")
+		return nil
 	} else {
-
 		if clusterType == "" {
 			clusterType = selectFromList("Which cluster type have you installed?", clusterTypeList, "")
 		}
@@ -42,14 +41,16 @@ func installIngress() {
 
 		ingressSpinner := spinner.New("Install Ingress")
 		URL := "https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-" + ingressControllerVersion + "/deploy/static/provider/" + ingressProvider + "/deploy.yaml"
-		_, _ = cfmt.Println("  run command : kubectl apply -f " + URL)
+		log.Info("  run command : kubectl apply -f " + URL)
 		ingressSpinner.Start("Install Ingress")
 		_, ingressErr := exec.Command("kubectl", "apply", "-f", URL).Output()
 		if ingressErr != nil {
 			ingressSpinner.Error("Failed to run command. Try running this command manually: kubectl apply -f " + URL)
-			log.Fatal(ingressErr)
+			return ingressErr
 		}
 
 		ingressSpinner.Success("Ingress installed successfully")
+
+		return nil
 	}
 }

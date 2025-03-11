@@ -2,15 +2,14 @@ package install
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"os/exec"
 	"strconv"
 
-	"github.com/leaanthony/spinner"
+	s "github.com/leaanthony/spinner"
 )
 
-func installGKE() {
+func installGKE() error {
 	// implememted with gcloud, since it is required for the download of the kubeconfig anyway
 
 	// gcloud config list
@@ -25,26 +24,26 @@ func installGKE() {
 	gcloudRegion := promptLine("Region", "[https://cloud.google.com/compute/docs/regions-zones]", "us-central1-c")
 	gcloudClusterVersion := promptLine("Cluster Version", "[https://cloud.google.com/kubernetes-engine/docs/release-notes-regular]", "1.23.8-gke.1900")
 
-	spinner := spinner.New("Spin up a GKE cluster")
+	spinner := s.New("Spin up a GKE cluster")
 	spinner.Start("run command : gcloud container clusters create " + gcloudName + " --region=" + gcloudRegion + " --cluster-version=" + gcloudClusterVersion)
 	_, err := exec.Command("gcloud", "container", "clusters", "create", gcloudName,
 		"--region="+gcloudRegion,
 		"--cluster-version="+gcloudClusterVersion).Output()
 	if err != nil {
 		fmt.Println()
-		spinner.Error("Failed to run command. Try runnig this command manually and skip this step: 'gcloud container clusters create " + gcloudName + " --region=" + gcloudRegion + " --cluster-version=" + gcloudClusterVersion + "'")
-		log.Fatal(err)
+		spinner.Error("Failed to run command. Try running this command manually and skip this step: 'gcloud container clusters create " + gcloudName + " --region=" + gcloudRegion + " --cluster-version=" + gcloudClusterVersion + "'")
+		return err
 	}
-	spinner.Success("GKE cluster started sucessfully")
+	spinner.Success("GKE cluster started successfully")
 
 	spinner.Start("Get credentials for the GKE cluster")
 	_, err = exec.Command("gcloud", "container", "clusters", "get-credentials", gcloudName, "--region="+gcloudRegion).Output()
 	if err != nil {
 		fmt.Println()
-		spinner.Error("Failed to run command. Try runnig this command manually and skip this step: 'gcloud container clusters get-credentials " + gcloudName + " --region=" + gcloudRegion + "'")
-		log.Fatal(err)
+		spinner.Error("Failed to run command. Try running this command manually and skip this step: 'gcloud container clusters get-credentials " + gcloudName + " --region=" + gcloudRegion + "'")
+		return err
 	} else {
 		spinner.Success("GKE cluster credentials set")
 	}
-
+	return nil
 }

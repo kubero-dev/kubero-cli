@@ -1,29 +1,27 @@
 package install
 
 import (
-	"fmt"
-	"github.com/i582/cfmt/cmd/cfmt"
-	"log"
+	"github.com/faelmori/kubero-cli/internal/log"
 	"os/exec"
 )
 
-func installMetrics() {
+func installMetrics() error {
 	installed, _ := exec.Command("kubectl", "get", "deployments.apps", "metrics-server", "-n", "kube-system").Output()
 	if len(installed) > 0 {
-		_, _ = cfmt.Println("{{✓ Metrics is already enabled}}::lightGreen")
-		return
+		log.Info("Metrics server already installed")
+		return nil
 	}
 	install := promptLine("5) Install Kubernetes internal metrics service (required for HPA, Horizontal Pod Autoscaling)", "[y,n]", "y")
 	if install != "y" {
-		return
+		log.Println("Skipping metrics server installation")
+		return nil
 	}
-
 	components := "https://raw.githubusercontent.com/kubero-dev/kubero-operator/main/deploy/metrics-server.yaml"
 	_, installErr := exec.Command("kubectl", "apply", "-f", components).Output()
-
 	if installErr != nil {
-		fmt.Println("failed to install metrics server")
-		log.Fatal(installErr)
+		log.Fatal("Failed to install metrics server", installErr)
+		return installErr
 	}
-	_, _ = cfmt.Println("{{✓ Metrics server installed}}::lightGreen")
+	log.Info("Metrics server installed successfully")
+	return nil
 }

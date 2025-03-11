@@ -1,31 +1,30 @@
 package install
 
 import (
-	"github.com/i582/cfmt/cmd/cfmt"
-	"os"
+	"fmt"
+	"github.com/faelmori/kubero-cli/internal/log"
 )
 
-func installKubernetes() {
+func installKubernetes() error {
 	kubernetesInstall := promptLine("1) Create a kubernetes cluster", "[y,n]", "y")
 	if kubernetesInstall != "y" {
-		return
+		log.Println("Skipping Kubernetes cluster installation")
+		return nil
 	}
-
 	clusterType = selectFromList("Select a Kubernetes provider", clusterTypeList, "")
 
 	switch clusterType {
 	case "scaleway":
-		installScaleway()
+		return installScaleway()
 	case "linode":
-		installLinode()
+		return installLinode()
 	case "gke":
-		installGKE()
+		return installGKE()
 	case "digitalocean":
-		installDigitalOcean()
+		return installDigitalOcean()
 	case "kind":
-		installKind()
+		return installKind()
 	default:
-		_, _ = cfmt.Println("{{✗ Unknown cluster type}}::red")
-		os.Exit(1)
+		return fmt.Errorf("invalid cluster type: %s", clusterType)
 	}
 }

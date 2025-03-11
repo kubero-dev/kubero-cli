@@ -3,44 +3,46 @@ package install
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
-
-	"github.com/i582/cfmt/cmd/cfmt"
+	"github.com/faelmori/kubero-cli/internal/log"
+	"github.com/faelmori/kubero-cli/internal/utils"
+	"github.com/leaanthony/spinner"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/yaml.v3"
-	"log"
 	"os"
 	"os/exec"
 
 	"time"
 )
 
-func installKuberoUi() {
+func installKuberoUi() error {
 	ingressInstall := promptLine("9) Install Kubero UI", "[y,n]", "y")
 	if ingressInstall != "y" {
-		return
+		log.Info("Skipping Kubero UI installation")
+		return nil
 	}
 
-	createNamespace("kubero")
+	if createNamespaceErr := utils.CreateNamespace("kubero"); createNamespaceErr != nil {
+		return createNamespaceErr
+	}
 
 	kuberoSecretInstalled, _ := exec.Command("kubectl", "get", "secret", "kubero-secrets", "-n", "kubero").Output()
 	if len(kuberoSecretInstalled) > 0 {
-		_, _ = cfmt.Println("{{✓ Kubero Secret exists}}::lightGreen")
+		log.Info("Kubero Secret exists")
 	} else {
-		webhookSecret := promptLine("Random string for your webhook secret", "", generateRandomString(20, ""))
+		webhookSecret := promptLine("Random string for your webhook secret", "", utils.GenerateRandomString(20, ""))
 
-		sessionKey := promptLine("Random string for your session key", "", generateRandomString(20, ""))
+		sessionKey := promptLine("Random string for your session key", "", utils.GenerateRandomString(20, ""))
 
 		if argAdminUser == "" {
 			argAdminUser = promptLine("Admin User", "", "admin")
 		}
 
 		if argAdminPassword == "" {
-			argAdminPassword = promptLine("Admin Password", "", generateRandomString(12, ""))
+			argAdminPassword = promptLine("Admin Password", "", utils.GenerateRandomString(12, ""))
 		}
 
 		if argApiToken == "" {
-			argApiToken = promptLine("Random string for admin API token", "", generateRandomString(20, ""))
+			argApiToken = promptLine("Random string for admin API token", "", utils.GenerateRandomString(20, ""))
 		}
 
 		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(argAdminPassword), bcrypt.DefaultCost)
@@ -61,36 +63,38 @@ func installKuberoUi() {
 		secretsYaml, _ := yaml.Marshal(kuberoSecrets)
 		secretsYamlErr := os.WriteFile("kuberoSecrets.yaml", secretsYaml, 0644)
 		if secretsYamlErr != nil {
-			fmt.Println(secretsYamlErr)
-			return
+			log.Error("Failed to write Kubero secrets to file")
+			return secretsYamlErr
 		}
 
 		_, secretsErr := exec.Command("kubectl", "create", "secret", "generic", "kubero-secrets", "--from-file=kuberoSecrets.yaml", "-n", "kubero").Output()
 		if secretsErr != nil {
-			_, _ = cfmt.Println("{{✗ Failed to create Kubero secrets}}::red")
-			log.Fatal(secretsErr)
+			log.Error("Failed to create Kubero secrets")
+			return secretsErr
 		}
 
 		e := os.Remove("kuberoSecrets.yaml")
 		if e != nil {
-			log.Fatal(e)
+			log.Error("Failed to remove kuberoSecrets.yaml")
+			return e
 		}
 	}
 
 	kuberoUiInstalled, _ := exec.Command("kubectl", "get", "deployments.apps", "kubero-ui", "-n", "kubero").Output()
 	if len(kuberoUiInstalled) > 0 {
-		_, _ = cfmt.Println("{{✓ Kubero UI is already installed}}::lightGreen")
-		return
+		log.Info("Kubero UI is already installed")
+		return nil
 	}
 
 	kuberoUiSpinner := spinner.New("Install Kubero UI")
 	kuberoUiUrl := "https://raw.githubusercontent.com/kubero-dev/kubero-ui/main/deploy/kubero-ui.yaml"
-	_, _ = cfmt.Println("  run command : kubectl apply -f " + kuberoUiUrl)
+
+	log.Info("run command : kubectl apply -f " + kuberoUiUrl)
 	kuberoUiSpinner.Start("Installing Kubero UI")
 	_, kuberoUiErr := exec.Command("kubectl", "apply", "-f", kuberoUiUrl).Output()
 	if kuberoUiErr != nil {
 		kuberoUiSpinner.Error("Failed to run command. Try running this command manually: kubectl apply -f " + kuberoUiUrl)
-		log.Fatal(kuberoUiErr)
+		return kuberoUiErr
 	}
 
 	kuberoUiSpinner.UpdateMessage("Waiting for Kubero UI to be ready")
@@ -98,7 +102,9 @@ func installKuberoUi() {
 	_, kuberoUiWaitErr := exec.Command("kubectl", "wait", "--for=condition=available", "deployment/kubero-ui", "-n", "kubero", "--timeout=180s").Output()
 	if kuberoUiWaitErr != nil {
 		kuberoUiSpinner.Error("Failed to run command. Try running it manually: kubectl wait --for=condition=available deployment/kubero-ui -n kubero --timeout=180s")
-		log.Fatal(kuberoUiWaitErr)
+		return kuberoUiWaitErr
 	}
 	kuberoUiSpinner.Success("Kubero UI installed")
+
+	return nil
 }

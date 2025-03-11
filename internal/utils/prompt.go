@@ -3,22 +3,21 @@ package utils
 import (
 	"bufio"
 	"fmt"
+	"github.com/AlecAivazis/survey/v2"
+	"github.com/faelmori/kubero-cli/internal/log"
 	"os"
 	"strings"
-
-	"github.com/AlecAivazis/survey/v2"
-	"github.com/i582/cfmt/cmd/cfmt"
 )
 
 type ConsolePrompt struct{}
 
 func (p *ConsolePrompt) PromptLine(question, options, def string) string {
 	if def != "" {
-		_, _ = cfmt.Printf("\n{{?}}::green %s %s : {{%s}}::cyan\n", question, options, def)
+		log.Info(fmt.Sprintf("%s %s : %s", question, options, def))
 		return def
 	}
 	reader := bufio.NewReader(os.Stdin)
-	_, _ = cfmt.Printf("\n{{?}}::green|bold {{%s %s}}::bold {{%s}}::cyan : ", question, options, def)
+	log.Info(fmt.Sprintf("%s %s : %s", question, options, def))
 	text, _ := reader.ReadString('\n')
 	text = strings.TrimSpace(text)
 	if text == "" {
@@ -26,11 +25,10 @@ func (p *ConsolePrompt) PromptLine(question, options, def string) string {
 	}
 	return text
 }
-
 func (p *ConsolePrompt) SelectFromList(question string, options []string, def string) string {
-	_, _ = cfmt.Println("")
+	log.Println("")
 	if def != "" {
-		_, _ = cfmt.Printf("\n{{?}}::green %s : {{%s}}::cyan\n", question, def)
+		log.Info(question, def)
 		return def
 	}
 	prompt := &survey.Select{
@@ -39,12 +37,10 @@ func (p *ConsolePrompt) SelectFromList(question string, options []string, def st
 	}
 	askOneErr := survey.AskOne(prompt, &def)
 	if askOneErr != nil {
-		fmt.Println("Error while selecting:", askOneErr)
+		log.Error("failed to ask for input", askOneErr)
 		return ""
 	}
 	return def
 }
 
-func NewConsolePrompt() *ConsolePrompt {
-	return &ConsolePrompt{}
-}
+func NewConsolePrompt() *ConsolePrompt { return &ConsolePrompt{} }

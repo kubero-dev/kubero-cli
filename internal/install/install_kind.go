@@ -1,23 +1,23 @@
 package install
 
 import (
-	"fmt"
-	"log"
+	"github.com/faelmori/kubero-cli/internal/log"
+	"github.com/faelmori/kubero-cli/internal/utils"
+
 	"math/rand"
 	"os"
 	"os/exec"
 	"strconv"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/leaanthony/spinner"
 	"gopkg.in/yaml.v3"
 )
 
-func installKind() {
-
-	if !checkBinary("kind") {
-		log.Fatal("kind binary is not installed")
+func installKind() error {
+	if !utils.CheckBinary("kind") {
+		log.Error("kind binary not found. Please install kind and try again")
+		return os.ErrNotExist
 	}
 
 	installer := resty.New()
@@ -29,8 +29,8 @@ func installKind() {
 	var kindConfig KindConfig
 	yamlUnmarshalErr := yaml.Unmarshal(kf.Body(), &kindConfig)
 	if yamlUnmarshalErr != nil {
-		fmt.Println(yamlUnmarshalErr)
-		return
+		log.Error("Failed to unmarshal kind.yaml")
+		return yamlUnmarshalErr
 	}
 
 	// set cluster name
@@ -43,8 +43,8 @@ func installKind() {
 	}
 	yamlUnmarshalBErr := yaml.Unmarshal(kv.Body(), &kindDefaults)
 	if yamlUnmarshalBErr != nil {
-		fmt.Println(yamlUnmarshalBErr)
-		return
+		log.Error("Failed to unmarshal kindVersions.yaml")
+		return yamlUnmarshalBErr
 	}
 	version := selectFromList("Kubernetes Version", kindDefaults.AvailableKubernetesVersions, "")
 
@@ -61,25 +61,24 @@ func installKind() {
 	kindConfig.Nodes[0].ExtraPortMappings[1].HostPort, _ = strconv.Atoi(argPortSecure)
 
 	kindConfigYaml, _ := yaml.Marshal(kindConfig)
-	//fmt.Println("-------------- kind.yaml ---------------")
-	//fmt.Println(string(kindConfigYaml))
-	//fmt.Println("----------------------------------------")
 
 	kindConfigErr := os.WriteFile("kind.yaml", kindConfigYaml, 0644)
 	if kindConfigErr != nil {
-		fmt.Println(kindConfigErr)
-		return
+		log.Error("Failed to write kind.yaml")
+		return kindConfigErr
 	}
 
 	kindSpinner := spinner.New("Spin up a local Kind cluster")
-	_, _ = cfmt.Println("run command : kind create cluster --config kind.yaml")
+	log.Info("run command : kind create cluster --config kind.yaml")
 	kindSpinner.Start("Creating Kind cluster")
 	out, err := exec.Command("kind", "create", "cluster", "--config", "kind.yaml").Output()
 	if err != nil {
 		kindSpinner.Error("Failed to run command. Try running this command manually and skip this step : 'kind create cluster --config kind.yaml'")
-		log.Fatal(err)
+		return err
 	}
 	kindSpinner.Success("Kind cluster started successfully")
 
-	fmt.Println(string(out))
+	log.Info(string(out))
+
+	return nil
 }

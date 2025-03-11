@@ -534,3 +534,173 @@ type CertManagerClusterIssuer struct {
 		} `yaml:"acme"`
 	} `yaml:"spec"`
 }
+
+type CertManagerClusterIssuerList struct {
+	APIVersion string `yaml:"apiVersion"`
+	Items      []struct {
+		APIVersion string `yaml:"apiVersion"`
+		Kind       string `yaml:"kind"`
+		Metadata   struct {
+			CreationTimestamp string `yaml:"creationTimestamp"`
+			Name              string `yaml:"name"`
+			Namespace         string `yaml:"namespace"`
+			ResourceVersion   string `yaml:"resourceVersion"`
+			SelfLink          string `yaml:"selfLink"`
+		}
+		Spec struct {
+			Acme struct {
+				Email               string `yaml:"email"`
+				PrivateKeySecretRef struct {
+					Name string `yaml:"name"`
+				} `yaml:"privateKeySecretRef"`
+				Server  string `yaml:"server"`
+				Solvers []struct {
+					HTTP01 struct {
+						Ingress struct {
+							Class string `yaml:"class"`
+						} `yaml:"ingress"`
+					} `yaml:"http01"`
+				} `yaml:"solvers"`
+			} `yaml:"acme"`
+		} `yaml:"spec"`
+		Status struct {
+			Conditions []struct {
+				LastTransitionTime string `yaml:"lastTransitionTime"`
+				Message            string `yaml:"message"`
+				Reason             string `yaml:"reason"`
+				Status             string `yaml:"status"`
+				Type               string `yaml:"type"`
+			} `yaml:"conditions"`
+		} `yaml:"status"`
+	} `yaml:"items"`
+	Kind string `yaml:"kind"`
+}
+
+type CertManagerClusterIssuerResponse struct {
+	APIVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+	Metadata   struct {
+		CreationTimestamp string `json:"creationTimestamp"`
+		Name              string `json:"name"`
+		Namespace         string `json:"namespace"`
+		ResourceVersion   string `json:"resourceVersion"`
+		SelfLink          string `json:"selfLink"`
+		UID               string `json:"uid"`
+	} `json:"metadata"`
+	Spec struct {
+		Acme struct {
+			Email               string `json:"email"`
+			PrivateKeySecretRef struct {
+				Name string `json:"name"`
+			} `json:"privateKeySecretRef"`
+			Server  string `json:"server"`
+			Solvers []struct {
+				HTTP01 struct {
+					Ingress struct {
+						Class string `json:"class"`
+					} `json:"ingress"`
+				} `json:"http01"`
+			} `json:"solvers"`
+		} `json:"acme"`
+	} `json:"spec"`
+	Status struct {
+		Conditions []struct {
+			LastTransitionTime string `json:"lastTransitionTime"`
+			Message            string `json:"message"`
+			Reason             string `json:"reason"`
+			Status             string `json:"status"`
+			Type               string `json:"type"`
+		} `json:"conditions"`
+	} `json:"status"`
+}
+
+type CertManagerClusterIssuerDeleteResponse struct {
+	APIVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+	Metadata   struct {
+		DeletionGracePeriodSeconds int    `json:"deletionGracePeriodSeconds"`
+		DeletionTimestamp          string `json:"deletionTimestamp"`
+		Name                       string `json:"name"`
+		Namespace                  string `json:"namespace"`
+	} `json:"metadata"`
+}
+
+type CertManagerClusterIssuerListResponse struct {
+	APIVersion string `json:"apiVersion"`
+	Items      []struct {
+		APIVersion string `json:"apiVersion"`
+		Kind       string `json:"kind"`
+		Metadata   struct {
+			CreationTimestamp string `json:"creationTimestamp"`
+			Name              string `json:"name"`
+			Namespace         string `json:"namespace"`
+			ResourceVersion   string `json:"resourceVersion"`
+			SelfLink          string `json:"selfLink"`
+			UID               string `json:"uid"`
+		} `json:"metadata"`
+		Spec struct {
+			Acme struct {
+				Email               string `json:"email"`
+				PrivateKeySecretRef struct {
+					Name string `json:"name"`
+				} `json:"privateKeySecretRef"`
+				Server  string `json:"server"`
+				Solvers []struct {
+					HTTP01 struct {
+						Ingress struct {
+							Class string `json:"class"`
+						} `json:"ingress"`
+					} `json:"http01"`
+				} `json:"solvers"`
+			} `json:"acme"`
+		} `json:"spec"`
+		Status struct {
+			Conditions []struct {
+				LastTransitionTime string `json:"lastTransitionTime"`
+				Message            string `json:"message"`
+				Reason             string `json:"reason"`
+				Status             string `json:"status"`
+				Type               string `json:"type"`
+			} `json:"conditions"`
+		} `json:"status"`
+	} `json:"items"`
+	Kind string `json:"kind"`
+}
+
+type CertManagerClusterIssuerListResponseItem struct {
+	APIVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+	Metadata   struct {
+		CreationTimestamp string `json:"creationTimestamp"`
+		Name              string `json:"name"`
+		Namespace         string `json:"namespace"`
+		ResourceVersion   string `json:"resourceVersion"`
+		SelfLink          string `json:"selfLink"`
+		UID               string `json:"uid"`
+	} `json:"metadata"`
+	Spec struct {
+		Acme struct {
+			Email               string `json:"email"`
+			PrivateKeySecretRef struct {
+				Name string `json:"name"`
+			} `json:"privateKeySecretRef"`
+			Server  string `json:"server"`
+			Solvers []struct {
+				HTTP01 struct {
+					Ingress struct {
+						Class string `json:"class"`
+					} `json:"ingress"`
+				} `json:"http01"`
+			} `json:"solvers"`
+		} `json:"acme"`
+	} `json:"spec"`
+	Status struct {
+		Conditions []struct {
+			LastTransitionTime string `json:"lastTransitionTime"`
+			Message            string `json:"message"`
+			Reason             string `json:"reason"`
+			Status             string `json:"status"`
+			Type               string `json:"type"`
+		} `json:"conditions"`
+	} `json:"status"`
+}
