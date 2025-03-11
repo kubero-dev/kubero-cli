@@ -3,7 +3,7 @@ package install
 import (
 	"encoding/base64"
 	"encoding/json"
-	"github.com/faelmori/kubero-cli/internal/log"
+	"github.com/kubero-dev/kubero-cli/internal/log"
 	"github.com/leaanthony/spinner"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/yaml.v3"

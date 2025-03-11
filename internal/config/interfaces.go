@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/faelmori/kubero-cli/types"
+	"github.com/kubero-dev/kubero-cli/types"
 	"github.com/spf13/viper"
 )
 

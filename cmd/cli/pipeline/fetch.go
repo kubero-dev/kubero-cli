@@ -1,7 +1,7 @@
 package pipeline
 
 import (
-	p "github.com/faelmori/kubero-cli/internal/pipeline"
+	p "github.com/kubero-dev/kubero-cli/internal/pipeline"
 	"github.com/spf13/cobra"
 )
 

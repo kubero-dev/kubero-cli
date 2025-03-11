@@ -1,9 +1,9 @@
 package cli
 
 import (
-	"github.com/faelmori/kubero-cli/cmd/common"
 	"github.com/faelmori/kubero-cli/internal/network"
 	"github.com/i582/cfmt/cmd/cfmt"
+	"github.com/kubero-dev/kubero-cli/cmd/common"
 
 	"github.com/spf13/cobra"
 )

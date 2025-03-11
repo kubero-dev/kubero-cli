@@ -3,8 +3,8 @@ package utils
 import (
 	"bytes"
 	"fmt"
-	"github.com/faelmori/kubero-cli/internal/log"
 	"github.com/go-resty/resty/v2"
+	"github.com/kubero-dev/kubero-cli/internal/log"
 	"github.com/olekukonko/tablewriter"
 	"k8s.io/client-go/tools/clientcmd"
 	"math/rand"

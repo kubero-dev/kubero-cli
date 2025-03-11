@@ -1,4 +1,4 @@
-module github.com/faelmori/kubero-cli
+module github.com/kubero-dev/kubero-cli
 
 go 1.24.0
 

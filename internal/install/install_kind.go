@@ -1,8 +1,8 @@
 package install
 
 import (
-	"github.com/faelmori/kubero-cli/internal/log"
 	"github.com/go-resty/resty/v2"
+	"github.com/kubero-dev/kubero-cli/internal/log"
 	"github.com/leaanthony/spinner"
 	"gopkg.in/yaml.v3"
 	"math/rand"

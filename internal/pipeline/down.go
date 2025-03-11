@@ -1,6 +1,6 @@
 package pipeline
 
-import a "github.com/faelmori/kubero-cli/internal/api"
+import a "github.com/kubero-dev/kubero-cli/internal/api"
 
 func (m *PipelineManager) DownPipeline() {
 	pipelinesList := m.GetAllRemotePipelines()

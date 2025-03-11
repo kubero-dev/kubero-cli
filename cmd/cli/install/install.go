@@ -1,8 +1,8 @@
 package install
 
 import (
-	"github.com/faelmori/kubero-cli/cmd/common"
 	"github.com/faelmori/kubero-cli/internal/install"
+	"github.com/kubero-dev/kubero-cli/cmd/common"
 	"github.com/spf13/cobra"
 )
 

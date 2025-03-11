@@ -1,8 +1,8 @@
 package api
 
 import (
-	"github.com/faelmori/kubero-cli/types"
 	"github.com/go-resty/resty/v2"
+	"github.com/kubero-dev/kubero-cli/types"
 )
 
 type Repository interface {

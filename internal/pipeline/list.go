@@ -2,8 +2,8 @@ package pipeline
 
 import (
 	"fmt"
-	a "github.com/faelmori/kubero-cli/internal/api"
 	"github.com/i582/cfmt/cmd/cfmt"
+	a "github.com/kubero-dev/kubero-cli/internal/api"
 	"os"
 )
 

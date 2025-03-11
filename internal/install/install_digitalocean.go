@@ -3,15 +3,15 @@ package install
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/faelmori/kubero-cli/internal/log"
+	"github.com/kubero-dev/kubero-cli/internal/log"
 	"math/rand"
 	"os"
 	"strconv"
 	"time"
 
-	"github.com/faelmori/kubero-cli/version"
 	"github.com/go-resty/resty/v2"
 	"github.com/i582/cfmt/cmd/cfmt"
+	"github.com/kubero-dev/kubero-cli/version"
 	"github.com/leaanthony/spinner"
 )
 

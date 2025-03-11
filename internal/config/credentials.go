@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/faelmori/kubero-cli/internal/log"
+	"github.com/kubero-dev/kubero-cli/internal/log"
 	"github.com/spf13/viper"
 	"os"
 )

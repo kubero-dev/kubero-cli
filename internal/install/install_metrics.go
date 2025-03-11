@@ -1,7 +1,7 @@
 package install
 
 import (
-	"github.com/faelmori/kubero-cli/internal/log"
+	"github.com/kubero-dev/kubero-cli/internal/log"
 	"os/exec"
 )
 

@@ -2,7 +2,7 @@ package install
 
 import (
 	"fmt"
-	"github.com/faelmori/kubero-cli/internal/log"
+	"github.com/kubero-dev/kubero-cli/internal/log"
 	"github.com/leaanthony/spinner"
 	"os/exec"
 	"time"

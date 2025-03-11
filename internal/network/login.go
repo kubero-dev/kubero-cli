@@ -2,7 +2,7 @@ package network
 
 import (
 	"fmt"
-	c "github.com/faelmori/kubero-cli/internal/config"
+	c "github.com/kubero-dev/kubero-cli/internal/config"
 	"github.com/spf13/viper"
 )
 

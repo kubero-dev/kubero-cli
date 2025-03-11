@@ -2,12 +2,12 @@ package network
 
 import (
 	"fmt"
-	c "github.com/faelmori/kubero-cli/internal/config"
 	"github.com/faelmori/kubero-cli/internal/log"
-	u "github.com/faelmori/kubero-cli/internal/utils"
 	"github.com/go-resty/resty/v2"
 	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/jonasfj/go-localtunnel"
+	c "github.com/kubero-dev/kubero-cli/internal/config"
+	u "github.com/kubero-dev/kubero-cli/internal/utils"
 	"github.com/leaanthony/spinner"
 	"os"
 	"regexp"

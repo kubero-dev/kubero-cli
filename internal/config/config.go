@@ -2,10 +2,10 @@ package config
 
 import (
 	"fmt"
-	"github.com/faelmori/kubero-cli/internal/log"
 	"github.com/faelmori/kubero-cli/internal/utils"
-	"github.com/faelmori/kubero-cli/types"
 	logz "github.com/faelmori/logz/logger"
+	"github.com/kubero-dev/kubero-cli/internal/log"
+	"github.com/kubero-dev/kubero-cli/types"
 	"github.com/spf13/viper"
 	"os"
 	"path/filepath"

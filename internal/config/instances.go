@@ -2,9 +2,9 @@ package config
 
 import (
 	"fmt"
-	u "github.com/faelmori/kubero-cli/internal/utils"
 	t "github.com/faelmori/kubero-cli/types"
 	"github.com/i582/cfmt/cmd/cfmt"
+	u "github.com/kubero-dev/kubero-cli/internal/utils"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/viper"
 	"os"

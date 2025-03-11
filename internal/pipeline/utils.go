@@ -3,7 +3,7 @@ package pipeline
 import (
 	"fmt"
 	"github.com/AlecAivazis/survey/v2"
-	a "github.com/faelmori/kubero-cli/internal/api"
+	a "github.com/kubero-dev/kubero-cli/internal/api"
 )
 
 func (m *PipelineManager) EnsurePipelineIsSet(pipelinesList []string) error {

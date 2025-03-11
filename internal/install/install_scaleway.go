@@ -3,8 +3,8 @@ package install
 import (
 	"encoding/base64"
 	"encoding/json"
-	"github.com/faelmori/kubero-cli/internal/log"
 	"github.com/faelmori/kubero-cli/version"
+	"github.com/kubero-dev/kubero-cli/internal/log"
 	"math/rand"
 	"os"
 	"strconv"

@@ -3,11 +3,11 @@ package pipeline
 import (
 	"encoding/json"
 	"fmt"
-	a "github.com/faelmori/kubero-cli/internal/api"
 	c "github.com/faelmori/kubero-cli/internal/config"
-	"github.com/faelmori/kubero-cli/internal/log"
 	u "github.com/faelmori/kubero-cli/internal/utils"
 	t "github.com/faelmori/kubero-cli/types"
+	a "github.com/kubero-dev/kubero-cli/internal/api"
+	"github.com/kubero-dev/kubero-cli/internal/log"
 	"os"
 	"strconv"
 

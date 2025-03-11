@@ -5,7 +5,7 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 */
 
 import (
-	"github.com/faelmori/kubero-cli/internal/pipeline"
+	"github.com/kubero-dev/kubero-cli/internal/pipeline"
 	"github.com/spf13/cobra"
 )
 
