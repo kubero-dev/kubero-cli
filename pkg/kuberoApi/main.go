@@ -2,6 +2,7 @@ package kuberoApi
 
 import (
 	_ "embed"
+	"github.com/faelmori/kubero-cli/types"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -36,7 +37,7 @@ func (k *KuberoClient) Init(baseURL string, bearerToken string) *resty.Request {
 	return client
 }
 
-func (k *KuberoClient) DeployPipeline(pipeline PipelineCRD) (*resty.Response, error) {
+func (k *KuberoClient) DeployPipeline(pipeline types.PipelineCRD) (*resty.Response, error) {
 	k.client.SetBody(pipeline.Spec)
 	res, err := k.client.Post("/api/cli/pipelines/")
 
@@ -79,7 +80,7 @@ func (k *KuberoClient) GetPipelines() (*resty.Response, error) {
 	return res, err
 }
 
-func (k *KuberoClient) DeployApp(app AppCRD) (*resty.Response, error) {
+func (k *KuberoClient) DeployApp(app types.AppCRD) (*resty.Response, error) {
 	k.client.SetBody(app.Spec)
 	res, err := k.client.Post("/api/cli/apps")
 

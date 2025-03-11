@@ -1,54 +1,125 @@
 package api
 
 import (
-	"encoding/json"
-	"errors"
+	"fmt"
+	"github.com/faelmori/kubero-cli/types"
+	"github.com/faelmori/kubero-cli/version"
 	"github.com/go-resty/resty/v2"
-	"github.com/spf13/viper"
 )
 
 type Client struct {
-	RestyClient *resty.Client
+	baseURL     string
+	bearerToken string
+	client      *resty.Request
 }
 
-func NewClient(apiUrl, token string) *Client {
-	client := resty.New().SetBaseURL(apiUrl).SetAuthToken(token)
-	return &Client{RestyClient: client}
+func NewClient() *Client {
+	return &Client{}
 }
 
-func (c *Client) Init(apiUrl string) {
-	c.RestyClient.SetHostURL(apiUrl)
-	c.RestyClient.SetAuthToken(viper.GetString("token"))
+func (c *Client) Init(baseURL string, bearerToken string) *resty.Request {
+	if baseURL == "" || bearerToken == "" {
+		panic("baseURL and bearerToken are required to initialize the API client")
+	}
+
+	client := resty.New().SetBaseURL(baseURL).R().
+		EnableTrace().
+		SetAuthScheme("Bearer").
+		SetAuthToken(bearerToken).
+		SetHeader("Accept", "application/json").
+		SetHeader("Content-Type", "application/json").
+		SetHeader("User-Agent", "kubero-cli/"+version.Version())
+
+	c.baseURL = baseURL
+	c.bearerToken = bearerToken
+	c.client = client
+
+	return client
+}
+func (c *Client) DeployPipeline(pipeline types.PipelineCRD) (*resty.Response, error) {
+	c.client.SetBody(pipeline.Spec)
+	res, err := c.client.Post("/api/cli/pipelines/")
+
+	return res, err
+}
+func (c *Client) UnDeployPipeline(pipelineName string) (*resty.Response, error) {
+	res, err := c.client.Delete("/api/cli/pipelines/" + pipelineName)
+
+	return res, err
+}
+func (c *Client) GetPipeline(pipelineName string) (*resty.Response, error) {
+	res, err := c.client.Get("/api/cli/pipelines/" + pipelineName)
+
+	return res, err
+}
+func (c *Client) UnDeployApp(pipelineName string, stageName string, appName string) (*resty.Response, error) {
+	res, err := c.client.Delete("/api/cli/pipelines/" + pipelineName + "/" + stageName + "/" + appName)
+
+	return res, err
+}
+func (c *Client) GetApp(pipelineName string, stageName string, appName string) (*resty.Response, error) {
+	res, err := c.client.Get("/api/cli/pipelines/" + pipelineName + "/" + stageName + "/" + appName)
+
+	return res, err
+}
+func (c *Client) GetApps() (*resty.Response, error) {
+	res, err := c.client.Get("/api/cli/apps")
+
+	return res, err
+}
+func (c *Client) GetPipelines() (*resty.Response, error) {
+	res, err := c.client.Get("/api/cli/pipelines")
+	return res, handleError(res, err)
+}
+func (c *Client) DeployApp(app types.AppCRD) (*resty.Response, error) {
+	c.client.SetBody(app.Spec)
+	res, err := c.client.Post("/api/cli/apps")
+
+	return res, err
+}
+func (c *Client) GetPipelineApps(pipelineName string) (*resty.Response, error) {
+	res, err := c.client.Get("/api/cli/pipelines/" + pipelineName + "/apps")
+
+	return res, err
+}
+func (c *Client) GetAddons() (*resty.Response, error) {
+	res, err := c.client.Get("/api/cli/addons")
+
+	return res, err
+}
+func (c *Client) GetBuildpacks() (*resty.Response, error) {
+	res, err := c.client.Get("/api/cli/config/buildpacks")
+
+	return res, err
+}
+func (c *Client) GetPodsize() (*resty.Response, error) {
+	res, err := c.client.Get("/api/cli/config/podsize")
+
+	return res, err
+}
+func (c *Client) GetRepositories() (*resty.Response, error) {
+	res, err := c.client.Get("/api/cli/config/repositories")
+
+	return res, err
+}
+func (c *Client) GetContexts() (*resty.Response, error) {
+	res, err := c.client.Get("/api/cli/config/k8s/context")
+
+	return res, err
+}
+func (c *Client) WithBody(body interface{}) *Client {
+	c.client.SetBody(body)
+	return c
 }
 
-func (c *Client) GetRepositories() ([]Repository, error) {
-	resp, err := c.RestyClient.R().Get("/api/repositories")
+func handleError(response *resty.Response, err error) error {
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if resp.StatusCode() != 200 {
-		return nil, errors.New("failed to fetch repositories")
-	}
-	var repos []Repository
-	err = json.Unmarshal(resp.Body(), &repos)
-	if err != nil {
-		return nil, err
-	}
-	return repos, nil
-}
 
-func (c *Client) GetContexts() ([]Context, error) {
-	resp, err := c.RestyClient.R().Get("/api/contexts")
-	if err != nil {
-		return nil, err
+	if response.IsError() {
+		return fmt.Errorf("API error: %s", response.String())
 	}
-	if resp.StatusCode() != 200 {
-		return nil, errors.New("failed to fetch contexts")
-	}
-	var contexts []Context
-	err = json.Unmarshal(resp.Body(), &contexts)
-	if err != nil {
-		return nil, err
-	}
-	return contexts, nil
+
+	return nil
 }

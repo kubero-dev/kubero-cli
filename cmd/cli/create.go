@@ -6,7 +6,8 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 
 import (
 	"fmt"
-	"kubero/pkg/kuberoApi"
+	"github.com/faelmori/kubero-cli/internal/pipeline"
+	"github.com/faelmori/kubero-cli/types"
 
 	"os"
 	"strconv"
@@ -34,24 +35,26 @@ func init() {
 }
 
 func createPipelineAndApp() {
-	createPipelineAndApp := promptLine("Create a new pipeline", "[y,n]", "y")
-	if createPipelineAndApp == "y" {
+	createPipelineAndAppArg := promptLine("Create a new pipeline", "[y,n]", "y")
+	if createPipelineAndAppArg == "y" {
 		createPipeline()
 	}
 
-	pipelinesList := getAllLocalPipelines()
+	appConfig := pipeline.NewPipelineManager(pipelineName, stageName, appName)
+
+	pipelinesList := appConfig.GetAllLocalApps()
 	ensurePipelineIsSet(pipelinesList)
 	ensureStageNameIsSet()
 	ensureAppNameIsSet()
 	createApp()
 }
 
-func appForm() kuberoApi.AppCRD {
+func appForm() types.AppCRD {
 
-	var appCRD kuberoApi.AppCRD
+	var appCRD types.AppCRD
 
-	appconfig := loadAppConfig(pipelineName, stageName, appName)
-	pipelineConfig := loadPipelineConfig(pipelineName)
+	appConfig := pipeline.NewPipelineManager(pipelineName, stageName, appName)
+	plConfig := appConfig.LoadAppConfig(pipelineName, stageName, appName)
 
 	appCRD.APIVersion = "application.kubero.dev/v1alpha1"
 	appCRD.Kind = "KuberoApp"
@@ -60,21 +63,21 @@ func appForm() kuberoApi.AppCRD {
 	appCRD.Spec.Pipeline = pipelineName
 	appCRD.Spec.Phase = stageName
 
-	appCRD.Spec.Domain = promptLine("Domain", "", appconfig.GetString("spec.domain"))
+	appCRD.Spec.Domain = promptLine("Domain", "", plConfig.GetString("spec.domain"))
 
-	unmarshalKeyErr := pipelineConfig.UnmarshalKey("spec.git.repository", &appCRD.Spec.Gitrepo)
+	unmarshalKeyErr := plConfig.UnmarshalKey("spec.git.repository", &appCRD.Spec.Gitrepo)
 	if unmarshalKeyErr != nil {
 		fmt.Println(unmarshalKeyErr)
-		return kuberoApi.AppCRD{}
+		return types.AppCRD{}
 	}
 
 	gitURL := pipelineConfig.GetString("spec.git.repository.sshurl")
-	appCRD.Spec.Branch = promptLine("Branch", gitURL+":", appconfig.GetString("spec.branch"))
+	appCRD.Spec.Branch = promptLine("Branch", gitURL+":", plConfig.GetString("spec.branch"))
 
 	appCRD.Spec.Buildpack = pipelineConfig.GetString("spec.buildpack.name")
 
 	autodeployDefault := "n"
-	if !appconfig.GetBool("spec.autodeploy") {
+	if !plConfig.GetBool("spec.autodeploy") {
 		autodeployDefault = "y"
 	}
 	autodeploy := promptLine("Autodeploy", "[y,n]", autodeployDefault)
@@ -90,13 +93,13 @@ func appForm() kuberoApi.AppCRD {
 		appCRD.Spec.EnvVars = append(appCRD.Spec.EnvVars, promptLine("Env Var", "", ""))
 	}
 
-	appCRD.Spec.Image.ContainerPort, _ = strconv.Atoi(promptLine("Container Port", "8080", appconfig.GetString("spec.image.containerport")))
+	appCRD.Spec.Image.ContainerPort, _ = strconv.Atoi(promptLine("Container Port", "8080", plConfig.GetString("spec.image.containerport")))
 
-	appCRD.Spec.Web = kuberoApi.Web{}
-	appCRD.Spec.Web.ReplicaCount, _ = strconv.Atoi(promptLine("Web Pods", "1", appconfig.GetString("spec.web.replicacount")))
+	appCRD.Spec.Web = types.Web{}
+	appCRD.Spec.Web.ReplicaCount, _ = strconv.Atoi(promptLine("Web Pods", "1", plConfig.GetString("spec.web.replicacount")))
 
-	appCRD.Spec.Worker = kuberoApi.Worker{}
-	appCRD.Spec.Worker.ReplicaCount, _ = strconv.Atoi(promptLine("Worker Pods", "0", appconfig.GetString("spec.worker.replicacount")))
+	appCRD.Spec.Worker = types.Worker{}
+	appCRD.Spec.Worker.ReplicaCount, _ = strconv.Atoi(promptLine("Worker Pods", "0", plConfig.GetString("spec.worker.replicacount")))
 
 	return appCRD
 }
@@ -110,7 +113,7 @@ func createApp() {
 	_, _ = cfmt.Println("\n\n{{Created appCRD.yaml}}::green")
 }
 
-func writeAppYaml(appCRD kuberoApi.AppCRD) {
+func writeAppYaml(appCRD types.AppCRD) {
 	// write pipeline.yaml
 	yamlData, err := yaml.Marshal(&appCRD)
 
@@ -126,7 +129,7 @@ func writeAppYaml(appCRD kuberoApi.AppCRD) {
 	}
 }
 
-func createPipeline() kuberoApi.PipelineCRD {
+func createPipeline() types.PipelineCRD {
 
 	loadConfigs(pipelineName)
 
@@ -143,7 +146,7 @@ func createPipeline() kuberoApi.PipelineCRD {
 	return pipelineCRD
 }
 
-func writePipelineYaml(pipeline kuberoApi.PipelineCRD) {
+func writePipelineYaml(pipeline types.PipelineCRD) {
 	basePath := "/.kubero/" //TODO Make it dynamic
 
 	gitdir := getGitdir()
@@ -180,9 +183,9 @@ func writePipelineYaml(pipeline kuberoApi.PipelineCRD) {
 	}
 }
 
-func pipelinesForm() kuberoApi.PipelineCRD {
+func pipelinesForm() types.PipelineCRD {
 
-	var pipelineCRD kuberoApi.PipelineCRD
+	var pipelineCRD types.PipelineCRD
 
 	if pipelineName == "" {
 		pipelineName = promptLine("Define a PipelineName name", "", "")
@@ -200,7 +203,7 @@ func pipelinesForm() kuberoApi.PipelineCRD {
 	askOneErr := survey.AskOne(prompt, &pipelineCRD.Spec.Buildpack.Name)
 	if askOneErr != nil {
 		fmt.Println(askOneErr.Error())
-		return kuberoApi.PipelineCRD{}
+		return types.PipelineCRD{}
 	}
 
 	domain := pipelineConfig.GetString("spec.domain")
@@ -223,14 +226,14 @@ func pipelinesForm() kuberoApi.PipelineCRD {
 		phaseReview := promptLine("enable reviewapps", "[y,n]", "n")
 		if phaseReview == "y" {
 			pipelineCRD.Spec.ReviewApps = true
-			pipelineCRD.Spec.Phases = append(pipelineCRD.Spec.Phases, kuberoApi.Phase{
+			pipelineCRD.Spec.Phases = append(pipelineCRD.Spec.Phases, types.Phase{
 				Name:    "review",
 				Enabled: true,
 				Context: promptLine("Context for reviewapps", fmt.Sprint(contextSimpleList), contextDefault),
 			})
 		} else {
 			pipelineCRD.Spec.ReviewApps = false
-			pipelineCRD.Spec.Phases = append(pipelineCRD.Spec.Phases, kuberoApi.Phase{
+			pipelineCRD.Spec.Phases = append(pipelineCRD.Spec.Phases, types.Phase{
 				Name:    "review",
 				Enabled: false,
 				Context: "",
@@ -240,13 +243,13 @@ func pipelinesForm() kuberoApi.PipelineCRD {
 
 	phaseTest := promptLine("enable test", "[y,n]", "n")
 	if phaseTest == "y" {
-		pipelineCRD.Spec.Phases = append(pipelineCRD.Spec.Phases, kuberoApi.Phase{
+		pipelineCRD.Spec.Phases = append(pipelineCRD.Spec.Phases, types.Phase{
 			Name:    "test",
 			Enabled: true,
 			Context: promptLine("Context for test", fmt.Sprint(contextSimpleList), contextDefault),
 		})
 	} else {
-		pipelineCRD.Spec.Phases = append(pipelineCRD.Spec.Phases, kuberoApi.Phase{
+		pipelineCRD.Spec.Phases = append(pipelineCRD.Spec.Phases, types.Phase{
 			Name:    "test",
 			Enabled: false,
 			Context: "",
@@ -255,13 +258,13 @@ func pipelinesForm() kuberoApi.PipelineCRD {
 
 	phaseStage := promptLine("enable stage", "[y,n]", "n")
 	if phaseStage == "y" {
-		pipelineCRD.Spec.Phases = append(pipelineCRD.Spec.Phases, kuberoApi.Phase{
+		pipelineCRD.Spec.Phases = append(pipelineCRD.Spec.Phases, types.Phase{
 			Name:    "stage",
 			Enabled: true,
 			Context: promptLine("Context for stage", fmt.Sprint(contextSimpleList), contextDefault),
 		})
 	} else {
-		pipelineCRD.Spec.Phases = append(pipelineCRD.Spec.Phases, kuberoApi.Phase{
+		pipelineCRD.Spec.Phases = append(pipelineCRD.Spec.Phases, types.Phase{
 			Name:    "stage",
 			Enabled: false,
 			Context: "",
@@ -270,13 +273,13 @@ func pipelinesForm() kuberoApi.PipelineCRD {
 
 	phaseProduction := promptLine("enable production", "[y,n]", "y")
 	if phaseProduction != "n" {
-		pipelineCRD.Spec.Phases = append(pipelineCRD.Spec.Phases, kuberoApi.Phase{
+		pipelineCRD.Spec.Phases = append(pipelineCRD.Spec.Phases, types.Phase{
 			Name:    "production",
 			Enabled: true,
 			Context: promptLine("Context for production ", fmt.Sprint(contextSimpleList), contextDefault),
 		})
 	} else {
-		pipelineCRD.Spec.Phases = append(pipelineCRD.Spec.Phases, kuberoApi.Phase{
+		pipelineCRD.Spec.Phases = append(pipelineCRD.Spec.Phases, types.Phase{
 			Name:    "production",
 			Enabled: false,
 			Context: "",
