@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/faelmori/kubero-cli/internal/log"
+	t "github.com/faelmori/kubero-cli/types"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"path/filepath"
@@ -102,7 +103,7 @@ func (v *ConfigManager) loadCLIConfig() {
 		v.instanceManager.personalInstanceList[instanceName] = instance
 	}
 
-	repoInstancesList := make(map[string]*types.Instance)
+	repoInstancesList := make(map[string]*t.Instance)
 	unmarshalKeyErr := repoConfig.UnmarshalKey("instances", &v.instanceManager.personalInstanceList)
 	if unmarshalKeyErr != nil {
 		fmt.Println("Error while unmarshalling instances:", unmarshalKeyErr)

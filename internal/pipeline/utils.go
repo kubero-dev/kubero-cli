@@ -6,7 +6,7 @@ import (
 	a "github.com/faelmori/kubero-cli/internal/api"
 )
 
-func (m *PipelineManager) ensurePipelineIsSet(pipelinesList []string) error {
+func (m *PipelineManager) EnsurePipelineIsSet(pipelinesList []string) error {
 	if m.pipelineName == "" {
 		fmt.Println("")
 		prompt := &survey.Select{
@@ -23,13 +23,14 @@ func (m *PipelineManager) ensurePipelineIsSet(pipelinesList []string) error {
 	return nil
 }
 
-func (m *PipelineManager) ensureAppNameIsSet() {
+func (m *PipelineManager) EnsureAppNameIsSet() error {
 	if m.appName == "" {
 		m.appName = promptLine("Define a app name", "", m.appName)
 	}
+	return nil
 }
 
-func (m *PipelineManager) ensureStageNameIsSet() error {
+func (m *PipelineManager) EnsureStageNameIsSet() error {
 	if m.stageName == "" {
 		fmt.Println("")
 		pipelineConfig := m.loadPipelineConfig(m.pipelineName)
@@ -63,16 +64,17 @@ func (m *PipelineManager) ensureAppNameIsSelected(availableApps []string) {
 	}
 }
 
-func (m *PipelineManager) LoadRepositories() {
+func (m *PipelineManager) LoadRepositories() error {
 	if m.repositories == nil {
 		repo := a.NewRepository("", "")
-		repoReq, err := repo.GetRepositories()
+		_, err := repo.GetRepositories()
 		if err != nil {
 			fmt.Println(err)
-			return
+			return err
 		}
-		m.repo = &repoReq
+		m.repo = &repo
 	}
+	return nil
 }
 
 func (m *PipelineManager) LoadContexts() {

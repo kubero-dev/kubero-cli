@@ -26,7 +26,7 @@ var (
 
 type PipelineManager struct {
 	c.ConfigManager
-	repo         *t.GitRepository
+	repo         *a.Repository
 	repositories []*t.GitRepository
 	contexts     *t.Contexts
 	pipelines    *t.PipelinesList
@@ -49,7 +49,7 @@ func (m *PipelineManager) GetPipelineConfig(pipelineName string) *viper.Viper {
 }
 
 func (m *PipelineManager) LoadAllLocalPipelines() t.PipelinesConfigsList {
-	pipelines := m.getAllLocalPipelines()
+	pipelines := m.GetAllLocalPipelines()
 
 	pipelinesConfigsList := make(t.PipelinesConfigsList)
 
@@ -156,7 +156,7 @@ func (m *PipelineManager) GetAllRemotePipelines() []string {
 	return pipelines
 }
 
-func (m *PipelineManager) getAllLocalPipelines() []string {
+func (m *PipelineManager) GetAllLocalPipelines() []string {
 	baseDir := m.GetIACBaseDir()
 	dir := baseDir + "/" + m.pipelineName
 

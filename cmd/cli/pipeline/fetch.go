@@ -22,24 +22,26 @@ func cmdFetchPL() *cobra.Command {
 		Short:   "Fetch your remote pipelines and apps to your local repository",
 		Long:    `Use the pipeline or app subcommand to fetch your pipelines and apps to your local repository`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			plManager := p.NewPipelineManager(pipelineName, appName, stageName)
+			pl := p.NewPipelineManager(pipelineName, appName, stageName)
 			if pipelineName != "" && appName == "" {
-				err := plManager.FetchPipeline()
+				err := pl.FetchPipeline(pipelineName)
 				if err != nil {
 					return err
 				}
 			} else if pipelineName != "" && appName != "" {
-				ensureStageNameIsSet()
-				fPlErr := plManager.FetchPipeline()
+				if err := pl.EnsureStageNameIsSet(); err != nil {
+					return err
+				}
+				fPlErr := pl.FetchPipeline(pipelineName)
 				if fPlErr != nil {
 					return fPlErr
 				}
-				fAppErr := plManager.FetchApp(appName, stageName, pipelineName)
+				fAppErr := pl.FetchApp(appName, stageName, pipelineName)
 				if fAppErr != nil {
 					return fAppErr
 				}
 			} else {
-				plManager.FetchAllPipelines()
+				pl.FetchAllPipelines()
 			}
 			return nil
 		},
@@ -83,9 +85,10 @@ func cmdFetchPipelinePL() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			plObj := p.NewPipelineManager(pipelineName, "", "")
 			pipelinesList := plObj.GetAllRemotePipelines()
-			plObj.EnsurePipelineIsSet(pipelinesList)
-
-			return plObj.FetchPipeline()
+			if err := plObj.EnsurePipelineIsSet(pipelinesList); err != nil {
+				return err
+			}
+			return plObj.FetchPipeline(pipelineName)
 		},
 	}
 

@@ -14,6 +14,9 @@ func PipelineDownCmds() []*cobra.Command {
 }
 
 func cmdDownPL() *cobra.Command {
+	var pipelineName, stageName, appName string
+	var force bool
+
 	var downCmd = &cobra.Command{
 		Use:     "down",
 		Aliases: []string{"undeploy", "dn"},
@@ -22,12 +25,13 @@ func cmdDownPL() *cobra.Command {
 Subcommands:
   kubero down [pipeline|app]`,
 		Run: func(cmd *cobra.Command, args []string) {
+			pl := pipeline.NewPipelineManager(pipelineName, stageName, appName)
 			if pipelineName != "" && appName == "" {
-				pipeline.DownPipeline()
+				pl.DownPipeline()
 			} else if appName != "" {
-				pipeline.DownApp()
+				pl.DownApp()
 			} else {
-				pipeline.DownAllPipelines()
+				pl.DownAllPipelines()
 			}
 		},
 	}
@@ -41,12 +45,17 @@ Subcommands:
 }
 
 func cmdDownAppPL() *cobra.Command {
+	var pipelineName, stageName, appName string
+	var force bool
+
 	var downAppCmd = &cobra.Command{
 		Use:   "app",
 		Short: "Undeploy an apps from the cluster",
 		Long:  `Use the app subcommand to undeploy your apps from the cluster`,
 		Run: func(cmd *cobra.Command, args []string) {
-			pipeline.DownApp()
+			pl := pipeline.NewPipelineManager(pipelineName, stageName, appName)
+
+			pl.DownApp()
 		},
 	}
 
@@ -59,13 +68,17 @@ func cmdDownAppPL() *cobra.Command {
 }
 
 func cmdDownPipelinePL() *cobra.Command {
+	var pipelineName, stageName, appName string
+	var force bool
+
 	var downPipelineCmd = &cobra.Command{
 		Use:     "pipeline",
 		Aliases: []string{"pl"},
 		Short:   "Undeploy a pipeline from the cluster",
 		Long:    `Use the pipeline subcommand to undeploy your pipelines from the cluster`,
 		Run: func(cmd *cobra.Command, args []string) {
-			pipeline.DownPipeline()
+			pl := pipeline.NewPipelineManager(pipelineName, stageName, appName)
+			pl.DownPipeline()
 		},
 	}
 

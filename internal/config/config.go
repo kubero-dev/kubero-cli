@@ -6,7 +6,6 @@ import (
 	"github.com/faelmori/kubero-cli/internal/utils"
 	"github.com/faelmori/kubero-cli/types"
 	logz "github.com/faelmori/logz/logger"
-	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
@@ -242,3 +241,4 @@ func (v *ConfigManager) GetCredentialsManager() *CredentialsManager {
 	}
 	return v.credentialsManager
 }
+func (v *ConfigManager) GetIACBaseDir() string { return v.GetProp("iac.baseDir").(string) }

@@ -16,13 +16,15 @@ func PipelineListCmds() []*cobra.Command {
 }
 
 func cmdPLList() *cobra.Command {
+	var pipelineName, outputFormat string
 	var listCmd = &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"ls"},
 		Short:   "List pipelines and apps",
 		Long:    `List pipelines and apps`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return pipeline.ListPipelines(pipelineName, outputFormat)
+			pl := pipeline.NewPipelineManager(pipelineName, "", "")
+			return pl.ListPipelines(pipelineName, outputFormat)
 		},
 	}
 

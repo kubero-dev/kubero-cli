@@ -158,7 +158,8 @@ func (k *KuberoClient) initConfig() error {
 	if k.configMgr.GetProp("instanceName") != nil {
 		k.currentInstanceName = k.configMgr.GetProp("instanceName").(string)
 		if k.currentInstanceName != "" {
-			k.currentInstance = k.configMgr.GetInstanceManager().GetCurrentInstance()
+			instance := k.configMgr.GetInstanceManager().GetCurrentInstance()
+			k.currentInstance = *instance
 		}
 	}
 

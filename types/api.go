@@ -168,3 +168,10 @@ type AppCRD struct {
 	Metadata   Metadata `json:"metadata,omitempty" yaml:"metadata,omitempty"`
 	Spec       AppSpec  `json:"spec" gorm:"embedded"`
 }
+
+type Repository struct {
+	gorm.Model
+	Branches []string `json:"branches"`
+	Name     string   `json:"name"`
+	Owner    string   `json:"owner"`
+}

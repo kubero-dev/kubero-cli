@@ -10,7 +10,7 @@ import (
 	"strconv"
 )
 
-func (m *PipelineManager) createPipelineAndApp() error {
+func (m *PipelineManager) CreatePipelineAndApp() error {
 	createPipelineAndAppArg := promptLine("Create a new pipeline", "[y,n]", "y")
 	if createPipelineAndAppArg == "y" {
 		if _, createPlErr := m.createPipeline(); createPlErr != nil {
@@ -85,7 +85,7 @@ func (m *PipelineManager) appForm() (*t.AppCRD, error) {
 	return &appCRD, nil
 }
 
-func (m *PipelineManager) createApp() error {
+func (m *PipelineManager) CreateApp() error {
 	appCRD, appCRDErr := m.appForm()
 	if appCRDErr != nil {
 		return appCRDErr
@@ -117,7 +117,7 @@ func (m *PipelineManager) writeAppYaml(appCRD t.AppCRD) error {
 	return nil
 }
 
-func (m *PipelineManager) createPipeline() (*t.PipelineCRD, error) {
+func (m *PipelineManager) CreatePipeline() (*t.PipelineCRD, error) {
 	_, plConfigsErr := m.LoadPLConfigs(m.pipelineName)
 	if plConfigsErr != nil {
 		return nil, plConfigsErr
