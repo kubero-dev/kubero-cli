@@ -1,10 +1,9 @@
-module kubero
+module github.com/faelmori/kubero-cli
 
-go 1.23.0
-
-toolchain go1.23.5
+go 1.24.0
 
 require (
+	github.com/faelmori/logz v1.1.0
 	github.com/go-git/go-billy/v5 v5.6.2
 	github.com/go-git/go-git/v5 v5.14.0
 	github.com/go-resty/resty/v2 v2.16.5
@@ -20,7 +19,11 @@ require (
 	gorm.io/gorm v1.25.12
 )
 
-require google.golang.org/protobuf v1.36.5 // indirect
+require (
+	github.com/godbus/dbus/v5 v5.1.0 // indirect
+	github.com/pebbe/zmq4 v1.2.11 // indirect
+	google.golang.org/protobuf v1.36.5 // indirect
+)
 
 require (
 	dario.cat/mergo v1.0.1 // indirect
@@ -92,6 +95,6 @@ require (
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/utils v0.0.0-20241210054802-24370beab758 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
-	sigs.k8s.io/structured-merge-diff/v4 v4.5.0 // indirect
+	sigs.k8s.io/structured-merge-diff/v4 v4.6.0 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )

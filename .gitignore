@@ -26,3 +26,10 @@ kind.yaml
 cmd/kuberoCli/VERSION
 
 .kubero
+
+.idea/.gitignore
+.idea/kubero-cli.iml
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+.idea/workspace.xml

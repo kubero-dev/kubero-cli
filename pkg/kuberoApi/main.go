@@ -13,7 +13,7 @@ type KuberoClient struct {
 }
 
 //go:embed VERSION
-var version string
+var Version string
 
 func (k *KuberoClient) Init(baseURL string, bearerToken string) *resty.Request {
 
@@ -23,7 +23,7 @@ func (k *KuberoClient) Init(baseURL string, bearerToken string) *resty.Request {
 		SetAuthToken(bearerToken).
 		SetHeader("Accept", "application/json").
 		SetHeader("Content-Type", "application/json").
-		SetHeader("User-Agent", "kubero-cli/"+version)
+		SetHeader("User-Agent", "kubero-cli/"+Version)
 
 	k.baseURL = baseURL
 	k.bearerToken = bearerToken

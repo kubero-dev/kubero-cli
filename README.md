@@ -10,58 +10,17 @@ A powerful and user-friendly Command Line Interface (CLI) for [Kubero](https://g
 
 ---
 
-## Table of Contents
-
-- [Features](#features)
-- [Installation](#installation)
-   - [Supported Platforms](#supported-platforms)
-   - [1. Installation with Makefile](#1-installation-with-makefile)
-   - [2. Homebrew Installation](#2-homebrew-installation)
-- [Supported Providers](#supported-providers)
-- [Usage](#usage)
-   - [Command Overview](#command-overview)
-- [Provider Credentials](#provider-credentials)
-   - [Scaleway](#scaleway)
-   - [Linode](#linode)
-   - [DigitalOcean](#digitalocean)
-   - [Google GKE](#google-gke)
-- [Development Guide](#development-guide)
-- [Contributing](#contributing)
-- [License](#license)
-- [Acknowledgments](#acknowledgments)
-
----
-
-## Features
-
-- **Easy Cluster Deployment:** Quickly create Kubernetes clusters on supported providers.
-- **App Management:** Simplify application deployment and management.
-- **Pipeline Integration:** Seamlessly integrate CI/CD pipelines.
-- **User-Friendly Commands:** Intuitive CLI commands for efficient workflows.
-- **Dashboard Access:** Easy access to the Kubero dashboard for monitoring.
- 
-<br/>
-
----
-
 ## Installation
 
-### Supported Platforms
-
-- **macOS**
-- **Linux**
-
-### 1. Installation with Makefile
+### Using Makefile
 
 With the updated workflow, installation is streamlined using the `Makefile`. Follow these steps:
 
 1. **Clone the Repository:**
 
    ```shell
-   git clone https://github.com/kubero-dev/kubero-cli.git
+   git clone https://github.com/faelmori/kubero-cli.git
    ```
-
-[//]: # (   ![Clone the Repository]&#40;#&#41;)
 
 2. **Navigate to the Project Directory:**
 
@@ -75,15 +34,11 @@ With the updated workflow, installation is streamlined using the `Makefile`. Fol
    make build
    ```
 
-[//]: # (   ![Make Build Process]&#40;#&#41;)
-
 4. **Install the Binary:**
 
    ```shell
    make install
    ```
-
-[//]: # (   ![Make Install Process]&#40;#&#41;)
 
 5. **Verify Installation:**
 
@@ -91,38 +46,21 @@ With the updated workflow, installation is streamlined using the `Makefile`. Fol
    kubero --version
    ```
 
-[//]: # (   ![Version Check]&#40;#&#41;)
+### Using Install Script
 
-### 2. Homebrew Installation
+You can also use the provided install script for a quick setup:
 
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Coming soon!!](https://github.com/kubero-dev/kubero-cli)
- 
-
----
-
-## Supported Providers
-
-Kubero CLI currently supports the following cloud providers:
-
-- **Scaleway**
-- **Linode**
-- **DigitalOcean**
-- **Google GKE**
-- **Kind** (local clusters)
-
-### Coming Soon
-
-- **Vultr**
-- **Oracle Cloud OCI/OKE**
-- **Exoscale**
-- **Swissflow**
+```shell
+curl -fsSL get.kubero.dev | bash
+```
 
 ---
 
 ## Usage
 
-### Command Overview
+### As a CLI
+
+The `kubero-cli` can be used to manage Kubernetes clusters and applications with various commands. Here are some examples:
 
 ```plaintext
 kubero
@@ -155,43 +93,53 @@ kubero
 └── help                   # Display help for commands
 ```
 
+### As a Go Module
+
+To use `kubero-cli` as a module in your Go project, you can import the packages as needed. For example:
+
+```go
+import (
+    "github.com/faelmori/kubero-cli/internal/api"
+    "github.com/faelmori/kubero-cli/internal/config"
+    "github.com/faelmori/kubero-cli/internal/db"
+    "github.com/faelmori/kubero-cli/internal/utils"
+)
+```
+
+You can then create instances of the clients and use them in your code:
+
+```go
+func main() {
+    // Initialize API client
+    client := api.NewClient("https://api.kubero.dev", "your_token")
+
+    // Load configuration
+    configLoader := &config.ViperConfig{}
+    err := configLoader.LoadConfigs("/path/to/config", "config_name")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Initialize database
+    dbClient := &db.GormDB{}
+    db, err := dbClient.InitDB()
+    if err != nil {
+        log.Fatal(err)
+    }
+    dbClient.AutoMigrateDB(db, &db.Instance{})
+
+    // Use utilities
+    prompt := &utils.ConsolePrompt{}
+    answer := prompt.PromptLine("Are you sure?", "[y/n]", "n")
+    fmt.Println("Answer:", answer)
+}
+```
+
 ---
 
-## Provider Credentials
+## Development
 
-Set the appropriate environment variables for your cloud provider before using Kubero CLI.
-
-### Scaleway
-
-```shell
-export SCALEWAY_ACCESS_TOKEN=your_access_token
-export SCALEWAY_PROJECT_ID=your_project_id
-export SCALEWAY_ORGANIZATION_ID=your_organization_id
-```
-
-### Linode
-
-```shell
-export LINODE_ACCESS_TOKEN=your_access_token
-```
-
-### DigitalOcean
-
-```shell
-export DIGITALOCEAN_ACCESS_TOKEN=your_access_token
-```
-
-### Google GKE
-
-```shell
-export GOOGLE_API_KEY=your_api_key
-```
-
----
-
-## Development Guide
-
-### Enable Development Mode
+### Development Guide
 
 To enable development mode for testing and debugging, create a `VERSION` file:
 
@@ -199,21 +147,15 @@ To enable development mode for testing and debugging, create a `VERSION` file:
 echo "dev" > cmd/kuberoCli/VERSION
 ```
 
----
-
-## Contributing
+### Contributing
 
 We welcome contributions from the community! Please check out our [Contributing Guidelines](https://github.com/kubero-dev/kubero/blob/main/CONTRIBUTING.md) for more information.
 
----
-
-## License
+### License
 
 This project is licensed under the [MIT License](LICENSE).
 
----
-
-## Acknowledgments
+### Acknowledgments
 
 - **[Kubero](https://github.com/kubero-dev/kubero):** The simplest PaaS for Kubernetes.
 - **[Go](https://golang.org/):** The programming language used for development.
@@ -222,5 +164,3 @@ This project is licensed under the [MIT License](LICENSE).
 ---
 
 Thank you for using **kubero-cli**! If you have suggestions or encounter issues, please open an issue in the [main repository](https://github.com/kubero-dev/kubero).
-
----
