@@ -36,7 +36,8 @@ required binaries:
  - kind (optional)`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			insMgr := install.NewManagerInstall(installOlm, argComponent, clusterType, argAdminPassword, argAdminUser, argApiToken, argPort, argPortSecure)
-			return insMgr.FullInstallation()
+			_ = insMgr.FullInstallation()
+			return nil
 		},
 	}
 

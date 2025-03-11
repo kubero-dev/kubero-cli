@@ -1,6 +1,7 @@
 package log
 
 import (
+	"fmt"
 	log "github.com/faelmori/logz"
 	logz "github.com/faelmori/logz/logger"
 )
@@ -71,7 +72,7 @@ func Debugln(args ...interface{}) { Debug(args...) }
 
 // Info logs a message at level Info on the standard logger.
 func Info(args ...interface{}) {
-	logger.Info("Info", map[string]interface{}{"context": "kubero-cli", "pkg": "log", "method": "Info", "args": args})
+	logger.Info(fmt.Sprintf("%s", args), map[string]interface{}{"context": "kubero-cli", "pkg": "log", "method": "Info", "args": args})
 }
 
 // Infof logs a formatted message at level Info on the standard logger.
