@@ -14,15 +14,15 @@ require (
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.19.0
-	github.com/zalando/go-keyring v0.2.0
+	github.com/zalando/go-keyring v0.2.6
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/sqlite v1.5.7
 	gorm.io/gorm v1.25.12
 )
 
 require (
-	github.com/alessio/shellescape v1.4.1 // indirect
-	github.com/danieljoos/wincred v1.1.0 // indirect
+	al.essio.dev/pkg/shellescape v1.5.1 // indirect
+	github.com/danieljoos/wincred v1.2.2 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/pebbe/zmq4 v1.2.11 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect

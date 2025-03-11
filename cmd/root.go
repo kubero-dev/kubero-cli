@@ -136,7 +136,7 @@ func (k *KuberoClient) initConfig() error {
 		})
 		return loadErr
 	}
-	if loadErr := k.configMgr.LoadCredentials(); loadErr != nil {
+	if loadErr := k.configMgr.GetCredentialsManager().LoadCredentials(); loadErr != nil {
 		log.Error("Failed to load credentials.", map[string]interface{}{
 			"context": "kubero-cli",
 			"action":  "initConfig",
@@ -158,7 +158,7 @@ func (k *KuberoClient) initConfig() error {
 	if k.configMgr.GetProp("instanceName") != nil {
 		k.currentInstanceName = k.configMgr.GetProp("instanceName").(string)
 		if k.currentInstanceName != "" {
-			k.currentInstance = k.configMgr.GetCurrentInstance()
+			k.currentInstance = k.configMgr.GetInstanceManager().GetCurrentInstance()
 		}
 	}
 
