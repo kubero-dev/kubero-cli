@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/faelmori/kubero-cli/internal/log"
-	"github.com/faelmori/kubero-cli/types"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"path/filepath"

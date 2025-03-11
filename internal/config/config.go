@@ -143,43 +143,7 @@ func (v *ConfigManager) GetConfigDir() (string, error) {
 	v.path = configPath
 	return configPath, nil
 }
-func (v *ConfigManager) GetIACBaseDir() string {
-	if v.instanceManager == nil {
-		if v.credentialsManager == nil {
-			v.credentialsManager = NewCredentialsManager()
-			if loadCredentialsErr := v.credentialsManager.LoadCredentials(); loadCredentialsErr != nil {
-				// Attempt to resolve the config file across multiple directories and methods.
-				// If all attempts fail, terminate with a clear error message (critical for app functionality).
-				log.Fatal("Error loading credentials!", map[string]interface{}{
-					"context": "kubero-cli",
-					"pkg":     "config",
-					"method":  "GetIACBaseDir",
-					"error":   loadCredentialsErr.Error(),
-				})
-			}
-		}
-		v.instanceManager = NewInstanceManager(v.credentialsManager.GetCredentials())
-	}
-	currentInstance := v.instanceManager.GetCurrentInstance()
-	basePath := "."
-	if currentInstance.IacBaseDir == "" {
-		currentInstance.IacBaseDir = ".kubero"
-		basePath += "/" + currentInstance.IacBaseDir
-	}
-	gitdir := v.GetGitDir()
-	if gitdir != "" {
-		basePath = gitdir + "/" + currentInstance.IacBaseDir
-	}
-	if _, err := os.Stat(basePath); os.IsNotExist(err) {
-		_, _ = cfmt.Println("{{Creating directory}}::yellow " + basePath)
-		mkDirAllErr := os.MkdirAll(basePath, 0755)
-		if mkDirAllErr != nil {
-			fmt.Println("Error while creating directory:", mkDirAllErr)
-			return ""
-		}
-	}
-	return basePath
-}
+
 func (v *ConfigManager) GetConfigName() string {
 	if v.name != "" {
 		return v.name

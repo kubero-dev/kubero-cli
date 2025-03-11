@@ -8,8 +8,7 @@ import (
 
 func loadAppConfig(pipelineName string, stageName string, appName string) *viper.Viper {
 
-	baseDir := getIACBaseDir()
-	dir := baseDir + "/" + pipelineName + "/" + stageName
+	dir := ".kubero/" + pipelineName + "/" + stageName
 
 	appConfig := viper.New()
 	appConfig.SetConfigName(appName)

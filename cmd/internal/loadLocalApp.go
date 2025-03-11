@@ -4,20 +4,21 @@ import (
 	"log"
 
 	"github.com/spf13/viper"
-	"kubero/pkg/kuberoApi"
 )
 
-func loadLocalApp(pipelineName string, stageName string, appName string) kuberoApi.AppCRD {
+func loadLocalApp(pipelineName string, stageName string, appName string) *viper.Viper {
 
-	appConfig := loadAppConfig(pipelineName, stageName, appName)
+	dir := ".kubero/" + pipelineName + "/" + stageName
 
-	var appCRD kuberoApi.AppCRD
-
-	appConfigUnmarshalErr := appConfig.Unmarshal(&appCRD)
-	if appConfigUnmarshalErr != nil {
-		log.Fatal(appConfigUnmarshalErr)
-		return kuberoApi.AppCRD{}
+	appConfig := viper.New()
+	appConfig.SetConfigName(appName)
+	appConfig.SetConfigType("yaml")
+	appConfig.AddConfigPath(dir)
+	readInConfigErr := appConfig.ReadInConfig()
+	if readInConfigErr != nil {
+		log.Fatal(readInConfigErr)
+		return nil
 	}
 
-	return appCRD
+	return appConfig
 }

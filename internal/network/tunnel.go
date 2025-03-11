@@ -57,7 +57,7 @@ func (t *Tunnel) StartTunnel() {
 
 	// Check if subdomain is valid
 	// localtunnel.me allows only lowercasae letters, numbers and dashes
-	if !regexp.MustCompile(`^[a-z0-9-]+$`).MatchString(t.tunnelSubdomain) {
+	if !regexp.MustCompile(`^[a-z00-9-]+$`).MatchString(t.tunnelSubdomain) {
 		_, _ = cfmt.Println("{{✖}}::red Subdomain {{" + t.tunnelSubdomain + "}}::yellow can only contain lowercase letters, numbers and dashes")
 		os.Exit(1)
 	}
