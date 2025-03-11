@@ -25,8 +25,8 @@ type IConfigManager interface {
 	SetProp(key string, value interface{})
 	saveConfig() error
 
-	getGitDir() string
-	getGitRemote() string
+	GetGitDir() string
+	GetGitRemote() string
 	GetIACBaseDir() string
 
 	WriteCLIConfig(argDomain, argPort, argToken string) error

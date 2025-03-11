@@ -13,16 +13,25 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// addonsCmd represents the addons command
-var addonsCmd = &cobra.Command{
-	Use:   "addons",
-	Short: "A brief description of your command",
-	Run: func(cmd *cobra.Command, args []string) {
-		client := a.NewClient()
-		resp, _ := client.GetAddons()
-		//fmt.Println(resp)
-		printAddons(resp)
-	},
+func ConfigAddonsCmds() []*cobra.Command {
+	return []*cobra.Command{
+		cmdAddons(),
+	}
+}
+
+func cmdAddons() *cobra.Command {
+	var addonsCmd = &cobra.Command{
+		Use:   "addons",
+		Short: "A brief description of your command",
+		Run: func(cmd *cobra.Command, args []string) {
+			client := a.NewClient()
+			resp, _ := client.GetAddons()
+			//fmt.Println(resp)
+			printAddons(resp)
+		},
+	}
+
+	return addonsCmd
 }
 
 // print the response as a table

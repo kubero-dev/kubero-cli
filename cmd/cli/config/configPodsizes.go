@@ -3,6 +3,9 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	a "github.com/faelmori/kubero-cli/internal/api"
+	u "github.com/faelmori/kubero-cli/internal/utils"
+	t "github.com/faelmori/kubero-cli/types"
 	"os"
 
 	"github.com/go-resty/resty/v2"
@@ -10,17 +13,24 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var podSizesCmd = &cobra.Command{
-	Use:   "podsizes",
-	Short: "List the available pod sizes",
-	Run: func(cmd *cobra.Command, args []string) {
-		resp, _ := api.GetPodsize()
-		printPodSizes(resp)
-	},
+func ConfigPodsizesCmds() []*cobra.Command {
+	return []*cobra.Command{
+		cmdPodSizes(),
+	}
 }
 
-func init() {
-	configCmd.AddCommand(podSizesCmd)
+func cmdPodSizes() *cobra.Command {
+	var podSizesCmd = &cobra.Command{
+		Use:   "podsizes",
+		Short: "List the available pod sizes",
+		Run: func(cmd *cobra.Command, args []string) {
+			client := a.NewClient()
+			resp, _ := client.GetPodsize()
+			printPodSizes(resp)
+		},
+	}
+
+	return podSizesCmd
 }
 
 func printPodSizes(r *resty.Response) {
@@ -29,7 +39,7 @@ func printPodSizes(r *resty.Response) {
 	table.SetHeader([]string{"Name", "Description"})
 	//table.SetBorder(false)
 
-	var podsizeList []PodSize
+	var podsizeList []t.PodSize
 	unmarshalErr := json.Unmarshal(r.Body(), &podsizeList)
 	if unmarshalErr != nil {
 		fmt.Println("Failed to unmarshal the response body:", unmarshalErr)
@@ -40,5 +50,6 @@ func printPodSizes(r *resty.Response) {
 		table.Append([]string{podsize.Name, podsize.Description})
 	}
 
-	printCLI(table, r)
+	utils := u.NewUtils()
+	utils.PrintCLI(table, r, "table")
 }

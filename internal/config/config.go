@@ -96,10 +96,11 @@ func (v *ConfigManager) GetConfig() types.Config {
 	}
 	return config
 }
-func (v *ConfigManager) GetLogger() *types.Logger { return v.Logger }
-func (v *ConfigManager) GetViper() *viper.Viper   { return v.globals }
-func (v *ConfigManager) GetPath() string          { return v.path }
-func (v *ConfigManager) GetName() string          { return v.name }
+func (v *ConfigManager) GetConfigManager() *ConfigManager { return v }
+func (v *ConfigManager) GetLogger() *types.Logger         { return v.Logger }
+func (v *ConfigManager) GetViper() *viper.Viper           { return v.globals }
+func (v *ConfigManager) GetPath() string                  { return v.path }
+func (v *ConfigManager) GetName() string                  { return v.name }
 
 func (v *ConfigManager) GetConfigDir() (string, error) {
 	if v.path != "" {
@@ -165,7 +166,7 @@ func (v *ConfigManager) GetIACBaseDir() string {
 		currentInstance.IacBaseDir = ".kubero"
 		basePath += "/" + currentInstance.IacBaseDir
 	}
-	gitdir := v.getGitDir()
+	gitdir := v.GetGitDir()
 	if gitdir != "" {
 		basePath = gitdir + "/" + currentInstance.IacBaseDir
 	}

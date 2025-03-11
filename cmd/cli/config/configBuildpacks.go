@@ -2,6 +2,9 @@ package config
 
 import (
 	"encoding/json"
+	a "github.com/faelmori/kubero-cli/internal/api"
+	u "github.com/faelmori/kubero-cli/internal/utils"
+	t "github.com/faelmori/kubero-cli/types"
 	"os"
 
 	"github.com/go-resty/resty/v2"
@@ -9,27 +12,33 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// buildpacksCmd represents the buildpacks command
-var buildpacksCmd = &cobra.Command{
-	Use:   "buildpacks",
-	Short: "List the available buildpacks",
-	Run: func(cmd *cobra.Command, args []string) {
-		resp, _ := api.GetBuildpacks()
-		printBuildpacks(resp)
-	},
+func ConfigBuildpacksCmds() []*cobra.Command {
+	return []*cobra.Command{
+		cmdBuildpacks(),
+	}
 }
 
-func init() {
-	configCmd.AddCommand(buildpacksCmd)
+func cmdBuildpacks() *cobra.Command {
+	var buildpacksCmd = &cobra.Command{
+		Use:   "buildpacks",
+		Short: "List the available buildpacks",
+		Run: func(cmd *cobra.Command, args []string) {
+			client := a.NewClient()
+			resp, _ := client.GetBuildpacks()
+			printBuildpacks(resp)
+		},
+	}
+
+	return buildpacksCmd
 }
 
 var buildPacksSimpleList []string
 
 func loadBuildpacks() {
+	client := a.NewClient()
+	b, _ := client.GetBuildpacks()
 
-	b, _ := api.GetBuildpacks()
-
-	var buildPacks buildPacks
+	var buildPacks t.BuildPacks
 	json.Unmarshal(b.Body(), &buildPacks)
 
 	for _, buildPack := range buildPacks {
@@ -48,7 +57,7 @@ func printBuildpacks(r *resty.Response) {
 	table.SetRowLine(true)
 	//table.SetBorder(false)
 
-	var buildPacksList buildPacks
+	var buildPacksList t.BuildPacks
 	json.Unmarshal(r.Body(), &buildPacksList)
 
 	for _, podsize := range buildPacksList {
@@ -75,5 +84,6 @@ func printBuildpacks(r *resty.Response) {
 		})
 	}
 
-	printCLI(table, r)
+	utils := u.NewUtils()
+	utils.PrintCLI(table, r, "table")
 }

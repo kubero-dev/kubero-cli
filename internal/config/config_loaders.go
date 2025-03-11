@@ -67,7 +67,7 @@ func (v *ConfigManager) LoadPLConfigs(pipelineName string) (*viper.Viper, error)
 	return pipelineConfig, nil
 }
 func (v *ConfigManager) loadCLIConfig() {
-	dir := v.getGitDir()
+	dir := v.GetGitDir()
 	repoConfig := viper.New()
 	repoConfig.SetConfigName("kubero")
 	repoConfig.SetConfigType("yaml")

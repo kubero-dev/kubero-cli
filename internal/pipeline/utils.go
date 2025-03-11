@@ -3,9 +3,10 @@ package pipeline
 import (
 	"fmt"
 	"github.com/AlecAivazis/survey/v2"
+	a "github.com/faelmori/kubero-cli/internal/api"
 )
 
-func (m *PipelineManager) ensurePipelineIsSet(pipelinesList []string) {
+func (m *PipelineManager) ensurePipelineIsSet(pipelinesList []string) error {
 	if m.pipelineName == "" {
 		fmt.Println("")
 		prompt := &survey.Select{
@@ -15,9 +16,11 @@ func (m *PipelineManager) ensurePipelineIsSet(pipelinesList []string) {
 		askOneErr := survey.AskOne(prompt, &m.pipelineName)
 		if askOneErr != nil {
 			fmt.Println("Error while selecting pipeline:", askOneErr)
-			return
+			return askOneErr
 		}
 	}
+
+	return nil
 }
 
 func (m *PipelineManager) ensureAppNameIsSet() {
@@ -26,7 +29,7 @@ func (m *PipelineManager) ensureAppNameIsSet() {
 	}
 }
 
-func (m *PipelineManager) ensureStageNameIsSet() {
+func (m *PipelineManager) ensureStageNameIsSet() error {
 	if m.stageName == "" {
 		fmt.Println("")
 		pipelineConfig := m.loadPipelineConfig(m.pipelineName)
@@ -38,9 +41,11 @@ func (m *PipelineManager) ensureStageNameIsSet() {
 		askOneErr := survey.AskOne(prompt, &m.stageName)
 		if askOneErr != nil {
 			fmt.Println("Error while selecting stage:", askOneErr)
-			return
+			return askOneErr
 		}
 	}
+
+	return nil
 }
 
 func (m *PipelineManager) ensureAppNameIsSelected(availableApps []string) {
@@ -56,4 +61,24 @@ func (m *PipelineManager) ensureAppNameIsSelected(availableApps []string) {
 			return
 		}
 	}
+}
+
+func (m *PipelineManager) LoadRepositories() {
+	if m.repositories == nil {
+		repo := a.NewRepository("", "")
+		repoReq, err := repo.GetRepositories()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		m.repository = repoReq
+	}
+}
+
+func (m *PipelineManager) LoadContexts() {
+	//TODO
+}
+
+func (m *PipelineManager) LoadBuildpacks() {
+	//TODO
 }

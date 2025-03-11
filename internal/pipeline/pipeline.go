@@ -7,7 +7,7 @@ import (
 	c "github.com/faelmori/kubero-cli/internal/config"
 	"github.com/faelmori/kubero-cli/internal/log"
 	u "github.com/faelmori/kubero-cli/internal/utils"
-	"github.com/faelmori/kubero-cli/types"
+	t "github.com/faelmori/kubero-cli/types"
 	"os"
 	"strconv"
 
@@ -26,6 +26,11 @@ var (
 
 type PipelineManager struct {
 	c.ConfigManager
+	repo         *t.GitRepository
+	repositories []*t.GitRepository
+	contexts     *t.Contexts
+	pipelines    *t.PipelinesList
+	buildPacks   *t.BuildPacks
 	pipelineName string
 	stageName    string
 	appName      string
@@ -39,10 +44,14 @@ func NewPipelineManager(pipelineName, stageName, appName string) *PipelineManage
 	}
 }
 
-func (m *PipelineManager) LoadAllLocalPipelines() types.PipelinesConfigsList {
+func (m *PipelineManager) GetPipelineConfig(pipelineName string) *viper.Viper {
+	return m.loadPipelineConfig(pipelineName)
+}
+
+func (m *PipelineManager) LoadAllLocalPipelines() t.PipelinesConfigsList {
 	pipelines := m.getAllLocalPipelines()
 
-	pipelinesConfigsList := make(types.PipelinesConfigsList)
+	pipelinesConfigsList := make(t.PipelinesConfigsList)
 
 	for _, pipeline := range pipelines {
 		pipelinesConfigsList[pipeline] = m.loadLocalPipeline(pipeline)
@@ -55,7 +64,7 @@ func (m *PipelineManager) LoadAllLocalPipelines() types.PipelinesConfigsList {
 func (m *PipelineManager) printPipeline(r *resty.Response) {
 	//fmt.Println(r)
 
-	var pipeline types.Pipeline
+	var pipeline t.Pipeline
 	unmarshalErr := json.Unmarshal(r.Body(), &pipeline)
 	if unmarshalErr != nil {
 		fmt.Println("Error: ", "Unable to decode response")
@@ -92,7 +101,7 @@ func (m *PipelineManager) printPipelinesList(r *resty.Response) error {
 		//"Review Apps"
 	})
 
-	var pipelinesList types.PipelinesList
+	var pipelinesList t.PipelinesList
 	unmarshalErr := json.Unmarshal(r.Body(), &pipelinesList)
 	if unmarshalErr != nil {
 		log.Error("Unable to decode response")
@@ -121,7 +130,7 @@ func (m *PipelineManager) printPipelinesList(r *resty.Response) error {
 }
 
 func (m *PipelineManager) GetAllRemotePipelines() []string {
-	var pipelinesList types.PipelinesList
+	var pipelinesList t.PipelinesList
 
 	api := a.NewClient()
 	res, err := api.GetPipelines()
@@ -204,16 +213,16 @@ func (m *PipelineManager) loadPipelineConfig(pipelineName string) *viper.Viper {
 	return pipelineConfig
 }
 
-func (m *PipelineManager) loadLocalPipeline(pipelineName string) types.PipelineCRD {
+func (m *PipelineManager) loadLocalPipeline(pipelineName string) t.PipelineCRD {
 
 	pipelineConfig := m.loadPipelineConfig(pipelineName)
 
-	var pipelineCRD types.PipelineCRD
+	var pipelineCRD t.PipelineCRD
 
 	pipelineConfigUnmarshalErr := pipelineConfig.Unmarshal(&pipelineCRD)
 	if pipelineConfigUnmarshalErr != nil {
 		fmt.Println("Error: ", "Unable to unmarshal config file")
-		return types.PipelineCRD{}
+		return t.PipelineCRD{}
 	}
 
 	return pipelineCRD

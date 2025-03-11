@@ -24,7 +24,7 @@ func (v *ConfigManager) saveConfig() error {
 	return v.globals.WriteConfigAs(filepath.Join(v.path, v.name))
 }
 func (v *ConfigManager) getLogz() *logz.LogzCore { return v.logz }
-func (v *ConfigManager) getGitDir() string {
+func (v *ConfigManager) GetGitDir() string {
 	wd, _ := os.Getwd()
 	path := strings.Split(wd, "/")
 	for i := len(path); i >= 0; i-- {
@@ -36,8 +36,8 @@ func (v *ConfigManager) getGitDir() string {
 	}
 	return ""
 }
-func (v *ConfigManager) getGitRemote() string {
-	gitdir := v.getGitDir() + "/.git"
+func (v *ConfigManager) GetGitRemote() string {
+	gitdir := v.GetGitDir() + "/.git"
 	fs := osfs.New(gitdir)
 	s := filesystem.NewStorageWithOptions(fs, cache.NewObjectLRUDefault(), filesystem.Options{KeepDescriptors: true})
 	r, err := git.Open(s, fs)
