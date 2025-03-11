@@ -1,7 +1,6 @@
 package types
 
 import (
-	kuberoApi "github.com/faelmori/kubero-cli/internal/api"
 	"time"
 
 	"gorm.io/gorm"
@@ -262,7 +261,7 @@ type PodSize struct {
 	Active bool `json:"active,omitempty" gorm:"column:active"`
 }
 
-type pipelinesConfigsList map[string]kuberoApi.PipelineCRD
+type pipelinesConfigsList map[string]PipelineCRD
 
 type appShort struct {
 	Name     string `json:"name" gorm:"column:name"`
