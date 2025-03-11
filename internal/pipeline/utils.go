@@ -71,7 +71,7 @@ func (m *PipelineManager) LoadRepositories() {
 			fmt.Println(err)
 			return
 		}
-		m.repository = repoReq
+		m.repo = &repoReq
 	}
 }
 

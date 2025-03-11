@@ -124,37 +124,111 @@ Kubero CLI currently supports the following cloud providers:
 
 ## Usage
 
-### Command Overview
+### Project Overview
 
 ```plaintext
-kubero
-├── install                # Create a Kubernetes cluster and install Kubero with all required components
-├── list                   # List all running clusters
-├── login                  # Log in to Kubero and save credentials
-├── logout                 # Log out from Kubero and remove saved credentials
-├── create                 # Create new app and pipeline configurations
-│   ├── app
-│   └── pipeline
-├── up                     # Deploy apps and pipelines
-│   ├── app
-│   └── pipeline
-├── down                   # Remove apps and pipelines
-│   ├── app
-│   └── pipeline
-├── fetch                  # Sync configurations to local files
-│   ├── app
-│   └── pipeline
-├── dashboard              # Open the Kubero dashboard
-├── tunnel                 # Open a tunnel to a NAT-ed cluster
-├── instance               # Manage Kubero instances
-│   ├── create             # Create an instance configuration
-│   ├── delete             # Delete an instance configuration
-│   └── select             # Select an active instance
-├── config                 # View available configurations
-│   ├── addons             # List addons
-│   ├── buildpacks         # List buildpacks
-│   └── podsizes           # List pod size configurations
-└── help                   # Display help for commands
+
+Kubero CLI
+├── cmd                                    # Main Directory for Kubero CLI (Command Line Interface Wrapper)
+│   ├── cli                                # CLI Package (Commands Implementation)
+│   │   ├── config                         # Config Commands (e.g., Addons, Buildpacks, Pod Sizes)
+│   │   │   ├── configAddons.go
+│   │   │   ├── configBuildpacks.go
+│   │   │   ├── config.go
+│   │   │   └── configPodsizes.go
+│   │   ├── dashboard.go                   # Dashboard Access Command
+│   │   ├── debug                          # Debugging Commands
+│   │   │   └── debug.go
+│   │   ├── install                        # Cluster and Addons Installation Commands
+│   │   │   ├── install_beta.go
+│   │   │   └── install.go
+│   │   ├── instance                       # Instance Management Commands
+│   │   │   └── instance.go
+│   │   ├── login.go                       # Network Login Command
+│   │   ├── pipeline                       # Pipeline Management Commands
+│   │   │   ├── create.go
+│   │   │   ├── down.go
+│   │   │   ├── fetch.go
+│   │   │   ├── list.go
+│   │   │   └── up.go
+│   │   └── tunnel.go                      # Network Tunneling Command
+│   ├── internal                           # Core Functionality Encapsulation
+│   │   ├── loadAppConfig.go
+│   │   └── loadLocalApp.go
+│   ├── main.go                            # Entry Point for Kubero CLI Execution
+│   ├── root.go                            # Parent Command Definition
+│   └── usage.go                           # Global CLI Styling (Help Templates, Colors, etc.)
+├── go.mod                                 # Go Module Configuration
+├── internal                               # Internal Directory (Encapsulated Logic)
+│   ├── api                                # API Service (Replaces Old KuberoApi)
+│   │   ├── client.go
+│   │   ├── context.go
+│   │   ├── interfaces.go
+│   │   └── repository.go
+│   ├── config                             # Configuration Management
+│   │   ├── config.go
+│   │   ├── config_loaders.go
+│   │   ├── config_privates.go
+│   │   ├── credentials.go
+│   │   ├── instances.go
+│   │   └── interfaces.go
+│   ├── db                                 # Database Logic (Currently Unused)
+│   │   ├── db.go
+│   │   └── interfaces.go
+│   ├── debug                              # Debugging Logic
+│   │   └── debug.go
+│   ├── install                            # Installation Logic (Second Largest Package)
+│   │   ├── install_cert_manager.go
+│   │   ├── install_digitalocean.go
+│   │   ├── install_gke.go
+│   │   ├── install.go
+│   │   ├── install_ingress.go
+│   │   ├── install_kind.go
+│   │   ├── install_kubernetes.go
+│   │   ├── install_kubero_operator.go
+│   │   ├── install_kubero_ui.go
+│   │   ├── install_linode.go
+│   │   ├── install_metrics.go
+│   │   ├── install_monitoring.go
+│   │   ├── install_scaleway.go
+│   │   ├── install_test.go
+│   │   └── install.types.go
+│   ├── log                                # Logging Service (Prometheus, Webhooks, etc.)
+│   │   └── logz.go
+│   ├── network                            # Network Logic (Login, Tunneling)
+│   │   ├── login.go
+│   │   └── tunnel.go
+│   ├── pipeline                           # Pipeline Logic (Largest Package)
+│   │   ├── app.go
+│   │   ├── create.go
+│   │   ├── down.go
+│   │   ├── fetch.go
+│   │   ├── list.go
+│   │   ├── pipeline.go
+│   │   └── utils.go
+│   └── utils                              # Utility Functions (e.g., Prompts, Random Strings)
+│       ├── interfaces.go
+│       ├── prompt.go
+│       ├── utils.go
+│       └── utils_test.go
+├── kubero.yaml.example                    # Example Configuration
+├── LICENSE                                # Licensing Information
+├── Makefile                               # Centralized Commands (Build, Install, Test)
+├── README.md                              # Documentation Overview
+├── scripts                                # Helper Scripts
+│   └── install.sh                         # Installation Script
+├── templates                              # Configuration Templates
+│   ├── certmanagerClusterIssuer.prod.yaml
+│   ├── certmanagerClusterIssuer.stage.yaml
+│   └── kindVersions.yaml
+├── types                                  # Data Structures
+│   ├── api.go                             # API Data Structures
+│   └── globals.go                         # Global Data Structures
+└── version                                # Version Management
+    ├── current.go                         # Current Version (Constants and Repository Info)
+    ├── semantic.go                        # Semantic Versioning (Parsing, Validation)
+    └── VERSION                            # Version Placeholder (Populated on Build)
+
 ```
 
 ---
