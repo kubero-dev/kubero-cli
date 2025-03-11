@@ -1,8 +1,8 @@
 package cli
 
 import (
-	c "github.com/faelmori/kubero-cli/internal/config"
 	"github.com/kubero-dev/kubero-cli/cmd/common"
+	c "github.com/kubero-dev/kubero-cli/internal/config"
 	"github.com/spf13/cobra"
 )
 

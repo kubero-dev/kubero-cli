@@ -1,8 +1,8 @@
 package debug
 
 import (
-	"github.com/faelmori/kubero-cli/internal/debug"
 	"github.com/kubero-dev/kubero-cli/cmd/common"
+	"github.com/kubero-dev/kubero-cli/internal/debug"
 	"github.com/spf13/cobra"
 )
 

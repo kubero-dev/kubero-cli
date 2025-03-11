@@ -2,11 +2,11 @@ package pipeline
 
 import (
 	"encoding/json"
-	c "github.com/faelmori/kubero-cli/internal/config"
-	"github.com/faelmori/kubero-cli/types"
 	"github.com/i582/cfmt/cmd/cfmt"
 	a "github.com/kubero-dev/kubero-cli/internal/api"
+	c "github.com/kubero-dev/kubero-cli/internal/config"
 	"github.com/kubero-dev/kubero-cli/internal/log"
+	"github.com/kubero-dev/kubero-cli/types"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/viper"
 	"os"

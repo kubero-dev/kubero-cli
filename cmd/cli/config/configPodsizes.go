@@ -3,10 +3,10 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	a "github.com/faelmori/kubero-cli/internal/api"
-	t "github.com/faelmori/kubero-cli/types"
 	"github.com/kubero-dev/kubero-cli/cmd/common"
+	a "github.com/kubero-dev/kubero-cli/internal/api"
 	u "github.com/kubero-dev/kubero-cli/internal/utils"
+	t "github.com/kubero-dev/kubero-cli/types"
 	"os"
 
 	"github.com/go-resty/resty/v2"

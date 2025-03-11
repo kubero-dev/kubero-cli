@@ -2,8 +2,8 @@ package config
 
 import (
 	"fmt"
-	"github.com/faelmori/kubero-cli/internal/config"
 	"github.com/kubero-dev/kubero-cli/cmd/common"
+	"github.com/kubero-dev/kubero-cli/internal/config"
 	"github.com/spf13/cobra"
 	"path/filepath"
 )

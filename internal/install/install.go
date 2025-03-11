@@ -1,8 +1,8 @@
 package install
 
 import (
-	u "github.com/faelmori/kubero-cli/internal/utils"
 	"github.com/kubero-dev/kubero-cli/internal/log"
+	u "github.com/kubero-dev/kubero-cli/internal/utils"
 	"github.com/spf13/cobra"
 	"math/rand"
 	"time"

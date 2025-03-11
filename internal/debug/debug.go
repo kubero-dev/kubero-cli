@@ -2,9 +2,9 @@ package debug
 
 import (
 	"fmt"
-	u "github.com/faelmori/kubero-cli/internal/utils"
-	"github.com/faelmori/kubero-cli/version"
 	l "github.com/kubero-dev/kubero-cli/internal/log"
+	u "github.com/kubero-dev/kubero-cli/internal/utils"
+	"github.com/kubero-dev/kubero-cli/version"
 	"os"
 	"os/exec"
 	"runtime"

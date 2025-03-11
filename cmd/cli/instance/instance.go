@@ -5,9 +5,9 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 */
 
 import (
-	c "github.com/faelmori/kubero-cli/internal/config"
-	u "github.com/faelmori/kubero-cli/internal/utils"
 	"github.com/kubero-dev/kubero-cli/cmd/common"
+	c "github.com/kubero-dev/kubero-cli/internal/config"
+	u "github.com/kubero-dev/kubero-cli/internal/utils"
 	"github.com/spf13/cobra"
 )
 

@@ -2,11 +2,11 @@ package network
 
 import (
 	"fmt"
-	"github.com/faelmori/kubero-cli/internal/log"
 	"github.com/go-resty/resty/v2"
 	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/jonasfj/go-localtunnel"
 	c "github.com/kubero-dev/kubero-cli/internal/config"
+	"github.com/kubero-dev/kubero-cli/internal/log"
 	u "github.com/kubero-dev/kubero-cli/internal/utils"
 	"github.com/leaanthony/spinner"
 	"os"

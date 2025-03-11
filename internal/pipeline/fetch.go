@@ -3,9 +3,9 @@ package pipeline
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/faelmori/kubero-cli/internal/log"
 	"github.com/i582/cfmt/cmd/cfmt"
 	a "github.com/kubero-dev/kubero-cli/internal/api"
+	"github.com/kubero-dev/kubero-cli/internal/log"
 	"github.com/kubero-dev/kubero-cli/types"
 	"gopkg.in/yaml.v3"
 	"os"

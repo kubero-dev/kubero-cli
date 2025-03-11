@@ -2,9 +2,9 @@ package api
 
 import (
 	"fmt"
-	"github.com/faelmori/kubero-cli/version"
 	"github.com/go-resty/resty/v2"
 	"github.com/kubero-dev/kubero-cli/types"
+	"github.com/kubero-dev/kubero-cli/version"
 )
 
 type Client struct {
