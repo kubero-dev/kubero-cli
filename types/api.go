@@ -1,8 +1,9 @@
 package types
 
 import (
-	"gorm.io/gorm"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type Metadata struct {
