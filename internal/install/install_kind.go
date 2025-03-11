@@ -2,19 +2,16 @@ package install
 
 import (
 	"github.com/faelmori/kubero-cli/internal/log"
-	"github.com/faelmori/kubero-cli/internal/utils"
-
+	"github.com/go-resty/resty/v2"
+	"github.com/leaanthony/spinner"
+	"gopkg.in/yaml.v3"
 	"math/rand"
 	"os"
 	"os/exec"
 	"strconv"
-
-	"github.com/go-resty/resty/v2"
-	"github.com/leaanthony/spinner"
-	"gopkg.in/yaml.v3"
 )
 
-func installKind() error {
+func (m *ManagerInstall) installKind() error {
 	if !utils.CheckBinary("kind") {
 		log.Error("kind binary not found. Please install kind and try again")
 		return os.ErrNotExist
@@ -50,15 +47,15 @@ func installKind() error {
 
 	kindConfig.Nodes[0].Image = "kindest/node:" + version
 
-	if argPort == "" {
-		argPort = promptLine("Local HTTP Port", "", "80")
+	if m.argPort == "" {
+		m.argPort = promptLine("Local HTTP Port", "", "80")
 	}
-	kindConfig.Nodes[0].ExtraPortMappings[0].HostPort, _ = strconv.Atoi(argPort)
+	kindConfig.Nodes[0].ExtraPortMappings[0].HostPort, _ = strconv.Atoi(m.argPort)
 
-	if argPortSecure == "" {
-		argPortSecure = promptLine("Local HTTPS Port", "", "443")
+	if m.argPortSecure == "" {
+		m.argPortSecure = promptLine("Local HTTPS Port", "", "443")
 	}
-	kindConfig.Nodes[0].ExtraPortMappings[1].HostPort, _ = strconv.Atoi(argPortSecure)
+	kindConfig.Nodes[0].ExtraPortMappings[1].HostPort, _ = strconv.Atoi(m.argPortSecure)
 
 	kindConfigYaml, _ := yaml.Marshal(kindConfig)
 

@@ -15,6 +15,10 @@ type KuberoClient struct {
 //go:embed VERSION
 var Version string
 
+func NewKuberoClient() *KuberoClient {
+	return &KuberoClient{}
+}
+
 func (k *KuberoClient) Init(baseURL string, bearerToken string) *resty.Request {
 
 	client := resty.New().SetBaseURL(baseURL).R().

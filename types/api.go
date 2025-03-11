@@ -1,4 +1,4 @@
-package kuberoApi
+package types
 
 import (
 	"gorm.io/gorm"
@@ -82,13 +82,6 @@ type Buildpack struct {
 	Run      Run    `json:"run" gorm:"embedded"`
 }
 
-type Phase struct {
-	gorm.Model
-	Name    string `json:"name"`
-	Enabled bool   `json:"enabled"`
-	Context string `json:"context"`
-}
-
 type PipelineSpec struct {
 	gorm.Model
 	Buildpack          Buildpack `json:"buildpack" gorm:"embedded"`
@@ -165,26 +158,6 @@ type AppSpec struct {
 	Security struct {
 		VulnerabilityScans bool `json:"vulnerabilityScans,omitempty" yaml:"vulnerabilityScans,omitempty"`
 	} `json:"security,omitempty" yaml:"security,omitempty"`
-}
-
-type Web struct {
-	Autoscaling struct {
-		MaxReplicas                       int `json:"maxReplicas" gorm:"column:maxReplicas"`
-		MinReplicas                       int `json:"minReplicas" gorm:"column:minReplicas"`
-		TargetCPUUtilizationPercentage    int `json:"targetCPUUtilizationPercentage" gorm:"column:targetCPUUtilizationPercentage"`
-		TargetMemoryUtilizationPercentage int `json:"targetMemoryUtilizationPercentage" gorm:"column:targetMemoryUtilizationPercentage"`
-	} `json:"autoscaling" gorm:"embedded"`
-	ReplicaCount int `json:"replicaCount" gorm:"column:replicaCount"`
-}
-
-type Worker struct {
-	Autoscaling struct {
-		MaxReplicas                       int `json:"maxReplicas" gorm:"column:maxReplicas"`
-		MinReplicas                       int `json:"minReplicas" gorm:"column:minReplicas"`
-		TargetCPUUtilizationPercentage    int `json:"targetCPUUtilizationPercentage" gorm:"column:targetCPUUtilizationPercentage"`
-		TargetMemoryUtilizationPercentage int `json:"targetMemoryUtilizationPercentage" gorm:"column:targetMemoryUtilizationPercentage"`
-	} `json:"autoscaling" gorm:"embedded"`
-	ReplicaCount int `json:"replicaCount" gorm:"column:replicaCount"`
 }
 
 type AppCRD struct {

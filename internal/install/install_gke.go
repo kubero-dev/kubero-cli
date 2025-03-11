@@ -9,7 +9,7 @@ import (
 	s "github.com/leaanthony/spinner"
 )
 
-func installGKE() error {
+func (m *ManagerInstall) installGKE() error {
 	// implememted with gcloud, since it is required for the download of the kubeconfig anyway
 
 	// gcloud config list

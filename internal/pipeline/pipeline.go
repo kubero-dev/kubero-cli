@@ -1,9 +1,10 @@
-package cli
+package pipeline
 
 import (
 	"encoding/json"
 	"fmt"
-	"kubero/pkg/kuberoApi"
+	"github.com/faelmori/kubero-cli/pkg/kuberoApi"
+	"github.com/faelmori/kubero-cli/types"
 	"log"
 	"os"
 	"strconv"
@@ -14,7 +15,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func loadAllLocalPipelines() pipelinesConfigsList {
+func loadAllLocalPipelines() types.PipelinesConfigsList {
 	pipelines := getAllLocalPipelines()
 
 	//var pipelinesConfigsList pipelinesConfigsList

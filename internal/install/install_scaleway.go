@@ -15,7 +15,7 @@ import (
 	"github.com/leaanthony/spinner"
 )
 
-func installScaleway() error {
+func (m *ManagerInstall) installScaleway() error {
 
 	// create the cluster
 	// https://api.scaleway.com/k8s/v1/regions/{region}/clusters/{cluster_id}/available-versions
@@ -57,7 +57,7 @@ func installScaleway() error {
 	regionsList := []string{"fr-par", "nl-ams", "pl-waw"}
 	region := selectFromList("Cluster Region", regionsList, "")
 
-	versions := getScalewayVersions(api, region)
+	versions := m.getScalewayVersions(api, region)
 	cluster.Version = selectFromList("Kubernetes Version", versions, "")
 
 	// TODO lets make this configurable if needed in the future
@@ -89,7 +89,6 @@ func installScaleway() error {
 		//RootVolumeSize:   50,
 	})
 
-	//fmt.Printf("%+v\n", cluster)
 	newCluster, _ := api.R().SetBody(cluster).Post(region + "/clusters")
 
 	var clusterResponse ScalewayCreateResponse
@@ -132,7 +131,7 @@ func installScaleway() error {
 	}
 	kubeconfig, _ := base64.StdEncoding.DecodeString(scalewayKubeconfigResponse.Content)
 
-	err := mergeKubeconfig(kubeconfig)
+	err := utils.MergeKubeconfig(kubeconfig)
 	if err != nil {
 		_, _ = cfmt.Println("{{✗ Failed to download kubeconfig}}::red")
 		log.Fatal(err)
@@ -143,7 +142,7 @@ func installScaleway() error {
 	return nil
 }
 
-func getScalewayVersions(api *resty.Client, region string) []string {
+func (m *ManagerInstall) getScalewayVersions(api *resty.Client, region string) []string {
 	token := os.Getenv("SCALEWAY_ACCESS_TOKEN")
 	if token == "" {
 		_, _ = cfmt.Println("{{✗ SCALEWAY_ACCESS_TOKEN is not set}}::red")
@@ -165,23 +164,4 @@ func getScalewayVersions(api *resty.Client, region string) []string {
 	}
 
 	return versions
-}
-
-func mergeKubeconfig(kubeconfig []byte) error {
-	// get the current kubeconfig
-	home, _ := os.UserHomeDir()
-	kubeconfigPath := home + "/.kube/config"
-	kubeconfigFile, err := os.OpenFile(kubeconfigPath, os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		return err
-	}
-	defer kubeconfigFile.Close()
-
-	// append the new kubeconfig
-	_, err = kubeconfigFile.Write(kubeconfig)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

@@ -1,26 +1,41 @@
-package cli
+package pipeline
 
 import (
 	"encoding/json"
-	"kubero/pkg/kuberoApi"
-	"log"
-	"os"
-	"strings"
-
+	"github.com/faelmori/kubero-cli/internal/log"
+	"github.com/faelmori/kubero-cli/internal/utils"
+	"github.com/faelmori/kubero-cli/pkg/kuberoApi"
+	"github.com/faelmori/kubero-cli/types"
 	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/viper"
+	"os"
+	"strings"
 )
 
-func appsList() {
+type ManagerPipeline struct {
+	pipelineName string
+	stageName    string
+	appName      string
+}
 
+func NewPipelineManager(pipelineName, stageName, appName string) *ManagerPipeline {
+	return &ManagerPipeline{
+		pipelineName: pipelineName,
+		stageName:    stageName,
+		appName:      appName,
+	}
+}
+
+func (m *ManagerPipeline) AppsList(pipelineName, outputFormat string) error {
+	api := kuberoApi.NewKuberoClient()
 	pipelineResp, _ := api.GetPipelineApps(pipelineName)
 
-	var pl Pipeline
+	var pl types.PipelineSpec
 	jsonUnmarshalErr := json.Unmarshal(pipelineResp.Body(), &pl)
 	if jsonUnmarshalErr != nil {
-		log.Fatal(jsonUnmarshalErr)
-		return
+		log.Error("Unable to decode response")
+		return jsonUnmarshalErr
 	}
 
 	for _, phase := range pl.Phases {
@@ -52,13 +67,14 @@ func appsList() {
 			})
 		}
 
-		printCLI(table, pipelineResp)
+		utils.PrintCLI(table, pipelineResp, outputFormat)
 	}
 }
 
-func getAllRemoteApps() []string {
+func (m *ManagerPipeline) GetAllRemoteApps() []string {
+	api := kuberoApi.NewKuberoClient()
 	apps, _ := api.GetApps()
-	var appShortList []appShort
+	var appShortList []types.AppShort
 	jsonUnmarshalErr := json.Unmarshal(apps.Body(), &appShortList)
 	if jsonUnmarshalErr != nil {
 		log.Fatal(jsonUnmarshalErr)
@@ -67,7 +83,7 @@ func getAllRemoteApps() []string {
 
 	var appsList []string
 	for _, app := range appShortList {
-		if pipelineName != "" && app.Pipeline != pipelineName {
+		if m.pipelineName != "" && api.Pipeline != m.pipelineName {
 			continue
 		}
 		if stageName != "" && app.Phase != stageName {
@@ -82,7 +98,7 @@ func getAllRemoteApps() []string {
 	return appsList
 }
 
-func getAllLocalApps() []string {
+func (m *ManagerPipeline) GetAllLocalApps() []string {
 
 	baseDir := getIACBaseDir()
 	dir := baseDir + "/" + pipelineName + "/" + stageName
@@ -106,7 +122,7 @@ func getAllLocalApps() []string {
 	return appsList
 }
 
-func loadLocalApp(pipelineName string, stageName string, appName string) kuberoApi.AppCRD {
+func (m *ManagerPipeline) LoadLocalApp(pipelineName string, stageName string, appName string) kuberoApi.AppCRD {
 
 	appConfig := loadAppConfig(pipelineName, stageName, appName)
 
@@ -121,7 +137,7 @@ func loadLocalApp(pipelineName string, stageName string, appName string) kuberoA
 	return appCRD
 }
 
-func loadAppConfig(pipelineName string, stageName string, appName string) *viper.Viper {
+func (m *ManagerPipeline) LoadAppConfig(pipelineName string, stageName string, appName string) *viper.Viper {
 
 	baseDir := getIACBaseDir()
 	dir := baseDir + "/" + pipelineName + "/" + stageName

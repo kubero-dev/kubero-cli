@@ -5,7 +5,7 @@ import (
 	"os/exec"
 )
 
-func installMetrics() error {
+func (m *ManagerInstall) InstallMetrics() error {
 	installed, _ := exec.Command("kubectl", "get", "deployments.apps", "metrics-server", "-n", "kube-system").Output()
 	if len(installed) > 0 {
 		log.Info("Metrics server already installed")

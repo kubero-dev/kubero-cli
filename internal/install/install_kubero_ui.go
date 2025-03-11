@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"github.com/faelmori/kubero-cli/internal/log"
-	"github.com/faelmori/kubero-cli/internal/utils"
 	"github.com/leaanthony/spinner"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/yaml.v3"
@@ -14,7 +13,7 @@ import (
 	"time"
 )
 
-func installKuberoUi() error {
+func (m *ManagerInstall) InstallKuberoUi() error {
 	ingressInstall := promptLine("9) Install Kubero UI", "[y,n]", "y")
 	if ingressInstall != "y" {
 		log.Info("Skipping Kubero UI installation")
@@ -33,21 +32,21 @@ func installKuberoUi() error {
 
 		sessionKey := promptLine("Random string for your session key", "", utils.GenerateRandomString(20, ""))
 
-		if argAdminUser == "" {
-			argAdminUser = promptLine("Admin User", "", "admin")
+		if m.argAdminUser == "" {
+			m.argAdminUser = promptLine("Admin User", "", "admin")
 		}
 
-		if argAdminPassword == "" {
-			argAdminPassword = promptLine("Admin Password", "", utils.GenerateRandomString(12, ""))
+		if m.argAdminPassword == "" {
+			m.argAdminPassword = promptLine("Admin Password", "", utils.GenerateRandomString(12, ""))
 		}
 
-		if argApiToken == "" {
-			argApiToken = promptLine("Random string for admin API token", "", utils.GenerateRandomString(20, ""))
+		if m.argApiToken == "" {
+			m.argApiToken = promptLine("Random string for admin API token", "", utils.GenerateRandomString(20, ""))
 		}
 
-		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(argAdminPassword), bcrypt.DefaultCost)
+		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(m.argAdminPassword), bcrypt.DefaultCost)
 		userData := map[string]string{
-			"username": argAdminUser,
+			"username": m.argAdminUser,
 			"password": string(hashedPassword),
 		}
 		userDataJson, _ := json.Marshal(userData)
@@ -57,7 +56,7 @@ func installKuberoUi() error {
 			"sessionKey":     sessionKey,
 			"webhookSecret":  webhookSecret,
 			"userDataBase64": userDataBase64,
-			"apiToken":       argApiToken,
+			"apiToken":       m.argApiToken,
 		}
 
 		secretsYaml, _ := yaml.Marshal(kuberoSecrets)

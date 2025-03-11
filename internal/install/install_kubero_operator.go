@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func installKuberoOperator() error {
+func (m *ManagerInstall) InstallKuberoOperator() error {
 	log.Info("Installing KuberOS Operator")
 
 	kuberoInstalled, _ := exec.Command("kubectl", "get", "operator", "kubero-operator.operators").Output()
@@ -17,14 +17,14 @@ func installKuberoOperator() error {
 		return nil
 	}
 
-	if installOlm {
-		return installKuberoOLMOperator()
+	if m.installOlm {
+		return m.InstallKuberoOLMOperator()
 	} else {
-		return installKuberoOperatorSlim()
+		return m.installKuberoOperatorSlim()
 	}
 }
 
-func installKuberoOLMOperator() error {
+func (m *ManagerInstall) InstallKuberoOLMOperator() error {
 	kuberoSpinner := spinner.New("Install Kubero Operator")
 	log.Info("run command : kubectl apply -f https://operatorhub.io/install/kubero-operator.yaml")
 	kuberoSpinner.Start("Install Kubero Operator")
@@ -47,7 +47,7 @@ func installKuberoOLMOperator() error {
 	return nil
 }
 
-func installKuberoOperatorSlim() error {
+func (m *ManagerInstall) installKuberoOperatorSlim() error {
 	kuberoSpinner := spinner.New("Install Kubero Operator")
 	log.Info("run command : kubectl apply -f https://raw.githubusercontent.com/kubero-dev/kubero-operator/main/deploy/operator.yaml")
 	kuberoSpinner.Start("Install Kubero Operator")

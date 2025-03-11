@@ -5,29 +5,42 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 */
 
 import (
+	"github.com/faelmori/kubero-cli/internal/config"
+	"github.com/faelmori/kubero-cli/internal/log"
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
-	"log"
+	"path/filepath"
 )
 
-// dashboardCmd represents the dashboard command
-var dashboardCmd = &cobra.Command{
-	Use:     "dashboard",
-	Aliases: []string{"db"},
-	Short:   "Opens the Kubero dashboard in your browser",
-	Long:    `Use the dashboard subcommand to open the Kubero dashboard in your browser.`,
-	Run: func(cmd *cobra.Command, args []string) {
+func cmdDashboard() *cobra.Command {
+	var configPath string
 
-		url := currentInstance.ApiUrl
-		openURLErr := browser.OpenURL(url)
-		if openURLErr != nil {
-			log.Fatal("Failed to open the browser:", openURLErr)
-			return
-		}
+	dashboardCmd := &cobra.Command{
+		Use:     "dashboard",
+		Aliases: []string{"db"},
+		Short:   "Opens the Kubero dashboard in your browser",
+		Long:    `Use the dashboard subcommand to open the Kubero dashboard in your browser.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			path := filepath.Dir(configPath)
+			file := filepath.Base(configPath)
+			cfgMgr := config.NewViperConfig(path, file)
+			if cfgMgrErr := cfgMgr.LoadConfigs(); cfgMgrErr != nil {
+				return cfgMgrErr
+			}
 
-	},
-}
+			url := currentInstance.ApiUrl
+			openURLErr := browser.OpenURL(url)
+			if openURLErr != nil {
+				return openURLErr
+			}
 
-func init() {
-	rootCmd.AddCommand(dashboardCmd)
+			log.Info("Opening the Kubero dashboard in your browser...")
+
+			return nil
+		},
+	}
+
+	dashboardCmd.Flags().StringVarP(&configPath, "config", "c", "", "Path to the Kubero dashboard configuration file")
+
+	return dashboardCmd
 }

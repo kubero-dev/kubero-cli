@@ -5,26 +5,26 @@ import (
 	"github.com/faelmori/kubero-cli/internal/log"
 )
 
-func installKubernetes() error {
+func (m *ManagerInstall) InstallKubernetes() error {
 	kubernetesInstall := promptLine("1) Create a kubernetes cluster", "[y,n]", "y")
 	if kubernetesInstall != "y" {
 		log.Println("Skipping Kubernetes cluster installation")
 		return nil
 	}
-	clusterType = selectFromList("Select a Kubernetes provider", clusterTypeList, "")
+	m.clusterType = selectFromList("Select a Kubernetes provider", m.clusterTypeList, "")
 
-	switch clusterType {
+	switch m.clusterType {
 	case "scaleway":
-		return installScaleway()
+		return m.installScaleway()
 	case "linode":
-		return installLinode()
+		return m.installLinode()
 	case "gke":
-		return installGKE()
+		return m.installGKE()
 	case "digitalocean":
-		return installDigitalOcean()
+		return m.installDigitalOcean()
 	case "kind":
-		return installKind()
+		return m.installKind()
 	default:
-		return fmt.Errorf("invalid cluster type: %s", clusterType)
+		return fmt.Errorf("invalid cluster type: %s", m.clusterType)
 	}
 }

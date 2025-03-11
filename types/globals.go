@@ -1,8 +1,9 @@
-package cli
+package types
 
 import (
+	logz "github.com/faelmori/logz/logger"
+	"github.com/spf13/viper"
 	"gorm.io/gorm"
-	"kubero/pkg/kuberoApi"
 	"time"
 )
 
@@ -220,7 +221,7 @@ type Addon struct {
 	Beta        bool   `json:"beta" gorm:"column:beta"`
 }
 
-type buildPacks []struct {
+type BuildPacks []struct {
 	Name     string `json:"name" gorm:"column:name"`
 	Language string `json:"language" gorm:"column:language"`
 	Fetch    struct {
@@ -261,9 +262,9 @@ type PodSize struct {
 	Active bool `json:"active,omitempty" gorm:"column:active"`
 }
 
-type pipelinesConfigsList map[string]kuberoApi.PipelineCRD
+type PipelinesConfigsList map[string]PipelineCRD
 
-type appShort struct {
+type AppShort struct {
 	Name     string `json:"name" gorm:"column:name"`
 	Phase    string `json:"phase" gorm:"column:phase"`
 	Pipeline string `json:"pipeline" gorm:"column:pipeline"`
@@ -301,3 +302,9 @@ type GithubVersion struct {
 	} `json:"commit" gorm:"embedded"`
 	NodeID string `json:"node_id" gorm:"column:node_id"`
 }
+
+type Logger = logz.LogzLogger
+
+type LogzCore = logz.LogzCore
+
+type Viper = viper.Viper

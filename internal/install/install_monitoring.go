@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func installMonitoring() error {
+func (m *ManagerInstall) InstallMonitoring() error {
 	install := promptLine("7) Install Monitoring", "[y,n]", "y")
 	if install != "y" {
 		log.Info("Skipping monitoring installation")

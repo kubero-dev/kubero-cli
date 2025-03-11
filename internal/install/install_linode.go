@@ -16,7 +16,7 @@ import (
 	"github.com/leaanthony/spinner"
 )
 
-func installLinode() error {
+func (m *ManagerInstall) installLinode() error {
 	// https://www.linode.com/docs/api/linode-kubernetes-engine-lke/#kubernetes-cluster-create
 	// https://www.linode.com/docs/api/linode-kubernetes-engine-lke/#kubernetes-cluster-view
 	// https://www.linode.com/docs/api/linode-kubernetes-engine-lke/#kubeconfig-view
@@ -102,7 +102,7 @@ func installLinode() error {
 		return err
 	}
 
-	err = mergeKubeconfig(kubeconfig)
+	err = utils.MergeKubeconfig(kubeconfig)
 	if err != nil {
 		fmt.Println()
 		spinnerObj.Error("Failed to merge kubeconfig")

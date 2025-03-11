@@ -10,21 +10,21 @@ import (
 	"time"
 )
 
-func installCertManager() error {
+func (m *ManagerInstall) InstallCertManager() error {
 	install := promptLine("6) Install SSL CertManager", "[y,n]", "y")
 	if install != "y" {
 		log.Info("Skipping CertManager installation")
 		return nil
 	}
 
-	if installOlm {
-		return installOLMCertManager()
+	if m.installOlm {
+		return m.installOLMCertManager()
 	} else {
-		return installCertManagerSlim()
+		return m.installCertManagerSlim()
 	}
 }
 
-func installCertManagerSlim() error {
+func (m *ManagerInstall) installCertManagerSlim() error {
 	kuberoUIInstalled, _ := exec.Command("kubectl", "get", "crd", "certificates.cert-manager.io").Output()
 	if len(kuberoUIInstalled) > 0 {
 		log.Info("CertManager already installed")
@@ -50,10 +50,10 @@ func installCertManagerSlim() error {
 	}
 	certManagerSpinner.Success("Cert Manager installed")
 
-	return installCertManagerClusterIssuer("cert-manager")
+	return m.installCertManagerClusterIssuer("cert-manager")
 }
 
-func installCertManagerClusterIssuer(namespace string) error {
+func (m *ManagerInstall) installCertManagerClusterIssuer(namespace string) error {
 	installer := resty.New()
 
 	installer.SetBaseURL("https://raw.githubusercontent.com")
@@ -92,7 +92,7 @@ func installCertManagerClusterIssuer(namespace string) error {
 	}
 }
 
-func installOLMCertManager() error {
+func (m *ManagerInstall) installOLMCertManager() error {
 	certManagerInstalled, _ := exec.Command("kubectl", "get", "deployment", "cert-manager-webhook", "-n", "operators").Output()
 	if len(certManagerInstalled) > 0 {
 		log.Info("Cert Manager already installed")
@@ -121,5 +121,5 @@ func installOLMCertManager() error {
 	}
 	certManagerSpinner.Success("Cert Manager is ready")
 
-	return installCertManagerClusterIssuer("default")
+	return m.installCertManagerClusterIssuer("default")
 }

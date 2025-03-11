@@ -6,7 +6,7 @@ import (
 	"os/exec"
 )
 
-func installIngress() error {
+func (m *ManagerInstall) InstallIngress() error {
 	ingressInstalled, _ := exec.Command("kubectl", "get", "ns", "ingress-nginx").Output()
 	if len(ingressInstalled) > 0 {
 		log.Info("Ingress is already installed")
@@ -18,12 +18,12 @@ func installIngress() error {
 		log.Println("Skipping Ingress installation")
 		return nil
 	} else {
-		if clusterType == "" {
-			clusterType = selectFromList("Which cluster type have you installed?", clusterTypeList, "")
+		if m.clusterType == "" {
+			m.clusterType = selectFromList("Which cluster type have you installed?", m.clusterTypeList, "")
 		}
 
 		prefill := "baremetal"
-		switch clusterType {
+		switch m.clusterType {
 		case "kind":
 			prefill = "kind"
 		case "linode":
@@ -40,7 +40,7 @@ func installIngress() error {
 		ingressProvider := selectFromList("Provider [kind, aws, baremetal, cloud(Azure,Google,Oracle,Linode), do(digital ocean), exoscale, scw(scaleway)]", ingressProviderList, prefill)
 
 		ingressSpinner := spinner.New("Install Ingress")
-		URL := "https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-" + ingressControllerVersion + "/deploy/static/provider/" + ingressProvider + "/deploy.yaml"
+		URL := "https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-" + m.ingressControllerVersion + "/deploy/static/provider/" + ingressProvider + "/deploy.yaml"
 		log.Info("  run command : kubectl apply -f " + URL)
 		ingressSpinner.Start("Install Ingress")
 		_, ingressErr := exec.Command("kubectl", "apply", "-f", URL).Output()

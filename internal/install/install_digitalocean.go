@@ -17,7 +17,7 @@ import (
 
 var KuberoCliVersion = version.Version()
 
-func installDigitalOcean() error {
+func (m *ManagerInstall) installDigitalOcean() error {
 	// https://docs.digitalocean.com/reference/api/api-reference/#operation/kubernetes_create_cluster
 
 	log.Warn("Installing Kubernetes on Digital Ocean is currently beta state in kubero-cli")
@@ -54,7 +54,7 @@ func installDigitalOcean() error {
 		},
 	})
 
-	kubernetesVersions, regions, sizes := getDigitaloceanOptions(doApi)
+	kubernetesVersions, regions, sizes := m.getDigitaloceanOptions(doApi)
 
 	doConfig.Name = promptLine("Kubernetes Cluster Name", "", "kubero-"+strconv.Itoa(rand.Intn(1000)))
 	doConfig.Region = selectFromList("Cluster Region", regions, "")
@@ -111,7 +111,7 @@ func installDigitalOcean() error {
 
 	kubectl, _ := doApi.R().
 		Get("v2/kubernetes/clusters/" + clusterID + "/kubeconfig")
-	mergeKubeconfigErr := mergeKubeconfig(kubectl.Body())
+	mergeKubeconfigErr := utils.MergeKubeconfig(kubectl.Body())
 	if mergeKubeconfigErr != nil {
 		log.Error("failed to merge kubeconfig")
 		return mergeKubeconfigErr
@@ -120,7 +120,7 @@ func installDigitalOcean() error {
 	return nil
 }
 
-func getDigitaloceanOptions(api *resty.Client) ([]string, []string, []string) {
+func (m *ManagerInstall) getDigitaloceanOptions(api *resty.Client) ([]string, []string, []string) {
 	token := os.Getenv("DIGITALOCEAN_ACCESS_TOKEN")
 	if token == "" {
 		_, _ = cfmt.Println("{{✗ DIGITALOCEAN_ACCESS_TOKEN is not set}}::red")
