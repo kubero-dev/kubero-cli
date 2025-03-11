@@ -1,13 +1,22 @@
 /*
 Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 */
+
 package main
 
-import "kubero/cmd/kuberoCli"
+import (
+	"github.com/faelmori/kubero-cli/cmd/cli"
+	"github.com/faelmori/kubero-cli/internal/config"
+)
 
-func main() {
+func init() {
 
-	kuberoCli.Execute()
+	cfg := config.NewViperConfig("", "config")
+	_ = cfg.LoadConfig()
 }
 
-// var configPath = os.Getenv("HOME") + "/.config/kubero-cli"
+func main() {
+	cli.Execute()
+}
+
+//

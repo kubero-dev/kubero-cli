@@ -26,3 +26,5 @@ kind.yaml
 cmd/kuberoCli/VERSION
 
 .kubero
+
+.idea
