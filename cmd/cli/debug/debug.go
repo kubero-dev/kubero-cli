@@ -1,4 +1,4 @@
-package cli
+package debug
 
 import (
 	"github.com/faelmori/kubero-cli/internal/debug"

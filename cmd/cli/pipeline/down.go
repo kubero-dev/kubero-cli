@@ -1,4 +1,4 @@
-package cli
+package pipeline
 
 import (
 	"github.com/faelmori/kubero-cli/internal/pipeline"

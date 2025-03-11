@@ -1,4 +1,4 @@
-package cli
+package install
 
 import (
 	"github.com/faelmori/kubero-cli/internal/install"

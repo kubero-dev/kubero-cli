@@ -1,4 +1,4 @@
-package cli
+package pipeline
 
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>

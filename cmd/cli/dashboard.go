@@ -12,6 +12,12 @@ import (
 	"path/filepath"
 )
 
+func DashboardCmds() []*cobra.Command {
+	return []*cobra.Command{
+		cmdDashboard(),
+	}
+}
+
 func cmdDashboard() *cobra.Command {
 	var configPath string
 
@@ -27,8 +33,7 @@ func cmdDashboard() *cobra.Command {
 			if cfgMgrErr := cfgMgr.LoadConfigs(); cfgMgrErr != nil {
 				return cfgMgrErr
 			}
-
-			url := currentInstance.ApiUrl
+			url := cfgMgr.GetConfig().Api.Url
 			openURLErr := browser.OpenURL(url)
 			if openURLErr != nil {
 				return openURLErr

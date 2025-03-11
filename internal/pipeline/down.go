@@ -1,12 +1,12 @@
 package pipeline
 
-func DownPipeline() {
+func (m *ManagerPipeline) DownPipeline() {
 	pipelinesList := getAllRemotePipelines()
 	ensurePipelineIsSet(pipelinesList)
 	downPipelineByName(pipelineName)
 }
 
-func downPipelineByName(pipelineName string) {
+func (m *ManagerPipeline) downPipelineByName(pipelineName string) {
 	confirmationLine("Are you sure you want to undeploy the pipeline '"+pipelineName+"'?", "y")
 
 	_, err := api.UnDeployPipeline(pipelineName)
@@ -15,9 +15,9 @@ func downPipelineByName(pipelineName string) {
 	}
 }
 
-func DownApp() {
+func (m *ManagerPipeline) DownApp() {
 
-	pipelinesList := getAllRemotePipelines()
+	pipelinesList := m.getAllRemotePipelines()
 	ensurePipelineIsSet(pipelinesList)
 
 	ensureStageNameIsSet()
@@ -33,7 +33,7 @@ func DownApp() {
 	}
 }
 
-func DownAllPipelines() {
+func (m *ManagerPipeline) DownAllPipelines() {
 	confirmationLine("Are you sure you want to undeploy all pipelines?", "y")
 	pipelinesList := getAllLocalPipelines()
 	for _, pipeline := range pipelinesList {

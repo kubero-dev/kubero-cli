@@ -1,4 +1,4 @@
-package cli
+package instance
 
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
@@ -14,7 +14,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-// instanceCmd represents the instance command
 var instanceCmd = &cobra.Command{
 	Use:     "instance",
 	Aliases: []string{"i"},
@@ -32,6 +31,39 @@ var instanceCmd = &cobra.Command{
 		*/
 
 		printInstanceList()
+	},
+}
+
+var instanceCreateCmd = &cobra.Command{
+	Use:     "create",
+	Aliases: []string{"new", "cr"},
+	Short:   "Create an new instance",
+	Long:    `Create an new instance.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("instanceCreate called")
+		createInstanceForm()
+	},
+}
+
+var instanceDeleteCmd = &cobra.Command{
+	Use:     "delete",
+	Aliases: []string{"del", "rm"},
+	Short:   "Delete an instance",
+	Long:    `Delete an instance.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("instanceDelete called")
+		deleteInstanceForm()
+	},
+}
+
+var instanceSelectCmd = &cobra.Command{
+	Use:     "select",
+	Aliases: []string{"use"},
+	Short:   "Select an instance",
+	Long:    `Select an instance to use.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		newInstanceName := selectFromList("Select an instance", instanceNameList, "")
+		setCurrentInstance(newInstanceName)
 	},
 }
 

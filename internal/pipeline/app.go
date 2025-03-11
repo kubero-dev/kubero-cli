@@ -3,7 +3,6 @@ package pipeline
 import (
 	"encoding/json"
 	"github.com/faelmori/kubero-cli/internal/log"
-	"github.com/faelmori/kubero-cli/internal/utils"
 	"github.com/faelmori/kubero-cli/pkg/kuberoApi"
 	"github.com/faelmori/kubero-cli/types"
 	"github.com/i582/cfmt/cmd/cfmt"
@@ -12,20 +11,6 @@ import (
 	"os"
 	"strings"
 )
-
-type ManagerPipeline struct {
-	pipelineName string
-	stageName    string
-	appName      string
-}
-
-func NewPipelineManager(pipelineName, stageName, appName string) *ManagerPipeline {
-	return &ManagerPipeline{
-		pipelineName: pipelineName,
-		stageName:    stageName,
-		appName:      appName,
-	}
-}
 
 func (m *ManagerPipeline) AppsList(pipelineName, outputFormat string) error {
 	api := kuberoApi.NewKuberoClient()
@@ -69,6 +54,8 @@ func (m *ManagerPipeline) AppsList(pipelineName, outputFormat string) error {
 
 		utils.PrintCLI(table, pipelineResp, outputFormat)
 	}
+
+	return nil
 }
 
 func (m *ManagerPipeline) GetAllRemoteApps() []string {
@@ -82,14 +69,15 @@ func (m *ManagerPipeline) GetAllRemoteApps() []string {
 	}
 
 	var appsList []string
+	//var pl types.Pipeline
 	for _, app := range appShortList {
-		if m.pipelineName != "" && api.Pipeline != m.pipelineName {
+		if m.pipelineName != "" && app.Name != m.pipelineName {
 			continue
 		}
-		if stageName != "" && app.Phase != stageName {
+		if m.stageName != "" && app.Phase != m.stageName {
 			continue
 		}
-		if appName != "" && app.Name != appName {
+		if m.appName != "" && app.Name != m.appName {
 			continue
 		}
 		appsList = append(appsList, app.Name)
@@ -100,8 +88,8 @@ func (m *ManagerPipeline) GetAllRemoteApps() []string {
 
 func (m *ManagerPipeline) GetAllLocalApps() []string {
 
-	baseDir := getIACBaseDir()
-	dir := baseDir + "/" + pipelineName + "/" + stageName
+	baseDir := m.GetIACBaseDir()
+	dir := baseDir + "/" + m.pipelineName + "/" + m.stageName
 
 	var appsList []string
 	appFiles, err := os.ReadDir(dir)
@@ -114,7 +102,8 @@ func (m *ManagerPipeline) GetAllLocalApps() []string {
 		// remove the .yaml extension
 		appName := strings.TrimSuffix(appFileName.Name(), ".yaml")
 
-		a := loadLocalApp(pipelineName, stageName, appName)
+		a := m.LoadLocalApp(m.pipelineName, m.stageName, appName)
+
 		if a.Kind == "KuberoApp" && a.Metadata.Name != "" {
 			appsList = append(appsList, a.Metadata.Name)
 		}
@@ -122,16 +111,16 @@ func (m *ManagerPipeline) GetAllLocalApps() []string {
 	return appsList
 }
 
-func (m *ManagerPipeline) LoadLocalApp(pipelineName string, stageName string, appName string) kuberoApi.AppCRD {
+func (m *ManagerPipeline) LoadLocalApp(pipelineName string, stageName string, appName string) types.AppCRD {
 
-	appConfig := loadAppConfig(pipelineName, stageName, appName)
+	appConfig := m.LoadAppConfig(pipelineName, stageName, appName)
 
-	var appCRD kuberoApi.AppCRD
+	var appCRD types.AppCRD
 
 	appConfigUnmarshalErr := appConfig.Unmarshal(&appCRD)
 	if appConfigUnmarshalErr != nil {
 		log.Fatal(appConfigUnmarshalErr)
-		return kuberoApi.AppCRD{}
+		return types.AppCRD{}
 	}
 
 	return appCRD
@@ -139,7 +128,7 @@ func (m *ManagerPipeline) LoadLocalApp(pipelineName string, stageName string, ap
 
 func (m *ManagerPipeline) LoadAppConfig(pipelineName string, stageName string, appName string) *viper.Viper {
 
-	baseDir := getIACBaseDir()
+	baseDir := m.GetIACBaseDir()
 	dir := baseDir + "/" + pipelineName + "/" + stageName
 
 	appConfig := viper.New()

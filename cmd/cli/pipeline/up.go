@@ -1,8 +1,9 @@
-package cli
+package pipeline
 
 import (
 	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 // upCmd represents the up command
@@ -25,6 +26,40 @@ var upCmd = &cobra.Command{
 		} else {
 			upAllPipelines()
 		}
+	},
+}
+
+var upAppCmd = &cobra.Command{
+	Use:   "app",
+	Short: "Deploy an apps to the cluster",
+	Long:  `Use the app subcommand to deploy your apps to the cluster`,
+	Run: func(cmd *cobra.Command, args []string) {
+
+		pipelinesList := getAllLocalPipelines()
+		ensurePipelineIsSet(pipelinesList)
+
+		ensureStageNameIsSet()
+
+		appsList := getAllLocalApps()
+		if len(appsList) == 0 {
+			_, _ = cfmt.Println("\n{{ERROR:}}::red No apps found in pipeline '" + pipelineName + "'")
+			os.Exit(1)
+		}
+		ensureAppNameIsSelected(appsList)
+		upApp()
+	},
+}
+
+var upPipelineCmd = &cobra.Command{
+	Use:     "pipeline",
+	Aliases: []string{"pl"},
+	Short:   "Deploy a pipeline to the cluster",
+	Long:    `Use the pipeline subcommand to deploy your pipelines to the cluster`,
+	Run: func(cmd *cobra.Command, args []string) {
+
+		pipelinesList := getAllLocalPipelines()
+		ensurePipelineIsSet(pipelinesList)
+		upPipeline()
 	},
 }
 

@@ -1,4 +1,4 @@
-package cli
+package pipeline
 
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
@@ -26,6 +26,36 @@ var createCmd = &cobra.Command{
 	Long:    `Initiate a new pipeline and app in your current repository.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		createPipelineAndApp()
+	},
+}
+
+var createPipelineCmd = &cobra.Command{
+	Use:     "pipeline",
+	Aliases: []string{"pl"},
+	Short:   "Create a new pipeline",
+	Long:    `Create a new Pipeline`,
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("create a new pipeline")
+
+		_ = createPipeline()
+	},
+}
+
+var createAppCmd = &cobra.Command{
+	Use:   "app",
+	Short: "Create a new app in a Pipeline",
+	Long: `Create a new app in a Pipeline.
+
+If called without arguments, it will ask for all the required information`,
+	Run: func(cmd *cobra.Command, args []string) {
+		c := pipeline.NewPipelineManager(pipelineName, stageName, appName)
+
+		pipelinesList := c.getAllLocalPipelines()
+		ensurePipelineIsSet(pipelinesList)
+		ensureStageNameIsSet()
+		ensureAppNameIsSet()
+		createApp()
+
 	},
 }
 

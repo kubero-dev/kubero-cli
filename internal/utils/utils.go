@@ -134,3 +134,10 @@ func (u *Utils) PrintCLI(table *tablewriter.Table, r *resty.Response, outputForm
 		table.Render()
 	}
 }
+
+func (u *Utils) BoolToEmoji(b bool) string {
+	if b {
+		return "✅"
+	}
+	return "❌"
+}

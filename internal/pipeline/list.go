@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-func ListPipelines(pipelineName, outputFormat string) error {
+func (m *ManagerPipeline) ListPipelines(pipelineName, outputFormat string) error {
 	apiClient := api.NewClient("/api/cli/pipelines/"+pipelineName, "")
 	client := apiClient.RestyClient.GetClient()
 
