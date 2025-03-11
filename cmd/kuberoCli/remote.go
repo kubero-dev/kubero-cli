@@ -17,7 +17,7 @@ import (
 // instanceCmd represents the instance command
 var remoteCmd = &cobra.Command{
 	Use:     "remote",
-	Aliases: []string{"cl", "clusters"},
+	Aliases: []string{"r", "remotes"},
 	Short:   "Manage multiple Kubero instances",
 	Long:    `Print a list of available instances.`,
 	Run: func(cmd *cobra.Command, args []string) {

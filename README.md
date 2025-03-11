@@ -162,20 +162,16 @@ kubero
 |                          # Can also be used to install Kubero on an existing cluster
 ├── login (li)             # Log in to Kubero and save credentials
 ├── logout (lo)            # Log out from Kubero and remove saved credentials
-├── clusters (cl)          # List Kubero cluster
+├── remote (r)          # List Kubero cluster
 │   ├── create             # Create a cluster configuration
 │   ├── delete             # Delete a cluster configuration
 │   └── select             # Select a cluster
 ├── app (a)                # List Kubero apps
 │   ├── create             # Create an app
-│   ├── delete             # Delete an app
-│   ├── iac:fetch          # Fetch an app as code configuration
-│   └── iac:up             # Deploy a app configuration (Infrastructure as Code)
+│   └── delete             # Delete an app
 ├── pipeline (p)           # List Kubero pipelines
 │   ├── create             # Create a pipeline
-│   ├── delete             # Delete a pipeline
-│   ├── iac:fetch          # Fetch a pipeline as code configuration
-│   └── iac:up             # Deploy a pipeline configuration (Infrastructure as Code)
+│   └── delete             # Delete a pipeline
 ├── config                 # View available configurations
 │   ├── addons             # List addons
 │   ├── buildpacks         # List buildpacks
@@ -183,12 +179,6 @@ kubero
 ├── dashboard (db)         # Open the Kubero dashboard
 ├── debug                  # Gather debug information
 ├── tunnel (t)             # Open a tunnel to a NAT-ed cluster
-├── iac:down               # Remove apps and pipelines
-│   ├── app
-│   └── pipeline
-├── iac:fetch              # Sync configurations to local files
-│   ├── app
-│   └── pipeline
 └── help                   # Display help for commands
 ```
 
@@ -200,21 +190,18 @@ kubero install
 ```
 
 Create a new app configuration:
-
 ```shell
-kubero create app
+kubero app create
 ```
 
-Deploy an app:
-
+Destroy an app:
 ```shell
-kubero destroy app
+kubero app delete
 ```
 
 List all running pipelines:
-
 ```shell
-kubero list
+kubero pipelines
 ```
 
 Open the Kubero dashboard:
