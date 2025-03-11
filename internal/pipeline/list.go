@@ -2,14 +2,14 @@ package pipeline
 
 import (
 	"fmt"
-	"github.com/faelmori/kubero-cli/internal/api"
+	a "github.com/faelmori/kubero-cli/internal/api"
 	"github.com/i582/cfmt/cmd/cfmt"
 	"os"
 )
 
-func (m *ManagerPipeline) ListPipelines(pipelineName, outputFormat string) error {
-	apiClient := api.NewClient("/api/cli/pipelines/"+pipelineName, "")
-	client := apiClient.RestyClient.GetClient()
+func (m *PipelineManager) ListPipelines(pipelineName, outputFormat string) error {
+	ac := a.NewClient()
+	client := ac.Init("/api/cli/pipelines", m.GetCredentialsManager().GetCredentials().GetString("token"))
 
 	if pipelineName != "" {
 		pipelineResp, err := client.Get("/api/cli/pipelines/" + pipelineName)
@@ -17,27 +17,28 @@ func (m *ManagerPipeline) ListPipelines(pipelineName, outputFormat string) error
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		if pipelineResp.StatusCode == 404 {
+		if pipelineResp.StatusCode() == 404 {
 			_, _ = cfmt.Println("{{  Pipeline not found}}::red")
 			os.Exit(1)
 		}
 
-		if err != nil {
-			fmt.Println(err)
+		m.printPipeline(pipelineResp)
+
+		if appsListErr := m.AppsList(pipelineName, outputFormat); appsListErr != nil {
+			fmt.Println(appsListErr)
 			os.Exit(1)
 		}
-
-		printPipeline(pipelineResp.Request)
-
-		appsList()
 	} else {
-		// get the pipelines
 		pipelineListResp, err := client.Get("/api/cli/pipelines")
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		printPipelinesList(pipelineListResp)
-
+		if printPipelineList := m.printPipelinesList(pipelineListResp); printPipelineList != nil {
+			fmt.Println(printPipelineList)
+			os.Exit(1)
+		}
 	}
+
+	return nil
 }

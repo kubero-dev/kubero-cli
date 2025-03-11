@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "embed"
+	"github.com/faelmori/kubero-cli/cmd/cli"
 	"github.com/faelmori/kubero-cli/cmd/cli/config"
 	"github.com/faelmori/kubero-cli/cmd/cli/debug"
 	"github.com/faelmori/kubero-cli/cmd/cli/install"
@@ -69,6 +70,7 @@ Documentation:
 	rootCmd.AddCommand(pipeline.FetchPipelineCmds()...)
 	rootCmd.AddCommand(pipeline.PipelineListCmds()...)
 	rootCmd.AddCommand(pipeline.PipelineDownCmds()...)
+	rootCmd.AddCommand(cli.TunnelCmds()...)
 
 	for _, cmd := range rootCmd.Commands() {
 		SetUsageDefinition(cmd)

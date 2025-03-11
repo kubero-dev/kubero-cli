@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-func (m *ManagerPipeline) AppsList(pipelineName, outputFormat string) error {
+func (m *PipelineManager) AppsList(pipelineName, outputFormat string) error {
 	api := a.NewClient()
 	pipelineResp, _ := api.GetPipelineApps(pipelineName)
 
@@ -59,7 +59,7 @@ func (m *ManagerPipeline) AppsList(pipelineName, outputFormat string) error {
 	return nil
 }
 
-func (m *ManagerPipeline) GetAllRemoteApps() []string {
+func (m *PipelineManager) GetAllRemoteApps() []string {
 	api := a.NewClient()
 	apps, _ := api.GetApps()
 	var appShortList []types.AppShort
@@ -87,7 +87,7 @@ func (m *ManagerPipeline) GetAllRemoteApps() []string {
 	return appsList
 }
 
-func (m *ManagerPipeline) GetAllLocalApps() []string {
+func (m *PipelineManager) GetAllLocalApps() []string {
 	cfg := c.NewViperConfig("", "")
 	baseDir := cfg.GetIACBaseDir()
 	dir := baseDir + "/" + m.pipelineName + "/" + m.stageName
@@ -103,16 +103,16 @@ func (m *ManagerPipeline) GetAllLocalApps() []string {
 		// remove the .yaml extension
 		appName := strings.TrimSuffix(appFileName.Name(), ".yaml")
 
-		a := m.LoadLocalApp(m.pipelineName, m.stageName, appName)
+		ap := m.LoadLocalApp(m.pipelineName, m.stageName, appName)
 
-		if a.Kind == "KuberoApp" && a.Metadata.Name != "" {
-			appsList = append(appsList, a.Metadata.Name)
+		if ap.Kind == "KuberoApp" && ap.Metadata.Name != "" {
+			appsList = append(appsList, ap.Metadata.Name)
 		}
 	}
 	return appsList
 }
 
-func (m *ManagerPipeline) LoadLocalApp(pipelineName string, stageName string, appName string) types.AppCRD {
+func (m *PipelineManager) LoadLocalApp(pipelineName string, stageName string, appName string) types.AppCRD {
 
 	appConfig := m.LoadAppConfig(pipelineName, stageName, appName)
 
@@ -127,7 +127,7 @@ func (m *ManagerPipeline) LoadLocalApp(pipelineName string, stageName string, ap
 	return appCRD
 }
 
-func (m *ManagerPipeline) LoadAppConfig(pipelineName string, stageName string, appName string) *viper.Viper {
+func (m *PipelineManager) LoadAppConfig(pipelineName string, stageName string, appName string) *viper.Viper {
 	cfg := c.NewViperConfig("", "")
 	baseDir := cfg.GetIACBaseDir()
 

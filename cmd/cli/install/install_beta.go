@@ -5,7 +5,6 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
-	"errors"
 	"fmt"
 	"os"
 
@@ -14,7 +13,7 @@ import (
 )
 
 const (
-	keySize       = 2048
+	keySize        = 2048
 	keyringService = "kubero-cli"
 	keyringUser    = "kubero"
 )

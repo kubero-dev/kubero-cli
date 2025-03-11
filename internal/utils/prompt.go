@@ -11,6 +11,10 @@ import (
 
 type ConsolePrompt struct{}
 
+func NewConsolePrompt() *ConsolePrompt {
+	return &ConsolePrompt{}
+}
+
 func (p *ConsolePrompt) PromptLine(question, options, def string) string {
 	if def != "" {
 		log.Info(fmt.Sprintf("%s %s : %s", question, options, def))
@@ -42,5 +46,19 @@ func (p *ConsolePrompt) SelectFromList(question string, options []string, def st
 	}
 	return def
 }
-
-func NewConsolePrompt() *ConsolePrompt { return &ConsolePrompt{} }
+func (p *ConsolePrompt) ConfirmationLine(question string, def string) bool {
+	log.Println("")
+	if def != "" {
+		log.Info(question, def)
+		return def == "y"
+	}
+	prompt := &survey.Confirm{
+		Message: question,
+	}
+	askOneErr := survey.AskOne(prompt, &def)
+	if askOneErr != nil {
+		log.Error("failed to ask for input", askOneErr)
+		return false
+	}
+	return strings.Contains(strings.ToLower(def), "y")
+}

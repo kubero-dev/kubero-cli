@@ -5,7 +5,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 )
 
-func (m *ManagerPipeline) ensurePipelineIsSet(pipelinesList []string) {
+func (m *PipelineManager) ensurePipelineIsSet(pipelinesList []string) {
 	if m.pipelineName == "" {
 		fmt.Println("")
 		prompt := &survey.Select{
@@ -20,13 +20,13 @@ func (m *ManagerPipeline) ensurePipelineIsSet(pipelinesList []string) {
 	}
 }
 
-func (m *ManagerPipeline) ensureAppNameIsSet() {
+func (m *PipelineManager) ensureAppNameIsSet() {
 	if m.appName == "" {
 		m.appName = promptLine("Define a app name", "", m.appName)
 	}
 }
 
-func (m *ManagerPipeline) ensureStageNameIsSet() {
+func (m *PipelineManager) ensureStageNameIsSet() {
 	if m.stageName == "" {
 		fmt.Println("")
 		pipelineConfig := m.loadPipelineConfig(m.pipelineName)
@@ -43,7 +43,7 @@ func (m *ManagerPipeline) ensureStageNameIsSet() {
 	}
 }
 
-func (m *ManagerPipeline) ensureAppNameIsSelected(availableApps []string) {
+func (m *PipelineManager) ensureAppNameIsSelected(availableApps []string) {
 	if m.appName == "" {
 		fmt.Println("")
 		prompt := &survey.Select{

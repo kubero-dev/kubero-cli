@@ -3,7 +3,8 @@ package pipeline
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/faelmori/kubero-cli/internal/api"
+	a "github.com/faelmori/kubero-cli/internal/api"
+	c "github.com/faelmori/kubero-cli/internal/config"
 	"github.com/faelmori/kubero-cli/internal/log"
 	u "github.com/faelmori/kubero-cli/internal/utils"
 	"github.com/faelmori/kubero-cli/types"
@@ -17,25 +18,28 @@ import (
 )
 
 var (
-	promptLine = u.NewConsolePrompt().PromptLine
-	utils      = u.NewUtils()
+	utilsPrompt      = u.NewConsolePrompt()
+	promptLine       = utilsPrompt.PromptLine
+	confirmationLine = utilsPrompt.ConfirmationLine
+	utils            = u.NewUtils()
 )
 
-type ManagerPipeline struct {
+type PipelineManager struct {
+	c.ConfigManager
 	pipelineName string
 	stageName    string
 	appName      string
 }
 
-func NewPipelineManager(pipelineName, stageName, appName string) *ManagerPipeline {
-	return &ManagerPipeline{
+func NewPipelineManager(pipelineName, stageName, appName string) *PipelineManager {
+	return &PipelineManager{
 		pipelineName: pipelineName,
 		stageName:    stageName,
 		appName:      appName,
 	}
 }
 
-func (m *ManagerPipeline) LoadAllLocalPipelines() types.PipelinesConfigsList {
+func (m *PipelineManager) LoadAllLocalPipelines() types.PipelinesConfigsList {
 	pipelines := m.getAllLocalPipelines()
 
 	pipelinesConfigsList := make(types.PipelinesConfigsList)
@@ -48,7 +52,7 @@ func (m *ManagerPipeline) LoadAllLocalPipelines() types.PipelinesConfigsList {
 
 }
 
-func (m *ManagerPipeline) printPipeline(r *resty.Response) {
+func (m *PipelineManager) printPipeline(r *resty.Response) {
 	//fmt.Println(r)
 
 	var pipeline types.Pipeline
@@ -68,7 +72,7 @@ func (m *ManagerPipeline) printPipeline(r *resty.Response) {
 	_, _ = cfmt.Printf("{{Git:}}::lightWhite %v:%v \n", pipeline.Git.Repository.SshUrl, pipeline.Git.Repository.DefaultBranch)
 }
 
-func (m *ManagerPipeline) printPipelinesList(r *resty.Response) error {
+func (m *PipelineManager) printPipelinesList(r *resty.Response) error {
 
 	table := tablewriter.NewWriter(os.Stdout)
 	//table.SetAutoFormatHeaders(true)
@@ -116,10 +120,10 @@ func (m *ManagerPipeline) printPipelinesList(r *resty.Response) error {
 	return nil
 }
 
-func (m *ManagerPipeline) GetAllRemotePipelines() []string {
+func (m *PipelineManager) GetAllRemotePipelines() []string {
 	var pipelinesList types.PipelinesList
 
-	api := api.NewClient()
+	api := a.NewClient()
 	res, err := api.GetPipelines()
 	if err != nil {
 		fmt.Println("Error: ", "Unable to load pipelines")
@@ -143,7 +147,7 @@ func (m *ManagerPipeline) GetAllRemotePipelines() []string {
 	return pipelines
 }
 
-func (m *ManagerPipeline) getAllLocalPipelines() []string {
+func (m *PipelineManager) getAllLocalPipelines() []string {
 	baseDir := m.GetIACBaseDir()
 	dir := baseDir + "/" + m.pipelineName
 
@@ -166,7 +170,7 @@ func (m *ManagerPipeline) getAllLocalPipelines() []string {
 	return pipelineNames
 }
 
-func (m *ManagerPipeline) getPipelinePhases(pipelineConfig *viper.Viper) []string {
+func (m *PipelineManager) getPipelinePhases(pipelineConfig *viper.Viper) []string {
 	var phases []string
 
 	//pipelineConfig := getPipelineConfig(pipelineName)
@@ -182,7 +186,7 @@ func (m *ManagerPipeline) getPipelinePhases(pipelineConfig *viper.Viper) []strin
 	return phases
 }
 
-func (m *ManagerPipeline) loadPipelineConfig(pipelineName string) *viper.Viper {
+func (m *PipelineManager) loadPipelineConfig(pipelineName string) *viper.Viper {
 
 	baseDir := m.GetIACBaseDir()
 	dir := baseDir + "/" + pipelineName
@@ -200,7 +204,7 @@ func (m *ManagerPipeline) loadPipelineConfig(pipelineName string) *viper.Viper {
 	return pipelineConfig
 }
 
-func (m *ManagerPipeline) loadLocalPipeline(pipelineName string) types.PipelineCRD {
+func (m *PipelineManager) loadLocalPipeline(pipelineName string) types.PipelineCRD {
 
 	pipelineConfig := m.loadPipelineConfig(pipelineName)
 

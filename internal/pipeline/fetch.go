@@ -7,9 +7,11 @@ import (
 	"github.com/faelmori/kubero-cli/internal/log"
 	"github.com/faelmori/kubero-cli/types"
 	"github.com/i582/cfmt/cmd/cfmt"
+	"gopkg.in/yaml.v3"
+	"os"
 )
 
-func (m *ManagerPipeline) FetchPipeline(pipelineName string) error {
+func (m *PipelineManager) FetchPipeline(pipelineName string) error {
 	confirmation := promptLine("Do you want to fetch the pipeline '"+pipelineName+"'?", "[y,n]", "y")
 	if confirmation == "y" {
 		log.Info("Fetching pipeline " + pipelineName)
@@ -33,6 +35,7 @@ func (m *ManagerPipeline) FetchPipeline(pipelineName string) error {
 		if pipelineErr != nil {
 			if p == nil {
 				log.Error("Pipeline '" + pipelineName + "' not found ")
+				return pipelineErr
 			}
 			if p.StatusCode() == 404 {
 				log.Error("Pipeline '" + pipelineName + "' not found ")
@@ -46,12 +49,15 @@ func (m *ManagerPipeline) FetchPipeline(pipelineName string) error {
 			log.Error("Unable to decode response")
 			return jsonUnmarshalErr
 		}
-		m.WritePipelineYaml(pipeline)
+		if writeYamlErr := m.WriteYamlPipeline(&pipeline); writeYamlErr != nil {
+			log.Error("Unable to write pipeline to file")
+			return writeYamlErr
+		}
 	}
 	return nil
 }
 
-func (m *ManagerPipeline) FetchApp(appName string, stageName string, pipelineName string) error {
+func (m *PipelineManager) FetchApp(appName string, stageName string, pipelineName string) error {
 
 	confirmation := promptLine("Do you want to fetch the app '"+appName+"' from '"+pipelineName+"'?", "[y,n]", "y")
 	if confirmation == "y" {
@@ -78,6 +84,7 @@ func (m *ManagerPipeline) FetchApp(appName string, stageName string, pipelineNam
 	if appErr != nil {
 		if apiClientApp == nil {
 			log.Error("App '" + appName + "' not found ")
+			return appErr
 		}
 		if apiClientApp.StatusCode() == 404 {
 			log.Error("App '" + appName + "' not found ")
@@ -91,11 +98,15 @@ func (m *ManagerPipeline) FetchApp(appName string, stageName string, pipelineNam
 		return jsonUnmarshalErr
 	}
 
-	m.WriteAppYaml(app)
+	if writeYamlErr := m.WriteYamlApp(&app); writeYamlErr != nil {
+		log.Error("Unable to write app to file")
+		return writeYamlErr
+	}
 
+	return nil
 }
 
-func (m *ManagerPipeline) FetchAllPipelines() {
+func (m *PipelineManager) FetchAllPipelines() {
 	confirmation := promptLine("Are you sure you want to fetch all pipelines?", "[y,n]", "n")
 	if confirmation == "y" {
 		_, _ = cfmt.Println("{{Fetching all pipelines}}::yellow")
@@ -103,4 +114,48 @@ func (m *ManagerPipeline) FetchAllPipelines() {
 		_, _ = cfmt.Println("{{Aborted}}::red")
 		return
 	}
+}
+
+func (m *PipelineManager) WriteYamlPipeline(pipeline *types.PipelineCRD) error {
+	if pipeline == nil {
+		return os.ErrInvalid
+	}
+	yamlData, yamlErr := yaml.Marshal(pipeline)
+	if yamlErr != nil {
+		return yamlErr
+	}
+	file, fileErr := os.Create(pipeline.Metadata.Name + ".yaml")
+	if fileErr != nil {
+		return fileErr
+	}
+	defer func(file *os.File) {
+		_ = file.Close()
+	}(file)
+	_, writeErr := file.Write(yamlData)
+	if writeErr != nil {
+		return writeErr
+	}
+	return nil
+}
+
+func (m *PipelineManager) WriteYamlApp(app *types.AppCRD) error {
+	if app == nil {
+		return os.ErrInvalid
+	}
+	yamlData, yamlErr := yaml.Marshal(app)
+	if yamlErr != nil {
+		return yamlErr
+	}
+	file, fileErr := os.Create(app.Metadata.Name + ".yaml")
+	if fileErr != nil {
+		return fileErr
+	}
+	defer func(file *os.File) {
+		_ = file.Close()
+	}(file)
+	_, writeErr := file.Write(yamlData)
+	if writeErr != nil {
+		return writeErr
+	}
+	return nil
 }

@@ -11,14 +11,14 @@ type IConfigManager interface {
 	LoadPLConfigs(pipelineName string) (*viper.Viper, error)
 	GetConfigDir() (string, error)
 	GetConfigName() string
-	WriteCLIConfig(argDomain, argPort, argToken string) error
+
 	GetConfig() types.Config
-	GetCurrentInstance() types.Instance
 	GetLogger() *types.Logger
 	GetViper() *types.Viper
 	getLogz() *types.LogzCore
 	GetName() string
 	GetPath() string
+
 	SetPath(path string) error
 	SetName(name string) error
 	GetProp(key string) interface{}
@@ -28,6 +28,10 @@ type IConfigManager interface {
 	getGitDir() string
 	getGitRemote() string
 	GetIACBaseDir() string
+
+	WriteCLIConfig(argDomain, argPort, argToken string) error
 	loadCLIConfig()
-	LoadCredentials() error
+
+	GetInstanceManager() *InstanceManager
+	GetCredentialsManager() *CredentialsManager
 }

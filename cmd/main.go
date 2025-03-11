@@ -5,18 +5,17 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package main
 
 import (
-	"github.com/faelmori/kubero-cli/cmd/cli"
-	"github.com/faelmori/kubero-cli/internal/config"
+	"os"
 )
 
-func init() {
-
-	cfg := config.NewViperConfig("", "config")
-	_ = cfg.LoadConfig()
-}
-
 func main() {
-	cli.Execute()
+	kbr := NewKuberoClient()
+	if err := kbr.Command().Execute(); err != nil {
+		kbr.log.Error(err.Error(), map[string]interface{}{
+			"context": "kubero-cli",
+			"action":  "Execute",
+			"error":   err.Error(),
+		})
+		os.Exit(1)
+	}
 }
-
-//

@@ -92,19 +92,19 @@ func (v *ConfigManager) loadCLIConfig() {
 		}
 	}
 
-	viperUnmarshalErr := viper.UnmarshalKey("instances", &v.instanceList)
+	viperUnmarshalErr := viper.UnmarshalKey("instances", &v.instanceManager.personalInstanceList)
 	if viperUnmarshalErr != nil {
 		fmt.Println("Error while unmarshalling instances:", viperUnmarshalErr)
 		return
 	}
-	for instanceName, instance := range v.instanceList {
+	for instanceName, instance := range v.instanceManager.personalInstanceList {
 		instance.Name = instanceName
 		instance.ConfigPath = viper.ConfigFileUsed()
-		v.instanceList[instanceName] = instance
+		v.instanceManager.personalInstanceList[instanceName] = instance
 	}
 
-	var repoInstancesList map[string]types.Instance
-	unmarshalKeyErr := repoConfig.UnmarshalKey("instances", &repoInstancesList)
+	repoInstancesList := make(map[string]*types.Instance)
+	unmarshalKeyErr := repoConfig.UnmarshalKey("instances", &v.instanceManager.personalInstanceList)
 	if unmarshalKeyErr != nil {
 		fmt.Println("Error while unmarshalling instances:", unmarshalKeyErr)
 		return
@@ -112,36 +112,16 @@ func (v *ConfigManager) loadCLIConfig() {
 	for instanceName, repoInstance := range repoInstancesList {
 		repoInstance.Name = instanceName
 		repoInstance.ConfigPath = repoConfig.ConfigFileUsed()
-		v.instanceList[instanceName] = repoInstance
+		v.instanceManager.personalInstanceList[instanceName] = repoInstance
 	}
 
 	var instanceNameList = make([]string, 0)
 	currentInstanceName := viper.GetString("currentInstance")
-	for instanceName, instance := range v.instanceList {
+	for instanceName, instance := range v.instanceManager.personalInstanceList {
 		instance.Name = instanceName
 		instanceNameList = append(instanceNameList, instanceName)
 		if instanceName == currentInstanceName {
-			v.current = instance
+			v.instanceManager.currentInstance = instance
 		}
 	}
-}
-func (v *ConfigManager) loadCredentials() error {
-	if v.credentials == nil {
-		v.credentials = viper.New()
-	}
-	v.credentials.SetConfigName("credentials")
-	v.credentials.SetConfigType("yaml")
-	v.credentials.AddConfigPath("/etc/kubero/")
-	v.credentials.AddConfigPath("$HOME/.kubero/")
-	err := v.credentials.ReadInConfig()
-	if err != nil {
-		log.Error("Failed to read credentials", map[string]interface{}{
-			"context": "kubero-cli",
-			"pkg":     "config",
-			"method":  "loadCredentials",
-			"error":   err.Error(),
-		})
-		return err
-	}
-	return nil
 }

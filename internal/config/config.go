@@ -15,12 +15,12 @@ import (
 var promptLine = utils.NewConsolePrompt().PromptLine
 
 type ConfigManager struct {
-	path, name                         string
-	logz                               *logz.LogzCore
-	Logger                             *logz.LogzLogger
-	globals, credentials, pipelineConf *viper.Viper
-	current                            types.Instance
-	instanceList                       map[string]types.Instance
+	path, name            string
+	logz                  *logz.LogzCore
+	Logger                *logz.LogzLogger
+	globals, pipelineConf *viper.Viper
+	instanceManager       *InstanceManager
+	credentialsManager    *CredentialsManager
 }
 
 func NewViperConfig(path, name string) IConfigManager {
@@ -83,6 +83,7 @@ func (v *ConfigManager) WriteCLIConfig(argDomain, argPort, argApiToken string) e
 
 	return nil
 }
+
 func (v *ConfigManager) GetConfig() types.Config {
 	var config types.Config
 	if err := v.globals.Unmarshal(&config); err != nil {
@@ -95,10 +96,11 @@ func (v *ConfigManager) GetConfig() types.Config {
 	}
 	return config
 }
-func (v *ConfigManager) GetLogger() *logz.LogzLogger { return v.Logger }
-func (v *ConfigManager) GetViper() *viper.Viper      { return v.globals }
-func (v *ConfigManager) GetPath() string             { return v.path }
-func (v *ConfigManager) GetName() string             { return v.name }
+func (v *ConfigManager) GetLogger() *types.Logger { return v.Logger }
+func (v *ConfigManager) GetViper() *viper.Viper   { return v.globals }
+func (v *ConfigManager) GetPath() string          { return v.path }
+func (v *ConfigManager) GetName() string          { return v.name }
+
 func (v *ConfigManager) GetConfigDir() (string, error) {
 	if v.path != "" {
 		return v.path, nil
@@ -141,7 +143,23 @@ func (v *ConfigManager) GetConfigDir() (string, error) {
 	return configPath, nil
 }
 func (v *ConfigManager) GetIACBaseDir() string {
-	currentInstance := v.GetCurrentInstance()
+	if v.instanceManager == nil {
+		if v.credentialsManager == nil {
+			v.credentialsManager = NewCredentialsManager()
+			if loadCredentialsErr := v.credentialsManager.LoadCredentials(); loadCredentialsErr != nil {
+				// Attempt to resolve the config file across multiple directories and methods.
+				// If all attempts fail, terminate with a clear error message (critical for app functionality).
+				log.Fatal("Error loading credentials!", map[string]interface{}{
+					"context": "kubero-cli",
+					"pkg":     "config",
+					"method":  "GetIACBaseDir",
+					"error":   loadCredentialsErr.Error(),
+				})
+			}
+		}
+		v.instanceManager = NewInstanceManager(v.credentialsManager.GetCredentials())
+	}
+	currentInstance := v.instanceManager.GetCurrentInstance()
 	basePath := "."
 	if currentInstance.IacBaseDir == "" {
 		currentInstance.IacBaseDir = ".kubero"
@@ -166,18 +184,6 @@ func (v *ConfigManager) GetConfigName() string {
 		return v.name
 	}
 	return "config.yaml"
-}
-func (v *ConfigManager) GetCurrentInstance() types.Instance {
-	var instance types.Instance
-	if err := v.globals.UnmarshalKey("instance", &instance); err != nil {
-		log.Error("Failed to unmarshal instance", map[string]interface{}{
-			"context": "kubero-cli",
-			"pkg":     "config",
-			"method":  "GetCurrentInstance",
-			"error":   err.Error(),
-		})
-	}
-	return instance
 }
 
 func (v *ConfigManager) GetProp(key string) interface{} {
@@ -232,4 +238,42 @@ func (v *ConfigManager) SetName(name string) error {
 	}
 
 	return nil
+}
+
+func (v *ConfigManager) GetInstanceManager() *InstanceManager {
+	if v.instanceManager == nil {
+		if v.credentialsManager == nil {
+			v.credentialsManager = NewCredentialsManager()
+			if loadCredentialsErr := v.credentialsManager.LoadCredentials(); loadCredentialsErr != nil {
+				// Attempt to resolve the config file across multiple directories and methods.
+				// If all attempts fail, terminate with a clear error message (critical for app functionality).
+				log.Error("Error loading credentials!", map[string]interface{}{
+					"context": "kubero-cli",
+					"pkg":     "config",
+					"method":  "GetInstanceManager",
+					"error":   loadCredentialsErr.Error(),
+				})
+				return nil
+			}
+		}
+		v.instanceManager = NewInstanceManager(v.credentialsManager.GetCredentials())
+	}
+	return v.instanceManager
+}
+func (v *ConfigManager) GetCredentialsManager() *CredentialsManager {
+	if v.credentialsManager == nil {
+		v.credentialsManager = NewCredentialsManager()
+		if loadCredentialsErr := v.credentialsManager.LoadCredentials(); loadCredentialsErr != nil {
+			// Attempt to resolve the config file across multiple directories and methods.
+			// If all attempts fail, terminate with a clear error message (critical for app functionality).
+			log.Error("Error loading credentials!", map[string]interface{}{
+				"context": "kubero-cli",
+				"pkg":     "config",
+				"method":  "GetCredentialsManager",
+				"error":   loadCredentialsErr.Error(),
+			})
+			return nil
+		}
+	}
+	return v.credentialsManager
 }

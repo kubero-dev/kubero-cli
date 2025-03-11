@@ -2,6 +2,9 @@ package config
 
 import (
 	"encoding/json"
+	a "github.com/faelmori/kubero-cli/internal/api"
+	u "github.com/faelmori/kubero-cli/internal/utils"
+	t "github.com/faelmori/kubero-cli/types"
 	"os"
 	"strconv"
 
@@ -15,14 +18,11 @@ var addonsCmd = &cobra.Command{
 	Use:   "addons",
 	Short: "A brief description of your command",
 	Run: func(cmd *cobra.Command, args []string) {
-		resp, _ := api.GetAddons()
+		client := a.NewClient()
+		resp, _ := client.GetAddons()
 		//fmt.Println(resp)
 		printAddons(resp)
 	},
-}
-
-func init() {
-	configCmd.AddCommand(addonsCmd)
 }
 
 // print the response as a table
@@ -33,12 +33,15 @@ func printAddons(r *resty.Response) {
 	table.SetRowLine(true)
 	//table.SetBorder(false)
 
-	var addonsList []Addon
-	json.Unmarshal(r.Body(), &addonsList)
+	var addonsList []t.Addon
+	unmarshalErr := json.Unmarshal(r.Body(), &addonsList)
+	if unmarshalErr != nil {
+		return
+	}
 
 	for _, addon := range addonsList {
 		table.Append([]string{addon.ID, addon.Description, addon.Version.Installed, strconv.FormatBool(addon.Beta), strconv.FormatBool(addon.Enabled)})
 	}
-
-	printCLI(table, r)
+	utils := u.NewUtils()
+	utils.PrintCLI(table, r, "table")
 }
