@@ -28,7 +28,7 @@ type PipelineManager struct {
 	c.ConfigManager
 	repo         *a.Repository
 	repositories []*t.GitRepository
-	contexts     *t.Contexts
+	contexts     []*a.Context
 	pipelines    *t.PipelinesList
 	buildPacks   *t.BuildPacks
 	pipelineName string

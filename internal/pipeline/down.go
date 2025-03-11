@@ -4,7 +4,7 @@ import a "github.com/faelmori/kubero-cli/internal/api"
 
 func (m *PipelineManager) DownPipeline() {
 	pipelinesList := m.GetAllRemotePipelines()
-	m.ensurePipelineIsSet(pipelinesList)
+	m.EnsurePipelineIsSet(pipelinesList)
 	m.downPipelineByName(m.pipelineName)
 }
 
@@ -20,9 +20,9 @@ func (m *PipelineManager) downPipelineByName(pipelineName string) {
 func (m *PipelineManager) DownApp() {
 
 	pipelinesList := m.GetAllRemotePipelines()
-	m.ensurePipelineIsSet(pipelinesList)
+	m.EnsurePipelineIsSet(pipelinesList)
 
-	m.ensureStageNameIsSet()
+	m.EnsureStageNameIsSet()
 
 	appsList := m.GetAllRemoteApps()
 	m.ensureAppNameIsSelected(appsList)
@@ -37,7 +37,7 @@ func (m *PipelineManager) DownApp() {
 
 func (m *PipelineManager) DownAllPipelines() {
 	confirmationLine("Are you sure you want to undeploy all pipelines?", "y")
-	pipelinesList := m.getAllLocalPipelines()
+	pipelinesList := m.GetAllLocalPipelines()
 	for _, pipeline := range pipelinesList {
 		m.downPipelineByName(pipeline)
 	}

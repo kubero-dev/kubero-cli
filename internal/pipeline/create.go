@@ -13,19 +13,19 @@ import (
 func (m *PipelineManager) CreatePipelineAndApp() error {
 	createPipelineAndAppArg := promptLine("Create a new pipeline", "[y,n]", "y")
 	if createPipelineAndAppArg == "y" {
-		if _, createPlErr := m.createPipeline(); createPlErr != nil {
+		if _, createPlErr := m.CreatePipeline(); createPlErr != nil {
 			return createPlErr
 		}
 	}
 
 	pipelinesList := m.GetAllLocalApps()
-	if ensurePlIsSetErr := m.ensurePipelineIsSet(pipelinesList); ensurePlIsSetErr != nil {
+	if ensurePlIsSetErr := m.EnsurePipelineIsSet(pipelinesList); ensurePlIsSetErr != nil {
 		return ensurePlIsSetErr
 	}
-	if ensurePlNameIsSetErr := m.ensureStageNameIsSet(); ensurePlNameIsSetErr != nil {
-		m.ensureAppNameIsSet()
+	if ensurePlNameIsSetErr := m.EnsureStageNameIsSet(); ensurePlNameIsSetErr != nil {
+		m.EnsureAppNameIsSet()
 	}
-	if createAppErr := m.createApp(); createAppErr != nil {
+	if createAppErr := m.CreateApp(); createAppErr != nil {
 		return createAppErr
 	}
 
@@ -189,7 +189,7 @@ func (m *PipelineManager) pipelinesForm() t.PipelineCRD {
 	fmt.Println("")
 	prompt := &survey.Select{
 		Message: "Select a buildpack",
-		Options: m.GetBuildPacksSimpleList(),
+		Options: nil, //m.GetBuildPacksSimpleList(),
 	}
 	askOneErr := survey.AskOne(prompt, &pipelineCRD.Spec.Buildpack.Name)
 	if askOneErr != nil {
@@ -280,4 +280,19 @@ func (m *PipelineManager) pipelinesForm() t.PipelineCRD {
 	}
 
 	return pipelineCRD
+}
+
+func (m *PipelineManager) GetContextSimpleList() []string {
+	m.LoadContexts()
+	if m.contexts == nil {
+		return []string{}
+	}
+	contexts := m.contexts
+	contextList := make([]string, 0)
+	for _, context := range contexts {
+		ctx := *context
+		contextList = append(contextList, ctx.GetName())
+	}
+
+	return contextList
 }
