@@ -38,72 +38,72 @@ func (c *Client) Init(baseURL string, bearerToken string) *resty.Request {
 }
 func (c *Client) DeployPipeline(pipeline types.PipelineCRD) (*resty.Response, error) {
 	c.client.SetBody(pipeline.Spec)
-	res, err := c.client.Post("/api/cli/pipelines/")
+	res, err := c.client.Post("/api/v3/pipelines/")
 
 	return res, err
 }
 func (c *Client) UnDeployPipeline(pipelineName string) (*resty.Response, error) {
-	res, err := c.client.Delete("/api/cli/pipelines/" + pipelineName)
+	res, err := c.client.Delete("/api/v3/pipelines/" + pipelineName)
 
 	return res, err
 }
 func (c *Client) GetPipeline(pipelineName string) (*resty.Response, error) {
-	res, err := c.client.Get("/api/cli/pipelines/" + pipelineName)
+	res, err := c.client.Get("/api/v3/pipelines/" + pipelineName)
 
 	return res, err
 }
 func (c *Client) UnDeployApp(pipelineName string, stageName string, appName string) (*resty.Response, error) {
-	res, err := c.client.Delete("/api/cli/pipelines/" + pipelineName + "/" + stageName + "/" + appName)
+	res, err := c.client.Delete("/api/v3/pipelines/" + pipelineName + "/" + stageName + "/" + appName)
 
 	return res, err
 }
 func (c *Client) GetApp(pipelineName string, stageName string, appName string) (*resty.Response, error) {
-	res, err := c.client.Get("/api/cli/pipelines/" + pipelineName + "/" + stageName + "/" + appName)
+	res, err := c.client.Get("/api/v3/pipelines/" + pipelineName + "/" + stageName + "/" + appName)
 
 	return res, err
 }
 func (c *Client) GetApps() (*resty.Response, error) {
-	res, err := c.client.Get("/api/cli/apps")
+	res, err := c.client.Get("/api/v3/apps")
 
 	return res, err
 }
 func (c *Client) GetPipelines() (*resty.Response, error) {
-	res, err := c.client.Get("/api/cli/pipelines")
+	res, err := c.client.Get("/api/v3/pipelines")
 	return res, handleError(res, err)
 }
 func (c *Client) DeployApp(app types.AppCRD) (*resty.Response, error) {
 	c.client.SetBody(app.Spec)
-	res, err := c.client.Post("/api/cli/apps")
+	res, err := c.client.Post("/api/v3/apps")
 
 	return res, err
 }
 func (c *Client) GetPipelineApps(pipelineName string) (*resty.Response, error) {
-	res, err := c.client.Get("/api/cli/pipelines/" + pipelineName + "/apps")
+	res, err := c.client.Get("/api/v3/pipelines/" + pipelineName + "/apps")
 
 	return res, err
 }
 func (c *Client) GetAddons() (*resty.Response, error) {
-	res, err := c.client.Get("/api/cli/addons")
+	res, err := c.client.Get("/api/v3/addons")
 
 	return res, err
 }
 func (c *Client) GetBuildpacks() (*resty.Response, error) {
-	res, err := c.client.Get("/api/cli/config/buildpacks")
+	res, err := c.client.Get("/api/v3/config/buildpacks")
 
 	return res, err
 }
 func (c *Client) GetPodsize() (*resty.Response, error) {
-	res, err := c.client.Get("/api/cli/config/podsize")
+	res, err := c.client.Get("/api/v3/config/podsize")
 
 	return res, err
 }
 func (c *Client) GetRepositories() (*resty.Response, error) {
-	res, err := c.client.Get("/api/cli/config/repositories")
+	res, err := c.client.Get("/api/v3/config/repositories")
 
 	return res, err
 }
 func (c *Client) GetContexts() (*resty.Response, error) {
-	res, err := c.client.Get("/api/cli/config/k8s/context")
+	res, err := c.client.Get("/api/v3/config/k8s/context")
 
 	return res, err
 }

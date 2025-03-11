@@ -30,57 +30,6 @@ func SetLogger(l log.Logger) { logger = l }
 // Fatal logs a message at level Fatal on the standard logger and then calls os.Exit(1).
 func Fatal(args ...interface{}) {
 	logger.Fatalln(args...)
-	//if args == nil {
-	//	return
-	//} else if len(args) == 1 {
-	//	if str, ok := args[0].(string); ok {
-	//		caller, file, line, _ := runtime.Caller(1)
-	//		if logger != nil {
-	//			logger.FatalC(str, map[string]interface{}{
-	//				"context": "kubero-cli",
-	//				"pkg":     "log",
-	//				"method":  "Fatal",
-	//				"caller":  runtime.FuncForPC(caller).Name(),
-	//				"file":    file,
-	//				"line":    line,
-	//				"args":    args,
-	//			})
-	//		} else {
-	//			log.FatalC(str, map[string]interface{}{
-	//				"context": "kubero-cli",
-	//				"pkg":     "log",
-	//				"method":  "Fatal",
-	//				"caller":  runtime.FuncForPC(caller).Name(),
-	//				"file":    file,
-	//				"line":    line,
-	//				"args":    args,
-	//			})
-	//		}
-	//	} else {
-	//		caller, file, line, _ := runtime.Caller(1)
-	//		if logger != nil {
-	//			logger.FatalC("Fatal error", map[string]interface{}{
-	//				"context": "kubero-cli",
-	//				"pkg":     "log",
-	//				"method":  "Fatal",
-	//				"caller":  runtime.FuncForPC(caller).Name(),
-	//				"file":    file,
-	//				"line":    line,
-	//				"args":    args,
-	//			})
-	//		} else {
-	//			log.FatalC("Fatal error", map[string]interface{}{
-	//				"context": "kubero-cli",
-	//				"pkg":     "log",
-	//				"method":  "Fatal",
-	//				"caller":  runtime.FuncForPC(caller).Name(),
-	//				"file":    file,
-	//				"line":    line,
-	//				"args":    args,
-	//			})
-	//		}
-	//	}
-	//}
 }
 
 // Fatalf logs a formatted message at level Fatal on the standard logger and then calls os.Exit(1).
