@@ -30,7 +30,7 @@ func cmdDashboard() *cobra.Command {
 			path := filepath.Dir(configPath)
 			file := filepath.Base(configPath)
 			cfgMgr := config.NewViperConfig(path, file)
-			if cfgMgrErr := cfgMgr.LoadConfigs(); cfgMgrErr != nil {
+			if cfgMgrErr := cfgMgr.LoadConfig(); cfgMgrErr != nil {
 				return cfgMgrErr
 			}
 			url := cfgMgr.GetConfig().Api.Url

@@ -6,7 +6,7 @@ import (
 	"github.com/faelmori/kubero-cli/internal/utils"
 	"github.com/faelmori/kubero-cli/types"
 	logz "github.com/faelmori/logz/logger"
-	"github.com/fsnotify/fsnotify"
+	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
@@ -14,23 +14,25 @@ import (
 
 var promptLine = utils.NewConsolePrompt().PromptLine
 
-type ManagerConfig struct {
-	path, name string
-	Viper      *viper.Viper
-	Logz       *logz.LogzCore
-	Logger     *logz.LogzLogger
+type ConfigManager struct {
+	path, name                         string
+	logz                               *logz.LogzCore
+	Logger                             *logz.LogzLogger
+	globals, credentials, pipelineConf *viper.Viper
+	current                            types.Instance
+	instanceList                       map[string]types.Instance
 }
 
-func NewViperConfig(path, name string) *ManagerConfig {
-	var vpCfg ManagerConfig
+func NewViperConfig(path, name string) IConfigManager {
+	var vpCfg ConfigManager
 	logger := log.Logger()
-	vpCfg = ManagerConfig{
-		path:   path,
-		name:   name,
-		Viper:  viper.New(),
-		Logger: &logger,
+	vpCfg = ConfigManager{
+		path:    path,
+		name:    name,
+		globals: viper.New(),
+		Logger:  &logger,
 	}
-	if loadConfigsErr := vpCfg.LoadConfigs(); loadConfigsErr != nil {
+	if loadConfigsErr := vpCfg.LoadConfig(); loadConfigsErr != nil {
 		// Attempt to resolve the config file across multiple directories and methods.
 		// If all attempts fail, terminate with a clear error message (critical for app functionality).
 		log.Fatal("Error reloading configs!", map[string]interface{}{
@@ -43,7 +45,7 @@ func NewViperConfig(path, name string) *ManagerConfig {
 	return &vpCfg
 }
 
-func (v *ManagerConfig) WriteCLIConfig(argDomain, argPort, argApiToken string) error {
+func (v *ConfigManager) WriteCLIConfig(argDomain, argPort, argApiToken string) error {
 	ingressInstall := promptLine("10) Write the Kubero CLI config", "[y,n]", "n")
 	if ingressInstall != "y" {
 		log.Info("Skipping Kubero CLI config")
@@ -81,19 +83,23 @@ func (v *ManagerConfig) WriteCLIConfig(argDomain, argPort, argApiToken string) e
 
 	return nil
 }
-func (v *ManagerConfig) saveConfig() error {
-	if v.Viper == nil {
-		return nil
+func (v *ConfigManager) GetConfig() types.Config {
+	var config types.Config
+	if err := v.globals.Unmarshal(&config); err != nil {
+		log.Error("Failed to unmarshal config", map[string]interface{}{
+			"context": "kubero-cli",
+			"pkg":     "config",
+			"method":  "GetConfig",
+			"error":   err.Error(),
+		})
 	}
-	if v.path == "" {
-		v.path, _ = v.GetConfigDir()
-	}
-	if v.name == "" {
-		v.name = v.GetConfigName()
-	}
-	return v.Viper.WriteConfigAs(filepath.Join(v.path, v.name))
+	return config
 }
-func (v *ManagerConfig) GetConfigDir() (string, error) {
+func (v *ConfigManager) GetLogger() *logz.LogzLogger { return v.Logger }
+func (v *ConfigManager) GetViper() *viper.Viper      { return v.globals }
+func (v *ConfigManager) GetPath() string             { return v.path }
+func (v *ConfigManager) GetName() string             { return v.name }
+func (v *ConfigManager) GetConfigDir() (string, error) {
 	if v.path != "" {
 		return v.path, nil
 	}
@@ -134,59 +140,57 @@ func (v *ManagerConfig) GetConfigDir() (string, error) {
 	v.path = configPath
 	return configPath, nil
 }
-func (v *ManagerConfig) GetConfigName() string {
+func (v *ConfigManager) GetIACBaseDir() string {
+	currentInstance := v.GetCurrentInstance()
+	basePath := "."
+	if currentInstance.IacBaseDir == "" {
+		currentInstance.IacBaseDir = ".kubero"
+		basePath += "/" + currentInstance.IacBaseDir
+	}
+	gitdir := v.getGitDir()
+	if gitdir != "" {
+		basePath = gitdir + "/" + currentInstance.IacBaseDir
+	}
+	if _, err := os.Stat(basePath); os.IsNotExist(err) {
+		_, _ = cfmt.Println("{{Creating directory}}::yellow " + basePath)
+		mkDirAllErr := os.MkdirAll(basePath, 0755)
+		if mkDirAllErr != nil {
+			fmt.Println("Error while creating directory:", mkDirAllErr)
+			return ""
+		}
+	}
+	return basePath
+}
+func (v *ConfigManager) GetConfigName() string {
 	if v.name != "" {
 		return v.name
 	}
 	return "config.yaml"
 }
-func (v *ManagerConfig) LoadConfigs() error {
-	path, pathErr := v.GetConfigDir()
-	if pathErr != nil {
-		return pathErr
-	}
-	name := v.GetConfigName()
-	viper.AddConfigPath(path)
-	viper.SetConfigName(name)
-	viper.SetConfigType(filepath.Ext(name)[1:])
-	viper.AutomaticEnv()
-	if readInConfigErr := viper.ReadInConfig(); readInConfigErr != nil {
-		return readInConfigErr
-	}
-	viper.WatchConfig()
-	viper.OnConfigChange(func(e fsnotify.Event) {
-		log.Debug("Config file changed:", map[string]interface{}{
+func (v *ConfigManager) GetCurrentInstance() types.Instance {
+	var instance types.Instance
+	if err := v.globals.UnmarshalKey("instance", &instance); err != nil {
+		log.Error("Failed to unmarshal instance", map[string]interface{}{
 			"context": "kubero-cli",
 			"pkg":     "config",
-			"method":  "LoadConfigs",
-			"event":   e.Name,
+			"method":  "GetCurrentInstance",
+			"error":   err.Error(),
 		})
-		rErr := viper.ReadInConfig()
-		if rErr != nil {
-			// Attempt to resolve the config file across multiple directories and methods.
-			// If all attempts fail, terminate with a clear error message (critical for app functionality).
-			log.Fatal("Error reloading configs!", map[string]interface{}{
-				"context": "kubero-cli",
-				"pkg":     "config",
-				"method":  "LoadConfigs",
-				"event":   "OnConfigChange",
-				"error":   rErr.Error(),
-			})
-		}
-	})
-	return nil
+	}
+	return instance
 }
-func (v *ManagerConfig) GetProp(key string) interface{} {
-	if v.Viper == nil {
+
+func (v *ConfigManager) GetProp(key string) interface{} {
+	if v.globals == nil {
 		return nil
 	}
-	return v.Viper.Get(key)
+	return v.globals.Get(key)
 }
-func (v *ManagerConfig) SetProp(key string, value interface{}) {
-	if v.Viper == nil {
-		v.Viper = viper.New()
+func (v *ConfigManager) SetProp(key string, value interface{}) {
+	if v.globals == nil {
+		v.globals = viper.New()
 	}
-	v.Viper.Set(key, value)
+	v.globals.Set(key, value)
 	go func() {
 		saveConfigErr := v.saveConfig()
 		if saveConfigErr != nil {
@@ -201,36 +205,7 @@ func (v *ManagerConfig) SetProp(key string, value interface{}) {
 		}
 	}()
 }
-func (v *ManagerConfig) GetCurrentInstance() types.Instance {
-	var instance types.Instance
-	if err := v.Viper.UnmarshalKey("instance", &instance); err != nil {
-		log.Error("Failed to unmarshal instance", map[string]interface{}{
-			"context": "kubero-cli",
-			"pkg":     "config",
-			"method":  "GetCurrentInstance",
-			"error":   err.Error(),
-		})
-	}
-	return instance
-}
-func (v *ManagerConfig) GetConfig() types.Config {
-	var config types.Config
-	if err := v.Viper.Unmarshal(&config); err != nil {
-		log.Error("Failed to unmarshal config", map[string]interface{}{
-			"context": "kubero-cli",
-			"pkg":     "config",
-			"method":  "GetConfig",
-			"error":   err.Error(),
-		})
-	}
-	return config
-}
-func (v *ManagerConfig) GetLogger() *logz.LogzLogger { return v.Logger }
-func (v *ManagerConfig) getLogz() *logz.LogzCore     { return v.Logz }
-func (v *ManagerConfig) GetViper() *viper.Viper      { return v.Viper }
-func (v *ManagerConfig) GetPath() string             { return v.path }
-func (v *ManagerConfig) GetName() string             { return v.name }
-func (v *ManagerConfig) SetPath(path string) error {
+func (v *ConfigManager) SetPath(path string) error {
 	if filepath.IsAbs(path) {
 		if filepath.Base(path) == "" {
 			v.path = filepath.Dir(path)
@@ -240,33 +215,21 @@ func (v *ManagerConfig) SetPath(path string) error {
 			v.name = filepath.Base(path)
 		}
 	}
-	if err := v.LoadConfigs(); err != nil {
+	if err := v.LoadConfig(); err != nil {
 		return err
 	}
 
 	return nil
 }
-func (v *ManagerConfig) SetName(name string) error {
+func (v *ConfigManager) SetName(name string) error {
 	if name == "" {
 		v.name = v.GetConfigName()
 	} else {
 		v.name = name
 	}
-	if err := v.LoadConfigs(); err != nil {
+	if err := v.LoadConfig(); err != nil {
 		return err
 	}
 
 	return nil
-}
-func (v *ManagerConfig) setViper(vp *viper.Viper) {
-	if vp == nil {
-		if v.Viper == nil {
-			v.Viper = viper.New()
-		} else {
-			viper.Reset()
-			v.Viper = viper.GetViper()
-		}
-	} else {
-		v.Viper = vp
-	}
 }

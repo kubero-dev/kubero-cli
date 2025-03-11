@@ -12,7 +12,7 @@ import (
 func init() {
 
 	cfg := config.NewViperConfig("", "config")
-	_ = cfg.LoadConfigs()
+	_ = cfg.LoadConfig()
 }
 
 func main() {

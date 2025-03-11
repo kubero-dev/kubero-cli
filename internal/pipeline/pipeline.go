@@ -144,7 +144,7 @@ func (m *ManagerPipeline) GetAllRemotePipelines() []string {
 }
 
 func (m *ManagerPipeline) getAllLocalPipelines() []string {
-	baseDir := m.getIACBaseDir()
+	baseDir := m.GetIACBaseDir()
 	dir := baseDir + "/" + m.pipelineName
 
 	var pipelineNames []string

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"github.com/faelmori/kubero-cli/internal/config"
 	"github.com/spf13/cobra"
 	"path/filepath"
@@ -27,11 +28,11 @@ You can use the 'config set' command to set a new configuration.`,
 			nm := filepath.Base(path)
 
 			cfgManager := config.NewViperConfig(pt, nm)
+			cfgMap := cfgManager.GetConfig()
 
-			cfgMap := cfgManager.Viper.AllSettings()
-			for k, v := range cfgMap {
-				cmd.Println(k, ":", v)
-			}
+			fmt.Println(fmt.Sprintf("Configuration file: %s", path))
+			fmt.Println("Configuration:")
+			fmt.Println(cfgMap)
 		},
 	}
 
@@ -51,12 +52,16 @@ You can use the 'config' command to show your current configuration.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			pt := filepath.Dir(path)
 			nm := filepath.Base(path)
-
 			cfgManager := config.NewViperConfig(pt, nm)
 
-			cfgManager.Viper.SetConfigFile(path)
-			return cfgManager.Viper.ReadInConfig()
+			if ptErr := cfgManager.SetPath(pt); ptErr != nil {
+				return ptErr
+			}
+			if nmErr := cfgManager.SetName(nm); nmErr != nil {
+				return nmErr
+			}
 
+			return nil
 		},
 	}
 
@@ -78,11 +83,12 @@ You can use the 'config' command to show your current configuration.`,
 			nm := filepath.Base(path)
 
 			cfgManager := config.NewViperConfig(pt, nm)
+			cfgMap := cfgManager.GetConfig()
 
-			cfgMap := cfgManager.Viper.AllSettings()
-			for k, v := range cfgMap {
-				cmd.Println(k, ":", v)
-			}
+			fmt.Println(fmt.Sprintf("Configuration file: %s", path))
+			fmt.Println("Configuration:")
+
+			fmt.Println(cfgMap)
 		},
 	}
 

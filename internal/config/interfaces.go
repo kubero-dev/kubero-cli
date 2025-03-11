@@ -1,10 +1,14 @@
 package config
 
-import "github.com/faelmori/kubero-cli/types"
+import (
+	"github.com/faelmori/kubero-cli/types"
+	"github.com/spf13/viper"
+)
 
-// IManagerConfig defines the interface for loading configuration
-type IManagerConfig interface {
-	LoadConfigs() error
+// IConfigManager defines the interface for loading configuration
+type IConfigManager interface {
+	LoadConfig() error
+	LoadPLConfigs(pipelineName string) (*viper.Viper, error)
 	GetConfigDir() (string, error)
 	GetConfigName() string
 	WriteCLIConfig(argDomain, argPort, argToken string) error
@@ -20,4 +24,10 @@ type IManagerConfig interface {
 	GetProp(key string) interface{}
 	SetProp(key string, value interface{})
 	saveConfig() error
+
+	getGitDir() string
+	getGitRemote() string
+	GetIACBaseDir() string
+	loadCLIConfig()
+	LoadCredentials() error
 }

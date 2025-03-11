@@ -6,8 +6,10 @@ import (
 )
 
 type Repository interface {
-	GetRepositories() ([]Repository, error)
-	GetContexts() ([]Context, error)
+	GetRepositories() (repositoriesResponse *resty.Response, err error)
+	GetContexts() (contextsResponse *resty.Response, err error)
+	loadContexts()
+	loadRepositories()
 }
 
 type Context interface {

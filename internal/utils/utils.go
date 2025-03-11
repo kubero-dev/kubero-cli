@@ -31,7 +31,6 @@ func (u *Utils) GenerateRandomString(length int, chars string) string {
 	}
 	return string(b)
 }
-
 func (u *Utils) CheckBinary(binary string) bool {
 	envs := os.Environ()
 	if ep, ok := os.LookupEnv("PATH"); ok {
@@ -40,7 +39,6 @@ func (u *Utils) CheckBinary(binary string) bool {
 	_, err := exec.LookPath(binary)
 	return err == nil
 }
-
 func (u *Utils) CheckAllBinaries(binaries ...string) error {
 	for _, binary := range binaries {
 		if !u.CheckBinary(binary) {
@@ -49,7 +47,6 @@ func (u *Utils) CheckAllBinaries(binaries ...string) error {
 	}
 	return nil
 }
-
 func (u *Utils) CheckClusters() error {
 	var outb, errb bytes.Buffer
 	clusterInfo := exec.Command("kubectl", "cluster-info")
@@ -74,7 +71,6 @@ func (u *Utils) CheckClusters() error {
 
 	return nil
 }
-
 func (u *Utils) CheckKubeConfig() error {
 	if !u.CheckBinary("kubectl") {
 		return fmt.Errorf("kubectl not found in PATH")
@@ -87,22 +83,18 @@ func (u *Utils) CheckKubeConfig() error {
 	}
 	return nil
 }
-
 func (u *Utils) CreateNamespace(namespace string) error {
 	_, err := exec.Command("kubectl", "create", "namespace", namespace).Output()
 	return err
 }
-
 func (u *Utils) DeleteNamespace(namespace string) error {
 	_, err := exec.Command("kubectl", "delete", "namespace", namespace).Output()
 	return err
 }
-
 func (u *Utils) CheckNamespace(namespace string) error {
 	_, err := exec.Command("kubectl", "get", "namespace", namespace).Output()
 	return err
 }
-
 func (u *Utils) MergeKubeconfig(kubeconfig []byte) error {
 	newDefaultPathOptions := clientcmd.NewDefaultPathOptions()
 	config1, _ := newDefaultPathOptions.GetStartingConfig()
@@ -126,7 +118,6 @@ func (u *Utils) MergeKubeconfig(kubeconfig []byte) error {
 	_ = clientcmd.ModifyConfig(clientcmd.DefaultClientConfig.ConfigAccess(), *config1, true)
 	return nil
 }
-
 func (u *Utils) PrintCLI(table *tablewriter.Table, r *resty.Response, outputFormat string) {
 	if outputFormat == "json" {
 		fmt.Println(r)
@@ -134,7 +125,6 @@ func (u *Utils) PrintCLI(table *tablewriter.Table, r *resty.Response, outputForm
 		table.Render()
 	}
 }
-
 func (u *Utils) BoolToEmoji(b bool) string {
 	if b {
 		return "✅"
