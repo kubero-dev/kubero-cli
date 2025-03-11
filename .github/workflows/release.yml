@@ -2,34 +2,42 @@ name: goreleaser
 
 on:
   push:
-    #branches:
-    #  - master
-
-    # Publish `v1.2.3` tags as releases.
     tags:
-      - v*
+      - 'v*'
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
   goreleaser:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Checkout
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      -
-        name: Set version
-        run: |
-          echo -n $(git describe --tags --abbrev=0) > cmd/kuberoCli/VERSION
-      -
-        name: Set up Go
+
+      - name: Set version
+        run: echo -n $(git describe --tags --abbrev=0) > version/VERSION
+
+      - name: Get Go version from go.mod
+        id: get-go-version
+        run: echo "::set-output name=go-version::$(grep '^go ' go.mod | awk '{print $2}')"
+
+      - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.21
-      -
-        name: Run GoReleaser
+          go-version: ${{ steps.get-go-version.outputs.go-version }}
+
+      - name: Install UPX
+        run: sudo apt-get install -y upx
+
+      - name: Build binary
+        run: |
+          go build -ldflags "-s -w -X main.version=$(git describe --tags) -X main.commit=$(git rev-parse HEAD) -X main.date=$(date +%Y-%m-%d)" -trimpath -o ./dist/$(basename $(pwd))
+          upx ./dist/$(basename $(pwd)) --force-overwrite --lzma --no-progress --no-color -qqq
+
+      - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
         with:
           distribution: goreleaser
