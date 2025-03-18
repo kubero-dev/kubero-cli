@@ -1,7 +1,7 @@
 package install
 
 import (
-	"github.com/kubero-dev/kubero-cli/internal/log"
+	l "github.com/kubero-dev/kubero-cli/internal/log"
 	u "github.com/kubero-dev/kubero-cli/internal/utils"
 	"github.com/spf13/cobra"
 	"math/rand"
@@ -48,7 +48,7 @@ func (m *ManagerInstall) FullInstallation() error {
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	if checkAllBinariesErr := utils.CheckAllBinaries(); checkAllBinariesErr != nil {
-		log.Error("Failed to check all binaries")
+		l.Error("Failed to check all binaries")
 		return checkAllBinariesErr
 	}
 

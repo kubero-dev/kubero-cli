@@ -1,11 +1,11 @@
 name: goreleaser
 
 on:
-  push:
-    tags:
-      - 'v*'
-    branches:
-      - main
+#  push:
+#    tags:
+#      - 'v*'
+#    branches:
+#      - main
   workflow_dispatch:
 
 jobs:

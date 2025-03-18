@@ -2,7 +2,7 @@ package api
 
 import (
 	"github.com/go-resty/resty/v2"
-	"github.com/kubero-dev/kubero-cli/types"
+	t "github.com/kubero-dev/kubero-cli/types"
 )
 
 type Repository interface {
@@ -19,14 +19,14 @@ type Context interface {
 
 type ClientAPI interface {
 	Init(baseURL string, bearerToken string) *resty.Request
-	DeployPipeline(pipeline types.PipelineCRD) (*resty.Response, error)
+	DeployPipeline(pipeline t.PipelineCRD) (*resty.Response, error)
 	UnDeployPipeline(pipelineName string) (*resty.Response, error)
 	GetPipeline(pipelineName string) (*resty.Response, error)
 	UnDeployApp(pipelineName string, stageName string, appName string) (*resty.Response, error)
 	GetApp(pipelineName string, stageName string, appName string) (*resty.Response, error)
 	GetApps() (*resty.Response, error)
 	GetPipelines() (*resty.Response, error)
-	DeployApp(app types.AppCRD) (*resty.Response, error)
+	DeployApp(app t.AppCRD) (*resty.Response, error)
 	GetPipelineApps(pipelineName string) (*resty.Response, error)
 	GetAddons() (*resty.Response, error)
 	GetBuildpacks() (*resty.Response, error)

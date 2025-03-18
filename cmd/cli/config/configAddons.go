@@ -2,7 +2,7 @@ package config
 
 import (
 	"encoding/json"
-	"github.com/kubero-dev/kubero-cli/cmd/common"
+	c "github.com/kubero-dev/kubero-cli/cmd/common"
 	a "github.com/kubero-dev/kubero-cli/internal/api"
 	u "github.com/kubero-dev/kubero-cli/internal/utils"
 	t "github.com/kubero-dev/kubero-cli/types"
@@ -24,7 +24,7 @@ func cmdAddons() *cobra.Command {
 	var addonsCmd = &cobra.Command{
 		Use:   "addons",
 		Short: "A brief description of your command",
-		Annotations: common.GetDescriptions([]string{
+		Annotations: c.GetDescriptions([]string{
 			"A brief description of your command",
 			"Use the addons subcommand to list all available addons.",
 		}, false),

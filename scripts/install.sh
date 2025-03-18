@@ -1,51 +1,60 @@
 #!/usr/bin/env bash
 
-_about='
-################################################################################
-# This Script is used to install kubero-cli project.                           #
-#                                                                              #
-# Supported OS: Linux, macOS ---> Windows(not supported)                       #
-# Supported Architecture: amd64, arm64                                         #
-# Source: https://github.com/kubero-dev/kubero-cli                             #
-# Binary Release: https://github.com/kubero-dev/kubero-cli/releases/latest     #
-# License: Apache License 2.0                                                  #
-# Notes:                                                                       #
-# - [version] is optional; if omitted, the latest version will be used.        #
-# - If the script is run locally, it will try to resolve the version from the  #
-#   repo tags if no version is provided.                                       #
-# - The script will install the binary in the ~/.local/bin directory if the    #
-#   user is not root. Otherwise, it will install in /usr/local/bin.            #
-# - The script will add the installation directory to the PATH in the shell    #
-#   configuration file.                                                        #
-# - The script will also install UPX if it is not already installed.           #
-# - The script will build the binary if the build option is provided.          #
-# - The script will download the binary from the release URL if the install    #
-#   option is provided.                                                        #
-# - The script will clean up build artifacts if the clean option is provided.  #
-# - The script will check if the required dependencies are installed.          #
-# - The script will validate the Go version before building the binary.        #
-# - The script will check if the installation directory is in the PATH.        #
-# - The script will print a summary of the installation.                       #
-################################################################################
-'
-
 set -e
 
-# Define variables
-#APP_NAME="$(basename "$(dirname "$(realpath "$0")")")"
+_OWNER="kubero-dev"
+_APP_NAME="kubero"
+_PROJECT_NAME="kubero-cli"
+_LICENSE="Apache License 2.0"
 
-APP_NAME="kubero"
-CMD_PATH="$(dirname "$(realpath "$(dirname "$0")")")/cmd"
-BUILD_PATH="$(dirname "$CMD_PATH")"
-BINARY="$BUILD_PATH/$APP_NAME"
-LOCAL_BIN="$HOME/.local/bin"
-GLOBAL_BIN="/usr/local/bin"
+# Function to customize the release URL logic
+get_release_url() {
+    local version=$1
+    local os=$2
+    local arch=$3
+    # Default logic for constructing the release URL
+    echo "https://github.com/${_OWNER}/${_PROJECT_NAME}/releases/download/${version}/${_PROJECT_NAME}_${os}_${arch}.tar.gz"
+}
 
-SUCCESS="\033[0;32m"
-WARN="\033[0;33m"
-ERROR="\033[0;31m"
-INFO="\033[0;36m"
-NC="\033[0m"
+_ABOUT="'
+################################################################################
+  This Script is used to install logz project.
+
+  Supported OS: Linux, macOS ---> Windows(not supported)
+  Supported Architecture: amd64, arm64
+  Source: https://github.com/${_OWNER}/${_PROJECT_NAME}
+  Binary Release: https://github.com/${_OWNER}/${_PROJECT_NAME}/releases/latest
+  License: ${_LICENSE}
+  Notes:
+    - [version] is optional; if omitted, the latest version will be used.
+    - If the script is run locally, it will try to resolve the version from the
+      repo tags if no version is provided.
+    - The script will install the binary in the ~/.local/bin directory if the
+      user is not root. Otherwise, it will install in /usr/local/bin.
+    - The script will add the installation directory to the PATH in the shell
+      configuration file.
+    - The script will also install UPX if it is not already installed.
+    - The script will build the binary if the build option is provided.
+    - The script will download the binary from the release URL if the install
+      option is provided.
+    - The script will clean up build artifacts if the clean option is provided.
+    - The script will check if the required dependencies are installed.
+    - The script will validate the Go version before building the binary.
+    - The script will check if the installation directory is in the PATH.
+    - The script will print a summary of the installation.
+################################################################################
+'"
+
+_CMD_PATH="$(dirname "$(realpath "$(dirname "$0")")")/cmd"
+_BUILD_PATH="$(dirname "${_CMD_PATH}")"
+_BINARY="${_BUILD_PATH}/${_APP_NAME}"
+_LOCAL_BIN="${HOME:-"~"}/.local/bin"
+_GLOBAL_BIN="/usr/local/bin"
+_SUCCESS="\033[0;32m"
+_WARN="\033[0;33m"
+_ERROR="\033[0;31m"
+_INFO="\033[0;36m"
+_NC="\033[0m"
 
 # Log messages with different levels
 # Arguments:
@@ -59,17 +68,17 @@ log() {
 
   # With colors
   case $type in
-    info|INFO|-i|-I)
-      printf '%b[INFO]%b ℹ️  %s\n' "$INFO" "$NC" "$message"
+    info|_INFO|-i|-I)
+      printf '%b[_INFO]%b ℹ️  %s\n' "$_INFO" "$_NC" "$message"
       ;;
-    warn|WARN|-w|-W)
-      printf '%b[WARN]%b ⚠️  %s\n' "$WARN" "$NC" "$message"
+    warn|_WARN|-w|-W)
+      printf '%b[_WARN]%b ⚠️  %s\n' "$_WARN" "$_NC" "$message"
       ;;
-    error|ERROR|-e|-E)
-      printf '%b[ERROR]%b ❌  %s\n' "$ERROR" "$NC" "$message"
+    error|_ERROR|-e|-E)
+      printf '%b[_ERROR]%b ❌  %s\n' "$_ERROR" "$_NC" "$message"
       ;;
-    success|SUCCESS|-s|-S)
-      printf '%b[SUCCESS]%b ✅  %s\n' "$SUCCESS" "$NC" "$message"
+    success|_SUCCESS|-s|-S)
+      printf '%b[_SUCCESS]%b ✅  %s\n' "$_SUCCESS" "$_NC" "$message"
       ;;
     *)
       log "info" "$message"
@@ -111,7 +120,7 @@ detect_shell_rc() {
         sh) shell_rc_file="$HOME/.profile" ;;
         fish) shell_rc_file="$HOME/.config/fish/config.fish" ;;
         *)
-            log "warn" "Unsupported shell" "$($user_shell), modify PATH manually."
+            log "warn" "Unsupported shell, modify PATH manually."
             return 1
             ;;
     esac
@@ -134,7 +143,7 @@ add_to_path() {
         return 0
     fi
 
-    log "success" "export PATH=$target_path:\$PATH" >> "$shell_rc_file"
+    echo "export PATH=$target_path:\$PATH" >> "$shell_rc_file"
     log "success" "Added $target_path to PATH in $shell_rc_file."
     log "success" "Run 'source $shell_rc_file' to apply changes."
 }
@@ -142,21 +151,21 @@ add_to_path() {
 # Clean up build artifacts
 clean() {
     log "info" "Cleaning up build artifacts..."
-    rm -f "$BINARY" || true
+    rm -f "$_BINARY" || true
     log "success" "Cleaned up build artifacts."
 }
 
 # Install the binary to the appropriate directory
 install_binary() {
     if [ "$(id -u)" -ne 0 ]; then
-        log "info" "You are not root. Installing in $LOCAL_BIN..."
-        mkdir -p "$LOCAL_BIN"
-        cp "$BINARY" "$LOCAL_BIN/$APP_NAME" || exit 1
-        add_to_path "$LOCAL_BIN"
+        log "info" "You are not root. Installing in $_LOCAL_BIN..."
+        mkdir -p "$_LOCAL_BIN"
+        cp "$_BINARY" "$_LOCAL_BIN/$_APP_NAME" || exit 1
+        add_to_path "$_LOCAL_BIN"
     else
-        log "info" "Root detected. Installing in $GLOBAL_BIN..."
-        cp "$BINARY" "$GLOBAL_BIN/$APP_NAME" || exit 1
-        add_to_path "$GLOBAL_BIN"
+        log "info" "Root detected. Installing in $_GLOBAL_BIN..."
+        cp "$_BINARY" "$_GLOBAL_BIN/$_APP_NAME" || exit 1
+        add_to_path "$_GLOBAL_BIN"
     fi
     clean
 }
@@ -195,9 +204,9 @@ check_dependencies() {
 # Build the binary
 build_binary() {
     log "info" "Building the binary..."
-    go build -ldflags "-s -w -X main.version=$(git describe --tags) -X main.commit=$(git rev-parse HEAD) -X main.date=$(date +%Y-%m-%d)" -trimpath -o "$BINARY" "$CMD_PATH"
+    go build -ldflags "-s -w -X main.version=$(git describe --tags) -X main.commit=$(git rev-parse HEAD) -X main.date=$(date +%Y-%m-%d)" -trimpath -o "$_BINARY" "$_CMD_PATH"
     install_upx
-    upx "$BINARY" --force-overwrite --lzma --no-progress --no-color -qqq
+    upx "$_BINARY" --force-overwrite --lzma --no-progress --no-color -qqq
 }
 
 # Validate the Go version
@@ -213,9 +222,9 @@ validate_versions() {
 
 # Print a summary of the installation
 summary() {
-    install_dir="$BINARY"
+    install_dir="$_BINARY"
     log "success" "Build and installation complete!"
-    log "success" "Binary: $BINARY"
+    log "success" "Binary: $_BINARY"
     log "success" "Installed in: $install_dir"
     check_path "$install_dir"
 }
@@ -247,13 +256,13 @@ download_binary() {
     arch=$(get_arch)
 
     # Validação: Verificar se o sistema operacional ou a arquitetura são suportados
-    if [ "$os" == "unsupported" ] || [ "$arch" == "unsupported" ]; then
+    if [ "$os" = "unsupported" ] || [ "$arch" = "unsupported" ]; then
         log "error" "Unsupported OS or architecture: OS=$os ARCH=$arch."
         exit 1
     fi
 
     # Obter a versão mais recente de forma robusta (fallback para "latest")
-    version=$(curl -s https://api.github.com/repos/kubero-dev/kubero-cli/releases/latest | \
+    version=$(curl -s "https://api.github.com/repos/${_OWNER}/${_PROJECT_NAME}/releases/latest" | \
         grep "tag_name" | cut -d '"' -f 4 || echo "latest")
 
     if [ -z "$version" ]; then
@@ -261,14 +270,14 @@ download_binary() {
         exit 1
     fi
 
-    # Construir a URL de download
-    release_url="https://github.com/kubero-dev/kubero-cli/releases/download/${version}/kubero-cli_${os}_${arch}.tar.gz"
-    log "info" "Downloading Kubero CLI binary for OS=$os, ARCH=$arch, Version=$version..."
+    # Construir a URL de download usando a função customizável
+    release_url=$(get_release_url "$version" "$os" "$arch")
+    log "info" "Downloading ${_APP_NAME} binary for OS=$os, ARCH=$arch, Version=$version..."
     log "info" "Release URL: $release_url"
 
     # Diretório temporário para baixar o arquivo
     temp_dir=$(mktemp -d || exit 1)
-    archive_path="${temp_dir}/${APP_NAME}.tar.gz"
+    archive_path="${temp_dir}/${_APP_NAME}.tar.gz"
 
     # Realizar o download e validar sucesso
     if ! curl -L -o "$archive_path" "$release_url"; then
@@ -279,8 +288,8 @@ download_binary() {
     log "success" "Binary downloaded successfully."
 
     # Extração do arquivo para o diretório binário
-    log "info" "Extracting binary to: $(dirname "$BINARY")"
-    if ! tar -xzf "$archive_path" -C "$(dirname "$BINARY")"; then
+    log "info" "Extracting binary to: $(dirname "$_BINARY")"
+    if ! tar -xzf "$archive_path" -C "$(dirname "$_BINARY")"; then
         log "error" "Failed to extract the binary from: $archive_path"
         rm -rf "$temp_dir"
         exit 1
@@ -291,12 +300,12 @@ download_binary() {
     log "success" "Binary extracted successfully."
 
     # Verificar se o binário foi extraído com sucesso
-    if [ ! -f "$BINARY" ]; then
-        log "error" "Binary not found after extraction: $BINARY"
+    if [ ! -f "$_BINARY" ]; then
+        log "error" "Binary not found after extraction: $_BINARY"
         exit 1
     fi
 
-    log "success" "Download and extraction of Kubero CLI completed!"
+    log "success" "Download and extraction of ${_APP_NAME} completed!"
 }
 
 # Install the binary from the release URL
@@ -306,10 +315,15 @@ install_from_release() {
 }
 
 # Clear the screen before beginning
-printf '\33c\e[3J'
+clear
 
-# Print the about message
-printf '\n%s\n\n' "$_about"
+check_dependencies "curl" "tar" "upx" "git" || exit 1
+
+# Clear the screen before beginning
+clear
+
+# Print the ABOUT message
+printf '\n%s\n\n' "${_ABOUT}"
 
 # Check if the user has provided a command
 case "$1" in
@@ -319,9 +333,10 @@ case "$1" in
         ;;
     install|INSTALL|"-i"|"-I")
         log "info" "Executing install command..."
-        read -r -p "Do you want to download the precompiled binary? [y/N] (No will build locally): " _c </dev/tty
-        log "info" "User choice: $_c"
-        if [[ $_c =~ ^[Yy]+$ ]]; then
+        read -r -p "Do you want to download the precompiled binary? [y/N] (No will build locally): " c </dev/tty
+        log "info" "User choice: ${c}"
+
+        if [ "$c" = "y" ] || [ "$c" = "Y" ]; then
             log "info" "Downloading precompiled binary..."
             install_from_release || exit 1
         else
@@ -343,4 +358,3 @@ case "$1" in
 esac
 
 exit $?
-

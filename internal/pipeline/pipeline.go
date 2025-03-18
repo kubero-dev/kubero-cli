@@ -1,13 +1,14 @@
 package pipeline
 
 import (
-	"encoding/json"
-	"fmt"
 	a "github.com/kubero-dev/kubero-cli/internal/api"
 	c "github.com/kubero-dev/kubero-cli/internal/config"
-	"github.com/kubero-dev/kubero-cli/internal/log"
+	l "github.com/kubero-dev/kubero-cli/internal/log"
 	u "github.com/kubero-dev/kubero-cli/internal/utils"
 	t "github.com/kubero-dev/kubero-cli/types"
+
+	"encoding/json"
+	"fmt"
 	"os"
 	"strconv"
 
@@ -104,7 +105,7 @@ func (m *PipelineManager) printPipelinesList(r *resty.Response) error {
 	var pipelinesList t.PipelinesList
 	unmarshalErr := json.Unmarshal(r.Body(), &pipelinesList)
 	if unmarshalErr != nil {
-		log.Error("Unable to decode response")
+		l.Error("Unable to decode response")
 		return unmarshalErr
 	}
 
@@ -165,7 +166,7 @@ func (m *PipelineManager) GetAllLocalPipelines() []string {
 
 	files, err := os.ReadDir(dir)
 	if err != nil {
-		log.Fatal(err)
+		l.Fatal(err)
 	}
 
 	for _, f := range files {

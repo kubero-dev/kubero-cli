@@ -3,8 +3,8 @@ package api
 import (
 	"fmt"
 	"github.com/go-resty/resty/v2"
-	"github.com/kubero-dev/kubero-cli/types"
-	"github.com/kubero-dev/kubero-cli/version"
+	t "github.com/kubero-dev/kubero-cli/types"
+	v "github.com/kubero-dev/kubero-cli/version"
 )
 
 type Client struct {
@@ -28,7 +28,7 @@ func (c *Client) Init(baseURL string, bearerToken string) *resty.Request {
 		SetAuthToken(bearerToken).
 		SetHeader("Accept", "application/json").
 		SetHeader("Content-Type", "application/json").
-		SetHeader("User-Agent", "kubero-cli/"+version.Version())
+		SetHeader("User-Agent", "kubero-cli/"+v.Version())
 
 	c.baseURL = baseURL
 	c.bearerToken = bearerToken
@@ -36,7 +36,7 @@ func (c *Client) Init(baseURL string, bearerToken string) *resty.Request {
 
 	return client
 }
-func (c *Client) DeployPipeline(pipeline types.PipelineCRD) (*resty.Response, error) {
+func (c *Client) DeployPipeline(pipeline t.PipelineCRD) (*resty.Response, error) {
 	c.client.SetBody(pipeline.Spec)
 	res, err := c.client.Post("/api/v3/pipelines/")
 
@@ -71,7 +71,7 @@ func (c *Client) GetPipelines() (*resty.Response, error) {
 	res, err := c.client.Get("/api/v3/pipelines")
 	return res, handleError(res, err)
 }
-func (c *Client) DeployApp(app types.AppCRD) (*resty.Response, error) {
+func (c *Client) DeployApp(app t.AppCRD) (*resty.Response, error) {
 	c.client.SetBody(app.Spec)
 	res, err := c.client.Post("/api/v3/apps")
 

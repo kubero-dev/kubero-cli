@@ -2,7 +2,7 @@ package install
 
 import (
 	"github.com/go-resty/resty/v2"
-	"github.com/kubero-dev/kubero-cli/internal/log"
+	l "github.com/kubero-dev/kubero-cli/internal/log"
 	"github.com/leaanthony/spinner"
 	"gopkg.in/yaml.v3"
 	"math/rand"
@@ -13,7 +13,7 @@ import (
 
 func (m *ManagerInstall) installKind() error {
 	if !utils.CheckBinary("kind") {
-		log.Error("kind binary not found. Please install kind and try again")
+		l.Error("kind binary not found. Please install kind and try again")
 		return os.ErrNotExist
 	}
 
@@ -26,7 +26,7 @@ func (m *ManagerInstall) installKind() error {
 	var kindConfig KindConfig
 	yamlUnmarshalErr := yaml.Unmarshal(kf.Body(), &kindConfig)
 	if yamlUnmarshalErr != nil {
-		log.Error("Failed to unmarshal kind.yaml")
+		l.Error("Failed to unmarshal kind.yaml")
 		return yamlUnmarshalErr
 	}
 
@@ -40,7 +40,7 @@ func (m *ManagerInstall) installKind() error {
 	}
 	yamlUnmarshalBErr := yaml.Unmarshal(kv.Body(), &kindDefaults)
 	if yamlUnmarshalBErr != nil {
-		log.Error("Failed to unmarshal kindVersions.yaml")
+		l.Error("Failed to unmarshal kindVersions.yaml")
 		return yamlUnmarshalBErr
 	}
 	version := selectFromList("Kubernetes Version", kindDefaults.AvailableKubernetesVersions, "")
@@ -61,12 +61,12 @@ func (m *ManagerInstall) installKind() error {
 
 	kindConfigErr := os.WriteFile("kind.yaml", kindConfigYaml, 0644)
 	if kindConfigErr != nil {
-		log.Error("Failed to write kind.yaml")
+		l.Error("Failed to write kind.yaml")
 		return kindConfigErr
 	}
 
 	kindSpinner := spinner.New("Spin up a local Kind cluster")
-	log.Info("run command : kind create cluster --config kind.yaml")
+	l.Info("run command : kind create cluster --config kind.yaml")
 	kindSpinner.Start("Creating Kind cluster")
 	out, err := exec.Command("kind", "create", "cluster", "--config", "kind.yaml").Output()
 	if err != nil {
@@ -75,7 +75,7 @@ func (m *ManagerInstall) installKind() error {
 	}
 	kindSpinner.Success("Kind cluster started successfully")
 
-	log.Info(string(out))
+	l.Info(string(out))
 
 	return nil
 }

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	l "github.com/kubero-dev/kubero-cli/internal/log"
 	u "github.com/kubero-dev/kubero-cli/internal/utils"
-	"github.com/kubero-dev/kubero-cli/version"
+	v "github.com/kubero-dev/kubero-cli/version"
 	"os"
 	"os/exec"
 	"runtime"
@@ -42,7 +42,7 @@ func (d *Debug) Run() error {
 	return nil
 }
 func (d *Debug) PrintCLIVersion() {
-	log.Info(fmt.Sprintf("Kubero CLI Version: %s", version.Version()), nil)
+	log.Info(fmt.Sprintf("Kubero CLI Version: %s", v.Version()), nil)
 }
 func (d *Debug) PrintOsArch() {
 	log.Info("OS/Arch", nil)
@@ -69,7 +69,7 @@ func (d *Debug) PrintKubernetesVersion() error {
 		return os.ErrNotExist
 	}
 
-	kVersion, err := exec.Command("kubectl", "version", "-o", "yaml").Output()
+	kVersion, err := exec.Command("kubectl", "version", "--client=true", "-o", "yaml").Output()
 	if err != nil {
 		log.Error("Failed to fetch Kubernetes version.", map[string]interface{}{
 			"context": "kubero-cli",
@@ -79,7 +79,7 @@ func (d *Debug) PrintKubernetesVersion() error {
 		return err
 	}
 
-	log.Info(fmt.Sprintf("Kubernetes Version: %s", string(kVersion)), nil)
+	log.Info(fmt.Sprintf("Kubernetes Version:\n%s", string(kVersion)), nil)
 
 	return nil
 }

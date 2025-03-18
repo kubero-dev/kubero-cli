@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/kubero-dev/kubero-cli/types"
+	t "github.com/kubero-dev/kubero-cli/types"
 	"github.com/spf13/viper"
 )
 
@@ -12,10 +12,10 @@ type IConfigManager interface {
 	GetConfigDir() (string, error)
 	GetConfigName() string
 
-	GetConfig() types.Config
-	GetLogger() *types.Logger
-	GetViper() *types.Viper
-	getLogz() *types.LogzCore
+	GetConfig() t.Config
+	GetLogger() *t.Logger
+	GetViper() *t.Viper
+	getLogz() *t.LogzCore
 	GetName() string
 	GetPath() string
 

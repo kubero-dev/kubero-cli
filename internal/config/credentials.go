@@ -1,28 +1,28 @@
 package config
 
 import (
-	"github.com/kubero-dev/kubero-cli/internal/log"
-	"github.com/spf13/viper"
+	l "github.com/kubero-dev/kubero-cli/internal/log"
+	v "github.com/spf13/viper"
 	"os"
 )
 
 type CredentialsManager struct {
-	credentialsCfg *viper.Viper
+	credentialsCfg *v.Viper
 }
 
 func NewCredentialsManager() *CredentialsManager {
 	return &CredentialsManager{
-		credentialsCfg: viper.New(),
+		credentialsCfg: v.New(),
 	}
 }
 
-func (c *CredentialsManager) GetCredentials() *viper.Viper    { return c.credentialsCfg }
-func (c *CredentialsManager) SetCredentials(cfg *viper.Viper) { c.credentialsCfg = cfg }
+func (c *CredentialsManager) GetCredentials() *v.Viper    { return c.credentialsCfg }
+func (c *CredentialsManager) SetCredentials(cfg *v.Viper) { c.credentialsCfg = cfg }
 func (c *CredentialsManager) LoadCredentials() error {
 	if c == nil {
 		nc := NewCredentialsManager()
 		if nc.credentialsCfg == nil {
-			nc.credentialsCfg = viper.New()
+			nc.credentialsCfg = v.New()
 		}
 		c = nc
 	}
@@ -32,7 +32,7 @@ func (c *CredentialsManager) LoadCredentials() error {
 	c.credentialsCfg.AddConfigPath("$HOME/.kubero/")
 
 	if cfgInfo, cfgStat := os.Stat(c.credentialsCfg.ConfigFileUsed()); cfgStat != nil || cfgInfo.Size() == 0 {
-		log.Debug("No credentials found", map[string]interface{}{
+		l.Debug("No credentials found", map[string]interface{}{
 			"context": "kubero-cli",
 			"pkg":     "config",
 			"method":  "loadCredentials",
@@ -42,7 +42,7 @@ func (c *CredentialsManager) LoadCredentials() error {
 
 	err := c.credentialsCfg.ReadInConfig()
 	if err != nil {
-		log.Error("Failed to read credentials", map[string]interface{}{
+		l.Error("Failed to read credentials", map[string]interface{}{
 			"context": "kubero-cli",
 			"pkg":     "config",
 			"method":  "loadCredentials",
@@ -54,14 +54,14 @@ func (c *CredentialsManager) LoadCredentials() error {
 }
 func (c *CredentialsManager) WriteCredentials() error {
 	if c.credentialsCfg == nil {
-		c.credentialsCfg = viper.New()
+		c.credentialsCfg = v.New()
 	}
 	c.credentialsCfg.SetConfigName("credentials")
 	c.credentialsCfg.SetConfigType("yaml")
 	c.credentialsCfg.AddConfigPath("/etc/kubero/")
 	c.credentialsCfg.AddConfigPath("$HOME/.kubero/")
 	if err := c.credentialsCfg.WriteConfig(); err != nil {
-		log.Error("Failed to write credentials", map[string]interface{}{
+		l.Error("Failed to write credentials", map[string]interface{}{
 			"context": "kubero-cli",
 			"pkg":     "config",
 			"method":  "WriteCredentials",

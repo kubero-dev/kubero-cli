@@ -3,7 +3,7 @@ package install
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kubero-dev/kubero-cli/internal/log"
+	l "github.com/kubero-dev/kubero-cli/internal/log"
 	"math/rand"
 	"os"
 	"strconv"
@@ -11,21 +11,21 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/i582/cfmt/cmd/cfmt"
-	"github.com/kubero-dev/kubero-cli/version"
+	v "github.com/kubero-dev/kubero-cli/version"
 	"github.com/leaanthony/spinner"
 )
 
-var KuberoCliVersion = version.Version()
+var KuberoCliVersion = v.Version()
 
 func (m *ManagerInstall) installDigitalOcean() error {
 	// https://docs.digitalocean.com/reference/api/api-reference/#operation/kubernetes_create_cluster
 
-	log.Warn("Installing Kubernetes on Digital Ocean is currently beta state in kubero-cli")
-	log.Warn("Please report if you run into errors")
+	l.Warn("Installing Kubernetes on Digital Ocean is currently beta state in kubero-cli")
+	l.Warn("Please report if you run into errors")
 
 	token := os.Getenv("DIGITALOCEAN_ACCESS_TOKEN")
 	if token == "" {
-		log.Error("missing DIGITALOCEAN_ACCESS_TOKEN")
+		l.Error("missing DIGITALOCEAN_ACCESS_TOKEN")
 		return os.ErrNotExist
 	}
 
@@ -69,16 +69,16 @@ func (m *ManagerInstall) installDigitalOcean() error {
 
 	if kf.StatusCode() > 299 {
 		fmt.Println(kf.String())
-		log.Error("failed to create digital ocean cluster")
+		l.Error("failed to create digital ocean cluster")
 		return fmt.Errorf("failed to create digital ocean cluster")
 	} else {
-		log.Info("digital ocean cluster created")
+		l.Info("digital ocean cluster created")
 	}
 
 	var doCluster DigitalOcean
 	jsonUnmarshalErr := json.Unmarshal(kf.Body(), &doCluster)
 	if jsonUnmarshalErr != nil {
-		log.Error("failed to unmarshal digital ocean cluster response")
+		l.Error("failed to unmarshal digital ocean cluster response")
 		return jsonUnmarshalErr
 	}
 
@@ -92,14 +92,14 @@ func (m *ManagerInstall) installDigitalOcean() error {
 			Get("/v2/kubernetes/clusters/" + clusterID)
 
 		if doWait.StatusCode() > 299 {
-			log.Warn(doWait.String())
+			l.Warn(doWait.String())
 			doSpinner.Error("Failed to create digital ocean cluster")
 			continue
 		} else {
 			var doCluster DigitalOcean
 			jsonUnmarshalBErr := json.Unmarshal(doWait.Body(), &doCluster)
 			if jsonUnmarshalBErr != nil {
-				log.Error("failed to unmarshal digital ocean cluster response")
+				l.Error("failed to unmarshal digital ocean cluster response")
 				return jsonUnmarshalBErr
 			}
 			if doCluster.KubernetesCluster.Status.State == "running" {
@@ -113,7 +113,7 @@ func (m *ManagerInstall) installDigitalOcean() error {
 		Get("v2/kubernetes/clusters/" + clusterID + "/kubeconfig")
 	mergeKubeconfigErr := utils.MergeKubeconfig(kubectl.Body())
 	if mergeKubeconfigErr != nil {
-		log.Error("failed to merge kubeconfig")
+		l.Error("failed to merge kubeconfig")
 		return mergeKubeconfigErr
 	}
 
@@ -124,13 +124,13 @@ func (m *ManagerInstall) getDigitaloceanOptions(api *resty.Client) ([]string, []
 	token := os.Getenv("DIGITALOCEAN_ACCESS_TOKEN")
 	if token == "" {
 		_, _ = cfmt.Println("{{✗ DIGITALOCEAN_ACCESS_TOKEN is not set}}::red")
-		log.Fatal("missing DIGITALOCEAN_ACCESS_TOKEN")
+		l.Fatal("missing DIGITALOCEAN_ACCESS_TOKEN")
 	}
 
 	optionsResponse, err := api.R().Get("/v2/kubernetes/options")
 	if err != nil {
 		_, _ = cfmt.Println("{{✗ failed to get digitalocean options}}::red")
-		log.Fatal(err)
+		l.Fatal(err)
 	}
 
 	var versionsResponse DigitaloceanOptions

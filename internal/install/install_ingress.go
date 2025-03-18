@@ -1,15 +1,16 @@
 package install
 
 import (
-	"github.com/kubero-dev/kubero-cli/internal/log"
+	l "github.com/kubero-dev/kubero-cli/internal/log"
 	"github.com/leaanthony/spinner"
+	"log"
 	"os/exec"
 )
 
 func (m *ManagerInstall) InstallIngress() error {
 	ingressInstalled, _ := exec.Command("kubectl", "get", "ns", "ingress-nginx").Output()
 	if len(ingressInstalled) > 0 {
-		log.Info("Ingress is already installed")
+		l.Info("Ingress is already installed")
 		return nil
 	}
 
@@ -41,7 +42,7 @@ func (m *ManagerInstall) InstallIngress() error {
 
 		ingressSpinner := spinner.New("Install Ingress")
 		URL := "https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-" + m.ingressControllerVersion + "/deploy/static/provider/" + ingressProvider + "/deploy.yaml"
-		log.Info("  run command : kubectl apply -f " + URL)
+		l.Info("  run command : kubectl apply -f " + URL)
 		ingressSpinner.Start("Install Ingress")
 		_, ingressErr := exec.Command("kubectl", "apply", "-f", URL).Output()
 		if ingressErr != nil {

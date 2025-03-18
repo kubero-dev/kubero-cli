@@ -1,7 +1,7 @@
 package config
 
 import (
-	logz "github.com/faelmori/logz/logger"
+	l "github.com/faelmori/logz/logger"
 	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/cache"
@@ -23,7 +23,7 @@ func (v *ConfigManager) saveConfig() error {
 	}
 	return v.globals.WriteConfigAs(filepath.Join(v.path, v.name))
 }
-func (v *ConfigManager) getLogz() *logz.LogzCore { return v.logz }
+func (v *ConfigManager) getLogz() *l.LogzCore { return v.logz }
 func (v *ConfigManager) GetGitDir() string {
 	wd, _ := os.Getwd()
 	path := strings.Split(wd, "/")
