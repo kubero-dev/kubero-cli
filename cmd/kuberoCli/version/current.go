@@ -36,24 +36,24 @@ var (
 			fmt.Println(GetVersionInfoWithLatestAndCheck())
 		},
 	}
-	subCmdUpgrade = &cobra.Command{
-		Use:   "upgrade",
-		Short: "Upgrade kuberoCli to the latest version",
-		Long:  "Upgrade kuberoCli to the latest version",
-		Run: func(cmd *cobra.Command, args []string) {
-			syncCmd := CmdUpgradeCLIAndCheck()
-			if err := syncCmd.Start(); err != nil {
-				fmt.Println("Error: " + err.Error())
-			}
-		},
-	}
-	subCmdUpgradeCheck = &cobra.Command{
-		Use:    "check",
-		Hidden: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return UpgradeCLI()
-		},
-	}
+	//subCmdUpgrade = &cobra.Command{
+	//	Use:   "upgrade",
+	//	Short: "Upgrade kuberoCli to the latest version",
+	//	Long:  "Upgrade kuberoCli to the latest version",
+	//	Run: func(cmd *cobra.Command, args []string) {
+	//		syncCmd := CmdUpgradeCLIAndCheck()
+	//		if err := syncCmd.Start(); err != nil {
+	//			fmt.Println("Error: " + err.Error())
+	//		}
+	//	},
+	//}
+	//subCmdUpgradeCheck = &cobra.Command{
+	//	Use:    "check",
+	//	Hidden: true,
+	//	RunE: func(cmd *cobra.Command, args []string) error {
+	//		return UpgradeCLI()
+	//	},
+	//}
 )
 
 const gitModelUrl = "https://github.com/kubero-dev/kubero-cli"
@@ -108,77 +108,77 @@ func GetVersionInfoWithLatestAndCheck() string {
 	}
 }
 
-func UpgradeCLI() error {
-	if GetVersion() == GetLatestVersionFromGit() {
-		fmt.Println("You are using the latest version.")
-		return nil
-	} else {
-		netClient := &http.Client{
-			Timeout: time.Second * 10,
-		}
-
-		response, err := netClient.Get(gitModelUrl + "/releases/latest")
-		if err != nil {
-			return err
-		}
-
-		latestVersion := response.Status
-
-		if latestVersion == "200 OK" {
-			return fmt.Errorf("error: %s", latestVersion)
-		}
-
-		fileUrl := gitModelUrl + "/releases/download/" + latestVersion + "/kuberoCli"
-
-		// Download the file
-		response, err = netClient.Get(fileUrl)
-		if err != nil {
-			return fmt.Errorf("error: %s", err)
-		}
-
-		// Save the file
-		writeFile, err := os.Create("kuberoCli")
-		if err != nil {
-			return fmt.Errorf("error: %s", err)
-		}
-		defer func(writeFile *os.File) {
-			_ = writeFile.Close()
-		}(writeFile)
-
-		fileInfo, err := writeFile.Stat()
-		if err != nil {
-			return fmt.Errorf("error: %s", err)
-		}
-
-		fileMode := fileInfo.Mode()
-		if err := writeFile.Chmod(fileMode); err != nil {
-			return fmt.Errorf("error: %s", err)
-		}
-
-		currentExecutable, err := os.Executable()
-		if err != nil {
-			return fmt.Errorf("error: %s", err)
-		}
-
-		cmdCopy := "cp " + currentExecutable + " " + currentExecutable + ".old"
-		cmdRemove := "rm " + currentExecutable
-		cmdRename := "mv kuberoCli " + currentExecutable
-		cmdUpgradeSpawner := cmdCopy + " && " + cmdRemove + " && " + cmdRename
-
-		spawner := os.Getenv("SHELL")
-		if spawner == "" {
-			spawner = "/bin/sh"
-		}
-
-		cmd := exec.Command(spawner, "-c", cmdUpgradeSpawner)
-		return cmd.Run()
-	}
-}
-
-func CmdUpgradeCLIAndCheck() *exec.Cmd {
-	cmd := exec.Command("kubero", "upgrade", "check")
-	return cmd
-}
+//func UpgradeCLI() error {
+//	if GetVersion() == GetLatestVersionFromGit() {
+//		fmt.Println("You are using the latest version.")
+//		return nil
+//	} else {
+//		netClient := &http.Client{
+//			Timeout: time.Second * 10,
+//		}
+//
+//		response, err := netClient.Get(gitModelUrl + "/releases/latest")
+//		if err != nil {
+//			return err
+//		}
+//
+//		latestVersion := response.Status
+//
+//		if latestVersion == "200 OK" {
+//			return fmt.Errorf("error: %s", latestVersion)
+//		}
+//
+//		fileUrl := gitModelUrl + "/releases/download/" + latestVersion + "/kuberoCli"
+//
+//		// Download the file
+//		response, err = netClient.Get(fileUrl)
+//		if err != nil {
+//			return fmt.Errorf("error: %s", err)
+//		}
+//
+//		// Save the file
+//		writeFile, err := os.Create("kuberoCli")
+//		if err != nil {
+//			return fmt.Errorf("error: %s", err)
+//		}
+//		defer func(writeFile *os.File) {
+//			_ = writeFile.Close()
+//		}(writeFile)
+//
+//		fileInfo, err := writeFile.Stat()
+//		if err != nil {
+//			return fmt.Errorf("error: %s", err)
+//		}
+//
+//		fileMode := fileInfo.Mode()
+//		if err := writeFile.Chmod(fileMode); err != nil {
+//			return fmt.Errorf("error: %s", err)
+//		}
+//
+//		currentExecutable, err := os.Executable()
+//		if err != nil {
+//			return fmt.Errorf("error: %s", err)
+//		}
+//
+//		cmdCopy := "cp " + currentExecutable + " " + currentExecutable + ".old"
+//		cmdRemove := "rm " + currentExecutable
+//		cmdRename := "mv kuberoCli " + currentExecutable
+//		cmdUpgradeSpawner := cmdCopy + " && " + cmdRemove + " && " + cmdRename
+//
+//		spawner := os.Getenv("SHELL")
+//		if spawner == "" {
+//			spawner = "/bin/sh"
+//		}
+//
+//		cmd := exec.Command(spawner, "-c", cmdUpgradeSpawner)
+//		return cmd.Run()
+//	}
+//}
+//
+//func CmdUpgradeCLIAndCheck() *exec.Cmd {
+//	cmd := exec.Command("kubero", "upgrade", "check")
+//	return cmd
+//}
 
 func CliCommand() *cobra.Command {
 	versionCmd.AddCommand(subLatestCmd)
