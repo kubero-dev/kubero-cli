@@ -128,7 +128,13 @@ For advanced use cases, build and package the binary manually.
 7. **Verify Installation:**
 
    ```shell
-   kubero --version
+   kubero version check
+   ```
+
+8. **Check for Updates:** (Optional)
+
+   ```shell
+   kubero version latest
    ```
 
 ---
