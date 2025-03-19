@@ -23,7 +23,7 @@ jobs:
         name: Set version
         # Set the version file from the current checkout tag (just when a tag is pushed and this workflow is triggered)
         run: |
-          echo -n $(git describe --tags --abbrev=0) > cmd/kuberoCli/version/CURRENT_VERSION
+          echo -n $(git describe --tags --abbrev=0) > cmd/kuberoCli/version/CLI_VERSION
       -
         name: Set up Go
         uses: actions/setup-go@v3
