@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"net/http"
-	"os"
-	"os/exec"
 	"strings"
 	"time"
 )
