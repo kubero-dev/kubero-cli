@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"kubero/cmd/kuberoCli/version"
 	"os"
 	"reflect"
 	"strings"
@@ -60,12 +61,19 @@ Documentation:
 func Execute() {
 	rootCmd.CompletionOptions.HiddenDefaultCmd = false
 
+	rootCmd.AddCommand(version.CliCommand())
+
 	SetUsageDefinition(rootCmd)
 
 	loadCLIConfig()
 	loadCredentials()
 	api = new(kuberoApi.KuberoClient)
 	client = api.Init(currentInstance.ApiUrl, credentialsConfig.GetString(currentInstanceName))
+
+	for _, cmd := range rootCmd.Commands() {
+		SetUsageDefinition(cmd)
+	}
+
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
