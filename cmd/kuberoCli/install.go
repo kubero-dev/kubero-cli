@@ -147,7 +147,7 @@ func printInstallSteps() {
     6. Install the cert-manager {{(optional)}}::gray
     7. Install the monitoring stack {{(optional, but recommended)}}::gray
     8. Install the kubero UI {{(optional, but highly recommended)}}::gray
-    9. Write the kubero CLI config
+    9. Write the kubero CLI config {{(optional)}}::gray
 `)
 }
 
@@ -487,7 +487,7 @@ func createNamespace(namespace string) {
 
 func installKuberoUi() {
 
-	ingressInstall := promptLine("9) Install Kubero UI", "[y,n]", "y")
+	ingressInstall := promptLine("8) Install Kubero UI", "[y,n]", "y")
 	if ingressInstall != "y" {
 		return
 	}
@@ -501,7 +501,8 @@ func installKuberoUi() {
 
 		webhookSecret := promptLine("Random string for your webhook secret", "", generateRandomString(20, ""))
 
-		sessionKey := promptLine("Random string for your session key", "", generateRandomString(20, ""))
+		//sessionKey := promptLine("Random string for your session key", "", generateRandomString(20, ""))
+		sessionKey := generateRandomString(20, "") //DEPRECATED in v3.0.0
 
 		if argAdminUser == "" {
 			argAdminUser = promptLine("Admin User", "", "admin")
@@ -526,7 +527,7 @@ func installKuberoUi() {
 			"--from-literal=KUBERO_USERS="+userDBencoded,
 		)
 
-		githubConfigure := promptLine("Configure Github", "[y,n]", "y")
+		githubConfigure := promptLine("Configure Github", "[y,n]", "n")
 		githubPersonalAccessToken := ""
 		if githubConfigure == "y" {
 			githubPersonalAccessToken = promptLine("Github personal access token", "", "")
@@ -990,7 +991,7 @@ func installOLMCertManager() {
 
 func writeCLIConfig() {
 
-	ingressInstall := promptLine("10) Write the Kubero CLI config", "[y,n]", "n")
+	ingressInstall := promptLine("9) Write the Kubero CLI config", "[y,n]", "n")
 	if ingressInstall != "y" {
 		return
 	}
