@@ -879,15 +879,17 @@ func installCertManager() {
 
 	if installOlm {
 		installOLMCertManager()
+		installCertManagerClusterIssuer("default")
 	} else {
 		installCertManagerSlim()
+		installCertManagerClusterIssuer("cert-manager")
 	}
 }
 
 func installCertManagerSlim() {
 
-	kuberoUIInstalled, _ := exec.Command("kubectl", "get", "crd", "certificates.cert-manager.io").Output()
-	if len(kuberoUIInstalled) > 0 {
+	checkInstalled, _ := exec.Command("kubectl", "get", "crd", "certificates.cert-manager.io").Output()
+	if len(checkInstalled) > 0 {
 		_, _ = cfmt.Println("{{✓ CertManager already installed}}::lightGreen")
 		return
 	}
@@ -912,19 +914,30 @@ func installCertManagerSlim() {
 	}
 	certManagerSpinner.Success("Cert Manager installed")
 
-	installCertManagerClusterIssuer("cert-manager")
-
 }
 
 func installCertManagerClusterIssuer(namespace string) {
 
+	checkInstalled, _ := exec.Command("kubectl", "get", "ClusterIssuer").Output()
+	if len(checkInstalled) > 0 {
+		_, _ = cfmt.Println("{{✓ CertManager ClusterIssuer already installed}}::lightGreen")
+		return
+	}
+
 	installer := resty.New()
 
 	installer.SetBaseURL("https://raw.githubusercontent.com")
-	kf, _ := installer.R().Get("kubero-dev/kubero-cli/main/templates/certManagerClusterIssuer.prod.yaml")
+	kf, err := installer.R().Get("kubero-dev/kubero-cli/refs/heads/main/templates/certmanagerClusterIssuer.prod.yaml")
+	if err != nil {
+		fmt.Println(err)
+		cfmt.Println("{{✗ Failed to create CertManager ClusterIssuer. Rerunn command after finalized installer with: kubero install -c certManager}}::red")
+	}
 
 	var certManagerClusterIssuer CertManagerClusterIssuer
-	_ = yaml.Unmarshal(kf.Body(), &certManagerClusterIssuer)
+	err = yaml.Unmarshal(kf.Body(), &certManagerClusterIssuer)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	argCertManagerContact := promptLine("6.1) Letsencrypt ACME contact email", "", "noreply@yourdomain.com")
 	certManagerClusterIssuer.Spec.Acme.Email = argCertManagerContact
@@ -986,7 +999,6 @@ func installOLMCertManager() {
 	}
 	certManagerSpinner.Success("Cert Manager is ready")
 
-	installCertManagerClusterIssuer("default")
 }
 
 func writeCLIConfig() {
