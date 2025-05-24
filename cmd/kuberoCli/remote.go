@@ -15,10 +15,10 @@ import (
 )
 
 // instanceCmd represents the instance command
-var instanceCmd = &cobra.Command{
-	Use:     "instance",
-	Aliases: []string{"i"},
-	Short:   "List available instances",
+var remoteCmd = &cobra.Command{
+	Use:     "remote",
+	Aliases: []string{"r", "remotes"},
+	Short:   "Manage multiple Kubero instances",
 	Long:    `Print a list of available instances.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		/*
@@ -36,7 +36,7 @@ var instanceCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(instanceCmd)
+	rootCmd.AddCommand(remoteCmd)
 }
 
 func printInstanceList() {
@@ -82,7 +82,7 @@ func createInstanceForm() {
 	fmt.Println("Create a new instance")
 
 	instanceName := promptLine("Enter the name of the instance", "", "")
-	instanceApiurl := promptLine("Enter the API URL of the instance", "", "http://localhost:80")
+	instanceApiurl := promptLine("Enter the API URL of the instance", "", "http://kubero.localhost:80")
 	instancePath := viper.ConfigFileUsed()
 
 	personalInstanceList := viper.GetStringMap("instances")
@@ -99,6 +99,8 @@ func createInstanceForm() {
 
 	setCurrentInstance(instanceName)
 
+	// reqiored to login to the new instance
+	api.SetApiUrl(instanceApiurl, "")
 }
 
 func setCurrentInstance(instanceName string) {
@@ -110,6 +112,7 @@ func setCurrentInstance(instanceName string) {
 		fmt.Println("Failed to save configuration:", writeConfigErr)
 		return
 	}
+	api.SetApiUrl(currentInstance.ApiUrl, credentialsConfig.GetString(instanceName))
 }
 
 func deleteInstanceForm() {
