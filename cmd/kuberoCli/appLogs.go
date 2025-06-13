@@ -12,8 +12,9 @@ import (
 var logsAppCmd = &cobra.Command{
 	Use:     "logs",
 	Aliases: []string{"d"},
-	Short:   "Deletes an app from the cluster",
-	Long:    `Use the app subcommand to undeploy your apps from the cluster`,
+	Short:   "Load logs for an app",
+	Long:    `Load logs for an app in a specific stage of a pipeline`,
+	Example: `kubero app logs -p my-pipeline -s stage -a my-app`,
 	Run: func(cmd *cobra.Command, args []string) {
 		getAppLogHistory()
 	},

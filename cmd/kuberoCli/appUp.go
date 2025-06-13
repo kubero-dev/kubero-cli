@@ -14,7 +14,7 @@ import (
 // appCmd represents the app command
 var upAppCmd = &cobra.Command{
 	Use:   "iac:up",
-	Short: "Deploy an apps to the cluster",
+	Short: "Deploy an app to the cluster",
 	Long:  `Use the app subcommand to deploy your apps to the cluster`,
 	Run: func(cmd *cobra.Command, args []string) {
 
