@@ -2,6 +2,7 @@ package kuberoCli
 
 import (
 	"encoding/json"
+	"fmt"
 	"kubero/pkg/kuberoApi"
 	"log"
 	"os"
@@ -9,8 +10,33 @@ import (
 
 	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/olekukonko/tablewriter"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+var AppCmd = &cobra.Command{
+	Use:     "app",
+	Aliases: []string{"apps", "application", "applications", "a"},
+	Short:   "List apps in a Pipeline",
+	Long: `Create a new app in a Pipeline.
+
+If called without arguments, it will ask for all the required information`,
+	Run: func(cmd *cobra.Command, args []string) {
+
+		pipelinesList := getAllRemotePipelines()
+		fmt.Println(pipelinesList)
+		ensurePipelineIsSet(pipelinesList)
+		//ensureStageNameIsSet()
+		//ensureAppNameIsSet()
+		appsList()
+
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(AppCmd)
+	AppCmd.PersistentFlags().StringVarP(&pipelineName, "pipeline", "p", "", "name of the pipeline")
+}
 
 func appsList() {
 
@@ -19,7 +45,7 @@ func appsList() {
 	var pl Pipeline
 	jsonUnmarshalErr := json.Unmarshal(pipelineResp.Body(), &pl)
 	if jsonUnmarshalErr != nil {
-		log.Fatal(jsonUnmarshalErr)
+		log.Fatal("appsList ", jsonUnmarshalErr)
 		return
 	}
 

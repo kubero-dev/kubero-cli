@@ -296,7 +296,7 @@ type KuberoConfigfile struct {
 			} `yaml:"securityContext" gorm:"embedded"`
 			Command string `yaml:"command" gorm:"column:command"`
 		} `yaml:"run,omitempty" gorm:"embedded"`
-	} `yaml:"buildPacks" gorm:"embedded"`
+	} `yaml:"buildpacks" gorm:"embedded"`
 	PodSizeList []struct {
 		Active      bool   `yaml:"active,omitempty" gorm:"column:active"`
 		Name        string `yaml:"name" gorm:"column:name"`
