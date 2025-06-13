@@ -168,7 +168,7 @@ kubero
 |                          # Can also be used to install Kubero on an existing cluster
 ├── login (li)             # Log in to Kubero and save credentials
 ├── logout (lo)            # Log out from Kubero and remove saved credentials
-├── remote (r)          # List Kubero cluster
+├── remote (r)             # List Kubero cluster
 │   ├── create             # Create a cluster configuration
 │   ├── delete             # Delete a cluster configuration
 │   └── select             # Select a cluster
@@ -180,7 +180,7 @@ kubero
 │   └── delete             # Delete a pipeline
 ├── config                 # View available configurations
 │   ├── addons             # List addons
-│   ├── buildpacks         # List buildpacks
+│   ├── runpacks           # List runpacks
 │   └── podsizes           # List pod size configurations
 ├── dashboard (db)         # Open the Kubero dashboard
 ├── debug                  # Gather debug information

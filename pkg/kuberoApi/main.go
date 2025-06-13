@@ -207,9 +207,9 @@ func (k *KuberoClient) GetAddons() (*resty.Response, error) {
 	return res, err
 }
 
-func (k *KuberoClient) GetBuildpacks() (*resty.Response, error) {
+func (k *KuberoClient) GetRunpacks() (*resty.Response, error) {
 	k.validateClient()
-	res, err := k.client.Get("/api/config/buildpacks")
+	res, err := k.client.Get("/api/config/runpacks")
 
 	return res, err
 }

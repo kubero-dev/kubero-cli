@@ -57,7 +57,7 @@ func createPipeline() kuberoApi.PipelineCRD {
 
 	loadRepositories()
 	loadContexts()
-	loadBuildpacks()
+	loadRunpacks()
 	pipelineCRD := pipelinesForm()
 
 	writePipelineYaml(pipelineCRD)
@@ -120,7 +120,7 @@ func pipelinesForm() kuberoApi.PipelineCRD {
 	fmt.Println("")
 	prompt := &survey.Select{
 		Message: "Select a buildpack",
-		Options: buildPacksSimpleList,
+		Options: runPacksSimpleList,
 	}
 	askOneErr := survey.AskOne(prompt, &pipelineCRD.Spec.Buildpack.Name)
 	if askOneErr != nil {
