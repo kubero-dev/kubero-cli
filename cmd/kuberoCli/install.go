@@ -2,7 +2,6 @@ package kuberoCli
 
 import (
 	"bytes"
-	"encoding/base64"
 	"fmt"
 	"log"
 	"math/rand"
@@ -349,11 +348,11 @@ func installIngress() {
 
 	ingressInstalled, _ := exec.Command("kubectl", "get", "ns", "ingress-nginx").Output()
 	if len(ingressInstalled) > 0 {
-		_, _ = cfmt.Println("{{✓ Ingress is already installed}}::lightGreen")
+		_, _ = cfmt.Println("{{✓ NGINX Ingress is already installed}}::lightGreen")
 		return
 	}
 
-	ingressInstall := promptLine("4) Install Ingress", "[y,n]", "y")
+	ingressInstall := promptLine("4) Install NGINX Ingress", "[y,n]", "y")
 	if ingressInstall != "y" {
 		return
 	} else {
@@ -383,7 +382,7 @@ func installIngress() {
 		ingressSpinner := spinner.New("Install Ingress")
 		URL := "https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-" + ingressControllerVersion + "/deploy/static/provider/" + ingressProvider + "/deploy.yaml"
 		_, _ = cfmt.Println("  run command : kubectl apply -f " + URL)
-		ingressSpinner.Start("Install Ingress")
+		ingressSpinner.Start("Install NGINX Ingress")
 		_, ingressErr := exec.Command("kubectl", "apply", "-f", URL).Output()
 		if ingressErr != nil {
 			ingressSpinner.Error("Failed to run command. Try running this command manually: kubectl apply -f " + URL)
@@ -504,6 +503,7 @@ func installKuberoUi() {
 		//sessionKey := promptLine("Random string for your session key", "", generateRandomString(20, ""))
 		sessionKey := generateRandomString(20, "") //DEPRECATED in v3.0.0
 
+		/* DEPRECATED in v3.0.0
 		if argAdminUser == "" {
 			argAdminUser = promptLine("Admin User", "", "admin")
 		}
@@ -520,11 +520,12 @@ func installKuberoUi() {
 		userDB = append(userDB, User{Username: argAdminUser, Password: argAdminPassword, Insecure: true, ApiToken: argApiToken})
 		userDBjson, _ := json.Marshal(userDB)
 		userDBencoded := base64.StdEncoding.EncodeToString(userDBjson)
+		*/
 
 		createSecretCommand := exec.Command("kubectl", "create", "secret", "generic", "kubero-secrets",
 			"--from-literal=KUBERO_WEBHOOK_SECRET="+webhookSecret,
 			"--from-literal=KUBERO_SESSION_KEY="+sessionKey,
-			"--from-literal=KUBERO_USERS="+userDBencoded,
+			//"--from-literal=KUBERO_USERS="+userDBencoded, // DEPRECATED in v3.0.0
 		)
 
 		githubConfigure := promptLine("Configure Github", "[y,n]", "n")
@@ -629,7 +630,7 @@ func installKuberoUi() {
 			}
 		}
 
-		kuberoUIRegistry := promptLine("Enable BuildPipeline for Kubero (BETA)", "[y/n]", "n")
+		kuberoUIRegistry := promptLine("Enable BuildPipeline for Kubero", "[y/n]", "n")
 		if kuberoUIRegistry == "y" {
 			kuberoUIConfig.Spec.Registry.Enabled = true
 
@@ -664,6 +665,7 @@ func installKuberoUi() {
 			kuberoUIConfig.Spec.Registry.Account.Hash = string(kuberoUIRegistryPasswordBytes)
 		}
 
+		/* DEPRECATED in v3.0.0
 		kuberoUIAudit := promptLine("Enable Audit Logging", "[y/n]", "n")
 		if kuberoUIAudit == "y" {
 			kuberoUIConfig.Spec.Kubero.AuditLogs.Enabled = true
@@ -674,6 +676,7 @@ func installKuberoUi() {
 			kuberoUIConfig.Spec.Kubero.AuditLogs.StorageClassName = kuberoUIRegistryStorageClassName
 
 		}
+		*/
 
 		if monitoringInstalled {
 			kuberoUIConfig.Spec.Prometheus.Enabled = true
