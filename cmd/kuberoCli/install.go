@@ -2,7 +2,6 @@ package kuberoCli
 
 import (
 	"bytes"
-	"encoding/base64"
 	"fmt"
 	"log"
 	"math/rand"
@@ -147,7 +146,7 @@ func printInstallSteps() {
     6. Install the cert-manager {{(optional)}}::gray
     7. Install the monitoring stack {{(optional, but recommended)}}::gray
     8. Install the kubero UI {{(optional, but highly recommended)}}::gray
-    9. Write the kubero CLI config
+    9. Write the kubero CLI config {{(optional)}}::gray
 `)
 }
 
@@ -349,11 +348,11 @@ func installIngress() {
 
 	ingressInstalled, _ := exec.Command("kubectl", "get", "ns", "ingress-nginx").Output()
 	if len(ingressInstalled) > 0 {
-		_, _ = cfmt.Println("{{✓ Ingress is already installed}}::lightGreen")
+		_, _ = cfmt.Println("{{✓ NGINX Ingress is already installed}}::lightGreen")
 		return
 	}
 
-	ingressInstall := promptLine("4) Install Ingress", "[y,n]", "y")
+	ingressInstall := promptLine("4) Install NGINX Ingress", "[y,n]", "y")
 	if ingressInstall != "y" {
 		return
 	} else {
@@ -383,7 +382,7 @@ func installIngress() {
 		ingressSpinner := spinner.New("Install Ingress")
 		URL := "https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-" + ingressControllerVersion + "/deploy/static/provider/" + ingressProvider + "/deploy.yaml"
 		_, _ = cfmt.Println("  run command : kubectl apply -f " + URL)
-		ingressSpinner.Start("Install Ingress")
+		ingressSpinner.Start("Install NGINX Ingress")
 		_, ingressErr := exec.Command("kubectl", "apply", "-f", URL).Output()
 		if ingressErr != nil {
 			ingressSpinner.Error("Failed to run command. Try running this command manually: kubectl apply -f " + URL)
@@ -487,7 +486,7 @@ func createNamespace(namespace string) {
 
 func installKuberoUi() {
 
-	ingressInstall := promptLine("9) Install Kubero UI", "[y,n]", "y")
+	ingressInstall := promptLine("8) Install Kubero UI", "[y,n]", "y")
 	if ingressInstall != "y" {
 		return
 	}
@@ -501,8 +500,10 @@ func installKuberoUi() {
 
 		webhookSecret := promptLine("Random string for your webhook secret", "", generateRandomString(20, ""))
 
-		sessionKey := promptLine("Random string for your session key", "", generateRandomString(20, ""))
+		//sessionKey := promptLine("Random string for your session key", "", generateRandomString(20, ""))
+		sessionKey := generateRandomString(20, "") //DEPRECATED in v3.0.0
 
+		/* DEPRECATED in v3.0.0
 		if argAdminUser == "" {
 			argAdminUser = promptLine("Admin User", "", "admin")
 		}
@@ -519,14 +520,15 @@ func installKuberoUi() {
 		userDB = append(userDB, User{Username: argAdminUser, Password: argAdminPassword, Insecure: true, ApiToken: argApiToken})
 		userDBjson, _ := json.Marshal(userDB)
 		userDBencoded := base64.StdEncoding.EncodeToString(userDBjson)
+		*/
 
 		createSecretCommand := exec.Command("kubectl", "create", "secret", "generic", "kubero-secrets",
 			"--from-literal=KUBERO_WEBHOOK_SECRET="+webhookSecret,
 			"--from-literal=KUBERO_SESSION_KEY="+sessionKey,
-			"--from-literal=KUBERO_USERS="+userDBencoded,
+			//"--from-literal=KUBERO_USERS="+userDBencoded, // DEPRECATED in v3.0.0
 		)
 
-		githubConfigure := promptLine("Configure Github", "[y,n]", "y")
+		githubConfigure := promptLine("Configure Github", "[y,n]", "n")
 		githubPersonalAccessToken := ""
 		if githubConfigure == "y" {
 			githubPersonalAccessToken = promptLine("Github personal access token", "", "")
@@ -628,7 +630,7 @@ func installKuberoUi() {
 			}
 		}
 
-		kuberoUIRegistry := promptLine("Enable BuildPipeline for Kubero (BETA)", "[y/n]", "n")
+		kuberoUIRegistry := promptLine("Enable BuildPipeline for Kubero", "[y/n]", "n")
 		if kuberoUIRegistry == "y" {
 			kuberoUIConfig.Spec.Registry.Enabled = true
 
@@ -663,6 +665,7 @@ func installKuberoUi() {
 			kuberoUIConfig.Spec.Registry.Account.Hash = string(kuberoUIRegistryPasswordBytes)
 		}
 
+		/* DEPRECATED in v3.0.0
 		kuberoUIAudit := promptLine("Enable Audit Logging", "[y/n]", "n")
 		if kuberoUIAudit == "y" {
 			kuberoUIConfig.Spec.Kubero.AuditLogs.Enabled = true
@@ -673,6 +676,7 @@ func installKuberoUi() {
 			kuberoUIConfig.Spec.Kubero.AuditLogs.StorageClassName = kuberoUIRegistryStorageClassName
 
 		}
+		*/
 
 		if monitoringInstalled {
 			kuberoUIConfig.Spec.Prometheus.Enabled = true
@@ -878,15 +882,17 @@ func installCertManager() {
 
 	if installOlm {
 		installOLMCertManager()
+		installCertManagerClusterIssuer("default")
 	} else {
 		installCertManagerSlim()
+		installCertManagerClusterIssuer("cert-manager")
 	}
 }
 
 func installCertManagerSlim() {
 
-	kuberoUIInstalled, _ := exec.Command("kubectl", "get", "crd", "certificates.cert-manager.io").Output()
-	if len(kuberoUIInstalled) > 0 {
+	checkInstalled, _ := exec.Command("kubectl", "get", "crd", "certificates.cert-manager.io").Output()
+	if len(checkInstalled) > 0 {
 		_, _ = cfmt.Println("{{✓ CertManager already installed}}::lightGreen")
 		return
 	}
@@ -911,19 +917,30 @@ func installCertManagerSlim() {
 	}
 	certManagerSpinner.Success("Cert Manager installed")
 
-	installCertManagerClusterIssuer("cert-manager")
-
 }
 
 func installCertManagerClusterIssuer(namespace string) {
 
+	checkInstalled, _ := exec.Command("kubectl", "get", "ClusterIssuer").Output()
+	if len(checkInstalled) > 0 {
+		_, _ = cfmt.Println("{{✓ CertManager ClusterIssuer already installed}}::lightGreen")
+		return
+	}
+
 	installer := resty.New()
 
 	installer.SetBaseURL("https://raw.githubusercontent.com")
-	kf, _ := installer.R().Get("kubero-dev/kubero-cli/main/templates/certManagerClusterIssuer.prod.yaml")
+	kf, err := installer.R().Get("kubero-dev/kubero-cli/refs/heads/main/templates/certmanagerClusterIssuer.prod.yaml")
+	if err != nil {
+		fmt.Println(err)
+		cfmt.Println("{{✗ Failed to create CertManager ClusterIssuer. Rerunn command after finalized installer with: kubero install -c certManager}}::red")
+	}
 
 	var certManagerClusterIssuer CertManagerClusterIssuer
-	_ = yaml.Unmarshal(kf.Body(), &certManagerClusterIssuer)
+	err = yaml.Unmarshal(kf.Body(), &certManagerClusterIssuer)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	argCertManagerContact := promptLine("6.1) Letsencrypt ACME contact email", "", "noreply@yourdomain.com")
 	certManagerClusterIssuer.Spec.Acme.Email = argCertManagerContact
@@ -985,12 +1002,11 @@ func installOLMCertManager() {
 	}
 	certManagerSpinner.Success("Cert Manager is ready")
 
-	installCertManagerClusterIssuer("default")
 }
 
 func writeCLIConfig() {
 
-	ingressInstall := promptLine("10) Write the Kubero CLI config", "[y,n]", "n")
+	ingressInstall := promptLine("9) Write the Kubero CLI config", "[y,n]", "n")
 	if ingressInstall != "y" {
 		return
 	}

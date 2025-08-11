@@ -9,38 +9,38 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// buildpacksCmd represents the buildpacks command
-var buildpacksCmd = &cobra.Command{
-	Use:   "buildpacks",
-	Short: "List the available buildpacks",
+// runpacksCmd represents the runpacks command
+var runpacksCmd = &cobra.Command{
+	Use:   "runpacks",
+	Short: "List the available runpacks",
 	Run: func(cmd *cobra.Command, args []string) {
-		resp, _ := api.GetBuildpacks()
-		printBuildpacks(resp)
+		resp, _ := api.GetRunpacks()
+		printRunpacks(resp)
 	},
 }
 
 func init() {
-	configCmd.AddCommand(buildpacksCmd)
+	configCmd.AddCommand(runpacksCmd)
 }
 
-var buildPacksSimpleList []string
+var runPacksSimpleList []string
 
-func loadBuildpacks() {
+func loadRunpacks() {
 
-	b, _ := api.GetBuildpacks()
+	b, _ := api.GetRunpacks()
 
-	var buildPacks buildPacks
-	json.Unmarshal(b.Body(), &buildPacks)
+	var runPacks buildPacks
+	json.Unmarshal(b.Body(), &runPacks)
 
-	for _, buildPack := range buildPacks {
-		buildPacksSimpleList = append(buildPacksSimpleList, buildPack.Name)
+	for _, runPack := range runPacks {
+		runPacksSimpleList = append(runPacksSimpleList, runPack.Name)
 	}
 
-	//buildPacks = []string{"java", "node", "python", "ruby", "php"}
+	//runPacks = []string{"java", "node", "python", "ruby", "php"}
 }
 
 // print the response as a table
-func printBuildpacks(r *resty.Response) {
+func printRunpacks(r *resty.Response) {
 
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"Name", "Language", "Phase", "Image", "Command"})
@@ -48,10 +48,10 @@ func printBuildpacks(r *resty.Response) {
 	table.SetRowLine(true)
 	//table.SetBorder(false)
 
-	var buildPacksList buildPacks
-	json.Unmarshal(r.Body(), &buildPacksList)
+	var runPacksList buildPacks
+	json.Unmarshal(r.Body(), &runPacksList)
 
-	for _, podsize := range buildPacksList {
+	for _, podsize := range runPacksList {
 		table.Append([]string{
 			podsize.Name,
 			podsize.Language,

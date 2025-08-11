@@ -6,14 +6,57 @@ import (
 	"kubero/pkg/kuberoApi"
 	"log"
 	"os"
-	"strconv"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/olekukonko/tablewriter"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
+var pipelineCmd = &cobra.Command{
+	Use:     "pipeline",
+	Aliases: []string{"p", "pipelines"},
+	Short:   "List pipelines",
+	Long:    `List pipelines`,
+	Run: func(cmd *cobra.Command, args []string) {
+
+		if pipelineName != "" {
+
+			pipelineResp, err := api.GetPipeline(pipelineName)
+			if pipelineResp.StatusCode() == 404 {
+				_, _ = cfmt.Println("{{  Pipeline not found}}::red")
+				os.Exit(1)
+			}
+
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			printPipeline(pipelineResp)
+			appsList()
+		} else {
+			// get the pipelines
+			pipelineListResp, err := api.GetPipelines()
+			//pipelineListResp, err := client.Get("/api/cli/pipelines")
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			printPipelinesList(pipelineListResp)
+
+		}
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(pipelineCmd)
+	pipelineCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "table", "output format [table, json]")
+}
+
+/*
+// not implemented yet
 func loadAllLocalPipelines() pipelinesConfigsList {
 	pipelines := getAllLocalPipelines()
 
@@ -21,12 +64,12 @@ func loadAllLocalPipelines() pipelinesConfigsList {
 	pipelinesConfigsList := make(pipelinesConfigsList)
 
 	for _, pipeline := range pipelines {
-		pipelinesConfigsList[pipeline] = loadLocalPipeline(pipeline)
+		pipelinesConfigsList[pipeline] = loadPipelineConfig(pipeline, true)
 	}
 
 	return pipelinesConfigsList
-
 }
+*/
 
 func printPipeline(r *resty.Response) {
 	//fmt.Println(r)
@@ -145,6 +188,8 @@ func getAllLocalPipelines() []string {
 	return pipelineNames
 }
 
+/*
+// not implemented yet
 func getPipelinePhases(pipelineConfig *viper.Viper) []string {
 	var phases []string
 
@@ -160,8 +205,22 @@ func getPipelinePhases(pipelineConfig *viper.Viper) []string {
 	}
 	return phases
 }
+*/
 
-func loadPipelineConfig(pipelineName string) *viper.Viper {
+func getPipelinePhasesFromCRD(pipelineCRD kuberoApi.PipelineCRD) []string {
+	var phases []string
+
+	phasesList := pipelineCRD.Spec.Phases
+
+	for p := range phasesList {
+		if phasesList[p].Enabled {
+			phases = append(phases, phasesList[p].Name)
+		}
+	}
+	return phases
+}
+
+func loadLocalPipelineConfig(pipelineName string) *viper.Viper {
 
 	baseDir := getIACBaseDir()
 	dir := baseDir + "/" + pipelineName
@@ -179,9 +238,13 @@ func loadPipelineConfig(pipelineName string) *viper.Viper {
 	return pipelineConfig
 }
 
-func loadLocalPipeline(pipelineName string) kuberoApi.PipelineCRD {
-
-	pipelineConfig := loadPipelineConfig(pipelineName)
+func loadPipelineConfig(pipelineName string, local bool) kuberoApi.PipelineCRD {
+	var pipelineConfig *viper.Viper
+	if local {
+		pipelineConfig = loadLocalPipelineConfig(pipelineName)
+	} else {
+		pipelineConfig = loadRemotePipelineConfig(pipelineName)
+	}
 
 	var pipelineCRD kuberoApi.PipelineCRD
 
@@ -192,4 +255,27 @@ func loadLocalPipeline(pipelineName string) kuberoApi.PipelineCRD {
 	}
 
 	return pipelineCRD
+}
+
+func loadRemotePipelineConfig(pipelineName string) *viper.Viper {
+	res, err := api.GetPipeline(pipelineName)
+	if err != nil {
+		fmt.Println("Error: ", "Unable to load pipeline")
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	var pipeline kuberoApi.PipelineSpec
+	unmarshalErr := json.Unmarshal(res.Body(), &pipeline)
+	if unmarshalErr != nil {
+		fmt.Println("Error: ", "Unable to decode response")
+		return nil
+	}
+
+	pipelineConfig := viper.New()
+	pipelineConfig.SetConfigType("yaml")
+	pipelineConfig.SetConfigName("pipeline")
+	pipelineConfig.Set("spec", pipeline)
+
+	return pipelineConfig
 }

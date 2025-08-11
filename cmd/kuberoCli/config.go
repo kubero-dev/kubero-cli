@@ -6,8 +6,9 @@ import (
 
 // configCmd represents the config command
 var configCmd = &cobra.Command{
-	Use:   "config",
-	Short: "Show your configuration",
+	Use:     "config",
+	Aliases: []string{"conf", "cfg", "c"},
+	Short:   "Show your configuration",
 	/*
 			Long: `A longer description that spans multiple lines and likely contains examples
 		and usage of using your command. For example:

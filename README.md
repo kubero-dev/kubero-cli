@@ -165,33 +165,63 @@ Kubero CLI currently supports the following cloud providers:
 ```plaintext
 kubero
 ├── install                # Create a Kubernetes cluster and install Kubero with all required components
-├── list                   # List all running clusters
-├── login                  # Log in to Kubero and save credentials
-├── logout                 # Log out from Kubero and remove saved credentials
-├── create                 # Create new app and pipeline configurations
-│   ├── app
-│   └── pipeline
-├── up                     # Deploy apps and pipelines
-│   ├── app
-│   └── pipeline
-├── down                   # Remove apps and pipelines
-│   ├── app
-│   └── pipeline
-├── fetch                  # Sync configurations to local files
-│   ├── app
-│   └── pipeline
-├── dashboard              # Open the Kubero dashboard
-├── tunnel                 # Open a tunnel to a NAT-ed cluster
-├── instance               # Manage Kubero instances
-│   ├── create             # Create an instance configuration
-│   ├── delete             # Delete an instance configuration
-│   └── select             # Select an active instance
+|                          # Can also be used to install Kubero on an existing cluster
+├── login (li)             # Log in to Kubero and save credentials
+├── logout (lo)            # Log out from Kubero and remove saved credentials
+├── remote (r)             # List Kubero cluster
+│   ├── create             # Create a cluster configuration
+│   ├── delete             # Delete a cluster configuration
+│   └── select             # Select a cluster
+├── app (a)                # List Kubero apps
+│   ├── create             # Create an app
+│   └── delete             # Delete an app
+├── pipeline (p)           # List Kubero pipelines
+│   ├── create             # Create a pipeline
+│   └── delete             # Delete a pipeline
 ├── config                 # View available configurations
 │   ├── addons             # List addons
-│   ├── buildpacks         # List buildpacks
+│   ├── runpacks           # List runpacks
 │   └── podsizes           # List pod size configurations
+├── dashboard (db)         # Open the Kubero dashboard
+├── debug                  # Gather debug information
+├── tunnel (t)             # Open a tunnel to a NAT-ed cluster
 └── help                   # Display help for commands
 ```
+
+### Usage with most common commands
+Create a new cluster and install Kubero:
+
+```shell
+kubero install
+```
+
+Create a new app configuration:
+```shell
+kubero app create
+```
+
+Destroy an app:
+```shell
+kubero app delete
+```
+
+List all running pipelines:
+```shell
+kubero pipelines
+```
+
+Open the Kubero dashboard:
+
+```shell
+kubero dashboard
+```
+
+For more information, use the `--help` flag with any command:
+
+```shell
+kubero --help
+```
+
 
 ---
 
