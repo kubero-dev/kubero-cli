@@ -678,6 +678,13 @@ func installKuberoUi() {
 		}
 		*/
 
+		storageClassList := getAvailableStorageClasses()
+		kuberoUIDatabaseStorageClassName := selectFromList("Database storage class", storageClassList, "")
+		kuberoUIConfig.Spec.Kubero.DataBase.StorageClassName = kuberoUIDatabaseStorageClassName
+
+		kuberoUIDatabaseStorage := promptLine("Database storage size", "", "10Gi")
+		kuberoUIConfig.Spec.Kubero.DataBase.Size = kuberoUIDatabaseStorage
+
 		if monitoringInstalled {
 			kuberoUIConfig.Spec.Prometheus.Enabled = true
 			kuberoUIConfig.Spec.Prometheus.Endpoint = promptLine("Prometheus URL", "", "http://kubero-prometheus-server")
