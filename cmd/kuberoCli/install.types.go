@@ -220,6 +220,11 @@ type KuberoUIConfig struct {
 				AccessModes      []string `yaml:"accessModes" gorm:"column:accessModes"`
 				Limit            string   `yaml:"limit" gorm:"column:limit"`
 			} `yaml:"auditLogs" gorm:"embedded"`
+			DataBase struct {
+				StorageClassName string   `yaml:"storageClassName" gorm:"column:storageClassName"`
+				Size             string   `yaml:"size" gorm:"column:size"`
+				AccessModes      []string `yaml:"accessModes" gorm:"column:accessModes"`
+			} `yaml:"database" gorm:"embedded"`
 			Config KuberoConfigfile `yaml:"config,omitempty" gorm:"embedded"`
 		} `yaml:"kubero" gorm:"embedded"`
 	} `yaml:"spec" gorm:"embedded"`
