@@ -2,14 +2,17 @@ package kuberoCli
 
 import (
 	"bufio"
+	"bytes"
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
-
-	"kubero/pkg/kuberoApi"
+	"kubero/cmd/kuberoCli/version"
 	"os"
 	"reflect"
 	"strings"
+
+	"kubero/pkg/kuberoApi"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/go-git/go-billy/v5/osfs"
@@ -20,52 +23,56 @@ import (
 	"github.com/i582/cfmt/cmd/cfmt"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
+	_ "github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
-var outputFormat string
-var force bool
-var repoSimpleList []string
-
-var client *resty.Request // TODO DEPRECATED: remove this global variable since we want to use the api variable instead
-var api *kuberoApi.KuberoClient
-var contextSimpleList []string
-
-var currentInstanceName string
-var instanceList map[string]Instance
-var instanceNameList []string
-var currentInstance Instance = Instance{}
-
-//go:embed VERSION
-var kuberoCliVersion string
-
-var pipelineConfig *viper.Viper
-var credentialsConfig *viper.Viper
+var (
+	outputFormat        string
+	force               bool
+	repoSimpleList      []string
+	api                 *kuberoApi.KuberoClient
+	contextSimpleList   []string
+	currentInstanceName string
+	instanceList        map[string]Instance
+	instanceNameList    []string
+	currentInstance     Instance
+	kuberoCliVersion    string
+	pipelineConfig      *viper.Viper
+	credentialsConfig   *viper.Viper
+)
 
 var rootCmd = &cobra.Command{
-	Use:     "kubero",
-	Short:   "Kubero is a platform as a service (PaaS) that enables developers to build, run, and operate applications on Kubernetes.",
-	Version: kuberoCliVersion,
+	Use:   "kubero",
+	Short: "Kubero is a platform as a service (PaaS) that enables developers to build, run, and operate applications on Kubernetes.",
 	Long: `
-
 	,--. ,--.        ,--.
 	|  .'   /,--.,--.|  |-.  ,---. ,--.--. ,---.
 	|  .   ' |  ||  || .-. '| .-. :|  .--'| .-. |
 	|  |\   \'  ''  '| '-' |\   --.|  |   ' '-' '
 	'--' '--' '----'  '---'  '----''--'    '---'
-
-
 Documentation:
-  https://docs.kubero.dev
+  https://www.kubero.dev/docs
 `,
+	Example: `kubero install`,
+	Aliases: []string{"kbr"},
 }
 
 func Execute() {
+	rootCmd.CompletionOptions.HiddenDefaultCmd = false
+
+	rootCmd.AddCommand(version.CliCommand())
+
+	SetUsageDefinition(rootCmd)
+
 	loadCLIConfig()
 	loadCredentials()
 	api = new(kuberoApi.KuberoClient)
+	api.Init(currentInstance.ApiUrl, credentialsConfig.GetString(currentInstanceName))
 
-	client = api.Init(currentInstance.Apiurl, credentialsConfig.GetString(currentInstanceName))
+	for _, cmd := range rootCmd.Commands() {
+		SetUsageDefinition(cmd)
+	}
 
 	err := rootCmd.Execute()
 	if err != nil {
@@ -86,29 +93,18 @@ func printCLI(table *tablewriter.Table, r *resty.Response) {
 }
 
 func promptWarning(msg string) {
-	cfmt.Println("{{\n⚠️   " + msg + ".\n}}::yellow")
+	_, _ = cfmt.Println("{{\n⚠️   " + msg + ".\n}}::yellow")
 }
 
-// promptBanner("✖ ERROR ..... do something")
-func promptBanner(msg string) {
-	cfmt.Printf(`
-    {{                                                                            }}::bgRed
-    {{  %-72s  }}::bgRed|#ffffff
-    {{                                                                            }}::bgRed
-	
-	`, msg)
-}
-
-// question, options/example, default
-func promptLine(question string, options string, def string) string {
+func promptLine(question, options, def string) string {
 	if def != "" && force {
-		cfmt.Printf("\n{{?}}::green %s %s : {{%s}}::cyan\n", question, options, def)
+		_, _ = cfmt.Printf("\n{{?}}::green %s %s : {{%s}}::cyan\n", question, options, def)
 		return def
 	}
 	reader := bufio.NewReader(os.Stdin)
-	cfmt.Printf("\n{{?}}::green|bold {{%s %s}}::bold {{%s}}::cyan : ", question, options, def)
+	_, _ = cfmt.Printf("\n{{?}}::green|bold {{%s %s}}::bold {{%s}}::cyan : ", question, options, def)
 	text, _ := reader.ReadString('\n')
-	text = strings.Replace(text, "\n", "", -1)
+	text = strings.TrimSpace(text)
 	if text == "" {
 		text = def
 	}
@@ -116,49 +112,55 @@ func promptLine(question string, options string, def string) string {
 }
 
 func selectFromList(question string, options []string, def string) string {
-	cfmt.Println("")
+	_, _ = cfmt.Println("")
 	if def != "" && force {
-		cfmt.Printf("\n{{?}}::green %s : {{%s}}::cyan\n", question, def)
+		_, _ = cfmt.Printf("\n{{?}}::green %s : {{%s}}::cyan\n", question, def)
 		return def
 	}
 	prompt := &survey.Select{
 		Message: question,
 		Options: options,
 	}
-	survey.AskOne(prompt, &def)
+	askOneErr := survey.AskOne(prompt, &def)
+	if askOneErr != nil {
+		fmt.Println("Error while selecting:", askOneErr)
+		return ""
+	}
 	return def
 }
 
-func confirmationLine(question string, def string) bool {
+func confirmationLine(question, def string) bool {
 	confirmation := promptLine(question, "[y,n]", def)
 	if confirmation != "y" {
-		cfmt.Println("{{\n✗ Aborted\n}}::red")
+		_, _ = cfmt.Println("{{\n✗ Aborted\n}}::red")
 		os.Exit(0)
 		return false
-	} else {
-		return true
 	}
+	return true
 }
 
 func loadRepositories() {
-
 	res, err := api.GetRepositories()
-	if res.StatusCode() != 200 {
-		fmt.Println("Error: ", res.StatusCode(), "Can't reach Kubero API. Make sure, you are logged in.")
+	if res == nil {
+		fmt.Println("Error: Can't reach Kubero API. Make sure, you are logged in.")
 		os.Exit(1)
 	}
-
+	if res.StatusCode() != 200 {
+		fmt.Println("Error:", res.StatusCode(), "Can't reach Kubero API. Make sure, you are logged in.")
+		os.Exit(1)
+	}
 	if err != nil {
-		fmt.Println("Error: ", "Unable to load repositories")
+		fmt.Println("Error: Unable to load repositories")
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
 	var availRep Repositories
-	json.Unmarshal(res.Body(), &availRep)
-
+	jsonUnmarshalErr := json.Unmarshal(res.Body(), &availRep)
+	if jsonUnmarshalErr != nil {
+		fmt.Println("Error: Unable to load repositories")
+		return
+	}
 	t := reflect.TypeOf(availRep)
-
 	repoSimpleList = make([]string, t.NumField())
 	for i := range repoSimpleList {
 		if reflect.ValueOf(availRep).Field(i).Bool() {
@@ -168,12 +170,13 @@ func loadRepositories() {
 }
 
 func loadContexts() {
-
 	cont, _ := api.GetContexts()
-
 	var contexts Contexts
-	json.Unmarshal(cont.Body(), &contexts)
-
+	jsonUnmarshalErr := json.Unmarshal(cont.Body(), &contexts)
+	if jsonUnmarshalErr != nil {
+		fmt.Println("Error: Unable to load contexts")
+		return
+	}
 	for _, context := range contexts {
 		contextSimpleList = append(contextSimpleList, context.Name)
 	}
@@ -193,76 +196,67 @@ func getGitRemote() string {
 
 func getGitdir() string {
 	wd, _ := os.Getwd()
-
 	path := strings.Split(wd, "/")
 	for i := len(path); i >= 0; i-- {
-
-		subpath := strings.Join(path[:i], "/")
-		fileInfo, err := os.Stat(subpath + "/.git")
-
-		if err != nil {
-			//fmt.Println(subpath + "/.git not a dir")
-			continue
-		} else {
-			if fileInfo.IsDir() {
-				//fmt.Println(subpath + "/.git is a dir")
-				return strings.Join(path[:i], "/")
-			} else {
-				//fmt.Println(subpath + "/.git not a dir")
-				continue
-			}
+		subPath := strings.Join(path[:i], "/")
+		fileInfo, err := os.Stat(subPath + "/.git")
+		if err == nil && fileInfo.IsDir() {
+			return subPath
 		}
-
 	}
 	return ""
 }
 
 func getIACBaseDir() string {
-	basepath := "."
-
+	basePath := "."
 	if currentInstance.IacBaseDir == "" {
 		currentInstance.IacBaseDir = ".kubero"
-		basepath = basepath + "/" + currentInstance.IacBaseDir
+		basePath += "/" + currentInstance.IacBaseDir
 	}
-
 	gitdir := getGitdir()
 	if gitdir != "" {
-		basepath = gitdir + "/" + currentInstance.IacBaseDir
+		basePath = gitdir + "/" + currentInstance.IacBaseDir
 	}
-
-	if _, err := os.Stat(basepath); os.IsNotExist(err) {
-		cfmt.Println("{{Creating directory}}::yellow " + basepath)
-		os.MkdirAll(basepath, 0755)
+	if _, err := os.Stat(basePath); os.IsNotExist(err) {
+		_, _ = cfmt.Println("{{Creating directory}}::yellow " + basePath)
+		mkDirAllErr := os.MkdirAll(basePath, 0755)
+		if mkDirAllErr != nil {
+			fmt.Println("Error while creating directory:", mkDirAllErr)
+			return ""
+		}
 	}
-
-	return basepath
+	return basePath
 }
 
-func loadConfigs(basePath string, pipelineName string) {
+//func loadConfigs(basePath, pipelineName string) {
+//	baseDir := getIACBaseDir()
+//	dir := baseDir + "/" + pipelineName
+//	pipelineConfig = viper.New()
+//	pipelineConfig.SetConfigName("pipeline")
+//	pipelineConfig.SetConfigType("yaml")
+//	pipelineConfig.AddConfigPath(dir)
+//	readInConfigErr := pipelineConfig.ReadInConfig()
+//	if readInConfigErr != nil {
+//		fmt.Println("Error while loading pipeline config file:", readInConfigErr)
+//		return
+//	}
+//}
 
+func loadConfigs(pipelineName string) {
 	baseDir := getIACBaseDir()
 	dir := baseDir + "/" + pipelineName
-
 	pipelineConfig = viper.New()
 	pipelineConfig.SetConfigName("pipeline")
 	pipelineConfig.SetConfigType("yaml")
 	pipelineConfig.AddConfigPath(dir)
-	pipelineConfig.ReadInConfig()
-
-}
-
-// create recursive folder if not exists
-/*
-func createFolder(path string) {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		os.MkdirAll(path, 0755)
+	readInConfigErr := pipelineConfig.ReadInConfig()
+	if readInConfigErr != nil {
+		fmt.Println("Error while loading pipeline config file:", readInConfigErr)
+		return
 	}
 }
-*/
 
 func loadCLIConfig() {
-
-	//load a default config from the current local git repository
 	dir := getGitdir()
 	repoConfig := viper.New()
 	repoConfig.SetConfigName("kubero")
@@ -271,7 +265,6 @@ func loadCLIConfig() {
 	repoConfig.ConfigFileUsed()
 	errCred := repoConfig.ReadInConfig()
 
-	//load a personal config from the user's home directory
 	viper.SetDefault("api.url", "http://default:2000")
 	viper.SetConfigName("kubero")
 	viper.SetConfigType("yaml")
@@ -280,17 +273,20 @@ func loadCLIConfig() {
 	err := viper.ReadInConfig()
 
 	if err != nil && errCred != nil {
-
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+		var configFileNotFoundError viper.ConfigFileNotFoundError
+		if errors.As(err, &configFileNotFoundError) {
 			fmt.Println("No config file found; using defaults")
 		} else {
-			fmt.Printf("Error while loading config files: %v \n\n\n%v", err, errCred)
+			fmt.Println("Error while loading config file:", err)
+			return
 		}
 	}
 
-	viper.UnmarshalKey("instances", &instanceList)
-
-	// iterate over all instances and and set the config path
+	viperUnmarshalErr := viper.UnmarshalKey("instances", &instanceList)
+	if viperUnmarshalErr != nil {
+		fmt.Println("Error while unmarshalling instances:", viperUnmarshalErr)
+		return
+	}
 	for instanceName, instance := range instanceList {
 		instance.Name = instanceName
 		instance.ConfigPath = viper.ConfigFileUsed()
@@ -298,8 +294,11 @@ func loadCLIConfig() {
 	}
 
 	var repoInstancesList map[string]Instance
-	repoConfig.UnmarshalKey("instances", &repoInstancesList)
-
+	unmarshalKeyErr := repoConfig.UnmarshalKey("instances", &repoInstancesList)
+	if unmarshalKeyErr != nil {
+		fmt.Println("Error while unmarshalling instances:", unmarshalKeyErr)
+		return
+	}
 	for instanceName, repoInstance := range repoInstancesList {
 		repoInstance.Name = instanceName
 		repoInstance.ConfigPath = repoConfig.ConfigFileUsed()
@@ -307,8 +306,6 @@ func loadCLIConfig() {
 	}
 
 	currentInstanceName = viper.GetString("currentInstance")
-
-	// iterate over all instances and find the current one
 	for instanceName, instance := range instanceList {
 		instance.Name = instanceName
 		instanceNameList = append(instanceNameList, instanceName)
@@ -316,34 +313,27 @@ func loadCLIConfig() {
 			currentInstance = instance
 		}
 	}
-
 }
 
 func loadCredentials() {
-
-	//load a personal credentials from the user's home directory
 	credentialsConfig = viper.New()
 	credentialsConfig.SetConfigName("credentials")
 	credentialsConfig.SetConfigType("yaml")
 	credentialsConfig.AddConfigPath("/etc/kubero/")
 	credentialsConfig.AddConfigPath("$HOME/.kubero/")
 	err := credentialsConfig.ReadInConfig()
-
 	if err != nil {
 		fmt.Println("Error while loading credentialsConfig file:", err)
 	}
-
 }
 
 func boolToEmoji(b bool) string {
 	if b {
 		return "✅"
-	} else {
-		return "❌"
 	}
+	return "❌"
 }
 
-// pipelinesList := getAllLocalPipelines()
 func ensurePipelineIsSet(pipelinesList []string) {
 	if pipelineName == "" {
 		fmt.Println("")
@@ -351,7 +341,11 @@ func ensurePipelineIsSet(pipelinesList []string) {
 			Message: "Select a pipeline",
 			Options: pipelinesList,
 		}
-		survey.AskOne(prompt, &pipelineName)
+		askOneErr := survey.AskOne(prompt, &pipelineName)
+		if askOneErr != nil {
+			fmt.Println("Error while selecting pipeline:", askOneErr)
+			return
+		}
 	}
 }
 
@@ -364,27 +358,38 @@ func ensureAppNameIsSet() {
 func ensureStageNameIsSet() {
 	if stageName == "" {
 		fmt.Println("")
-
-		pipelineConfig := loadPipelineConfig(pipelineName)
-		availablePhases := getPipelinePhases(pipelineConfig)
-
+		pipelineConfig := loadPipelineConfig(pipelineName, false)
+		availablePhases := getPipelinePhasesFromCRD(pipelineConfig)
 		prompt := &survey.Select{
 			Message: "Select a stage",
 			Options: availablePhases,
 		}
-		survey.AskOne(prompt, &stageName)
+		askOneErr := survey.AskOne(prompt, &stageName)
+		if askOneErr != nil {
+			fmt.Println("Error while selecting stage:", askOneErr)
+			os.Exit(1)
+			return
+		}
 	}
 }
 
 func ensureAppNameIsSelected(availableApps []string) {
-
 	if appName == "" {
 		fmt.Println("")
-
 		prompt := &survey.Select{
 			Message: "Select an app",
 			Options: availableApps,
 		}
-		survey.AskOne(prompt, &appName)
+		askOneErr := survey.AskOne(prompt, &appName)
+		if askOneErr != nil {
+			fmt.Println("Error while selecting app:", askOneErr)
+			return
+		}
 	}
+}
+
+func prettyPrintJson(data []byte) {
+	var prettyJSON bytes.Buffer
+	json.Indent(&prettyJSON, data, "", "\t")
+	fmt.Println(prettyJSON.String())
 }

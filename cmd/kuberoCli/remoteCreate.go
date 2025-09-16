@@ -1,6 +1,3 @@
-/*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-*/
 package kuberoCli
 
 import (
@@ -9,8 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// instanceCreateCmd represents the instanceCreate command
-var instanceCreateCmd = &cobra.Command{
+var remoteCreateCmd = &cobra.Command{
 	Use:     "create",
 	Aliases: []string{"new", "cr"},
 	Short:   "Create an new instance",
@@ -22,5 +18,5 @@ var instanceCreateCmd = &cobra.Command{
 }
 
 func init() {
-	instanceCmd.AddCommand(instanceCreateCmd)
+	remoteCmd.AddCommand(remoteCreateCmd)
 }

@@ -1,7 +1,8 @@
+package kuberoCli
+
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 */
-package kuberoCli
 
 import (
 	"fmt"
@@ -14,19 +15,19 @@ import (
 )
 
 // instanceCmd represents the instance command
-var instanceCmd = &cobra.Command{
-	Use:     "instance",
-	Aliases: []string{"i"},
-	Short:   "List available instances",
+var remoteCmd = &cobra.Command{
+	Use:     "remote",
+	Aliases: []string{"r", "remotes"},
+	Short:   "Manage multiple Kubero instances",
 	Long:    `Print a list of available instances.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		/*
 			fmt.Println("current instance : " + currentInstanceName)
 			fmt.Println(instanceList)
-			if currentInstance.Apiurl == "" {
+			if currentInstance.ApiUrl == "" {
 				fmt.Println("No current instance api URL")
 			} else {
-				fmt.Println("Current instance api URL : " + currentInstance.Apiurl)
+				fmt.Println("Current instance api URL : " + currentInstance.ApiUrl)
 			}
 		*/
 
@@ -35,7 +36,7 @@ var instanceCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(instanceCmd)
+	rootCmd.AddCommand(remoteCmd)
 }
 
 func printInstanceList() {
@@ -69,7 +70,7 @@ func printInstanceList() {
 			active,
 			token,
 			instanceName,
-			instanceList[instanceName].Apiurl,
+			instanceList[instanceName].ApiUrl,
 			instanceList[instanceName].ConfigPath,
 			instanceList[instanceName].IacBaseDir,
 		})
@@ -81,14 +82,14 @@ func createInstanceForm() {
 	fmt.Println("Create a new instance")
 
 	instanceName := promptLine("Enter the name of the instance", "", "")
-	instanceApiurl := promptLine("Enter the API URL of the instance", "", "http://localhost:80")
+	instanceApiurl := promptLine("Enter the API URL of the instance", "", "http://kubero.localhost:80")
 	instancePath := viper.ConfigFileUsed()
 
 	personalInstanceList := viper.GetStringMap("instances")
 
 	personalInstanceList[instanceName] = Instance{
 		Name:       instanceName,
-		Apiurl:     instanceApiurl,
+		ApiUrl:     instanceApiurl,
 		ConfigPath: instancePath,
 	}
 
@@ -98,13 +99,20 @@ func createInstanceForm() {
 
 	setCurrentInstance(instanceName)
 
+	// reqiored to login to the new instance
+	api.SetApiUrl(instanceApiurl, "")
 }
 
 func setCurrentInstance(instanceName string) {
 	currentInstanceName = instanceName
 	currentInstance = instanceList[instanceName]
 	viper.Set("currentInstance", instanceName)
-	viper.WriteConfig()
+	writeConfigErr := viper.WriteConfig()
+	if writeConfigErr != nil {
+		fmt.Println("Failed to save configuration:", writeConfigErr)
+		return
+	}
+	api.SetApiUrl(currentInstance.ApiUrl, credentialsConfig.GetString(instanceName))
 }
 
 func deleteInstanceForm() {
@@ -112,6 +120,10 @@ func deleteInstanceForm() {
 
 	delete(instanceList, instanceName)
 	viper.Set("instances", instanceList)
-	viper.WriteConfig()
+	writeConfigErr := viper.WriteConfig()
+	if writeConfigErr != nil {
+		fmt.Println("Failed to save configuration:", writeConfigErr)
+		return
+	}
 
 }

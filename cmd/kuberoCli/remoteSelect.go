@@ -1,14 +1,10 @@
-/*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-*/
 package kuberoCli
 
 import (
 	"github.com/spf13/cobra"
 )
 
-// instanceSelectCmd represents the instanceSelect command
-var instanceSelectCmd = &cobra.Command{
+var remoteSelectCmd = &cobra.Command{
 	Use:     "select",
 	Aliases: []string{"use"},
 	Short:   "Select an instance",
@@ -20,5 +16,5 @@ var instanceSelectCmd = &cobra.Command{
 }
 
 func init() {
-	instanceCmd.AddCommand(instanceSelectCmd)
+	remoteCmd.AddCommand(remoteSelectCmd)
 }
