@@ -531,7 +531,7 @@ func installKuberoUi() {
 		)
 
 		if gitops == "y" {
-      
+
 			githubConfigure := promptLine("Configure Github", "[y,n]", "n")
 			githubPersonalAccessToken := ""
 			if githubConfigure == "y" {
@@ -657,8 +657,8 @@ func installKuberoUi() {
 				kuberoUIRegistryHost := promptLine("Registry", "[registry.kubero.mydomain.com]", "")
 				kuberoUIConfig.Spec.Registry.Host = kuberoUIRegistryHost
 
-				kuberoUIRegistrySubpath := promptLine("Subpath (optional) ", "[example/foo/bar]", "")
-				kuberoUIConfig.Spec.Registry.Subpath = kuberoUIRegistrySubpath
+				kuberoUIRegistrySubPath := promptLine("Subpath (optional) ", "[example/foo/bar]", "")
+				kuberoUIConfig.Spec.Registry.SubPath = kuberoUIRegistrySubPath
 
 				kuberoUIConfig.Spec.Registry.Port = 443
 
