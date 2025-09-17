@@ -259,7 +259,7 @@ func installOLM() {
 		return
 	}
 
-	olmInstall := promptLine("2) Install OLM", "[y,n]", "n")
+	olmInstall := promptLine("2) Install OLM (optional)", "[y,n]", "n")
 	if olmInstall != "y" {
 		installOlm = false
 		return
@@ -493,6 +493,8 @@ func installKuberoUi() {
 
 	createNamespace("kubero")
 
+	gitops := promptLine("Enable GitOps Feature", "[y,n]", "n")
+
 	kuberoSecretInstalled, _ := exec.Command("kubectl", "get", "secret", "kubero-secrets", "-n", "kubero").Output()
 	if len(kuberoSecretInstalled) > 0 {
 		_, _ = cfmt.Println("{{✓ Kubero Secret exists}}::lightGreen")
@@ -528,53 +530,56 @@ func installKuberoUi() {
 			//"--from-literal=KUBERO_USERS="+userDBencoded, // DEPRECATED in v3.0.0
 		)
 
-		githubConfigure := promptLine("Configure Github", "[y,n]", "n")
-		githubPersonalAccessToken := ""
-		if githubConfigure == "y" {
-			githubPersonalAccessToken = promptLine("Github personal access token", "", "")
-			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITHUB_PERSONAL_ACCESS_TOKEN="+githubPersonalAccessToken)
-		}
+		if gitops == "y" {
 
-		giteaConfigure := promptLine("Configure Gitea", "[y,n]", "n")
-		giteaPersonalAccessToken := ""
-		giteaBaseUrl := ""
-		if giteaConfigure == "y" {
-			giteaPersonalAccessToken = promptLine("Gitea personal access token", "", "")
-			giteaBaseUrl = promptLine("Gitea URL", "http://localhost:3000", "")
-			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITEA_PERSONAL_ACCESS_TOKEN="+giteaPersonalAccessToken)
-			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITEA_BASEURL="+giteaBaseUrl)
-		}
+			githubConfigure := promptLine("Configure Github", "[y,n]", "n")
+			githubPersonalAccessToken := ""
+			if githubConfigure == "y" {
+				githubPersonalAccessToken = promptLine("Github personal access token", "", "")
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITHUB_PERSONAL_ACCESS_TOKEN="+githubPersonalAccessToken)
+			}
 
-		gogsConfigure := promptLine("Configure Gogs", "[y,n]", "n")
-		gogsPersonalAccessToken := ""
-		gogsBaseUrl := ""
-		if gogsConfigure == "y" {
-			gogsPersonalAccessToken = promptLine("Gogs personal access token", "", "")
-			gogsBaseUrl = promptLine("Gogs URL", "http://localhost:3000", "")
-			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GOGS_PERSONAL_ACCESS_TOKEN="+gogsPersonalAccessToken)
-			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GOGS_BASEURL="+gogsBaseUrl)
-		}
+			giteaConfigure := promptLine("Configure Gitea", "[y,n]", "n")
+			giteaPersonalAccessToken := ""
+			giteaBaseUrl := ""
+			if giteaConfigure == "y" {
+				giteaPersonalAccessToken = promptLine("Gitea personal access token", "", "")
+				giteaBaseUrl = promptLine("Gitea URL", "http://localhost:3000", "")
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITEA_PERSONAL_ACCESS_TOKEN="+giteaPersonalAccessToken)
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITEA_BASEURL="+giteaBaseUrl)
+			}
 
-		gitlabConfigure := promptLine("Configure Gitlab", "[y,n]", "n")
-		gitlabPersonalAccessToken := ""
-		gitlabBaseUrl := ""
-		if gitlabConfigure == "y" {
-			gitlabPersonalAccessToken = promptLine("Gitlab personal access token", "", "")
-			gitlabBaseUrl = promptLine("Gitlab URL", "http://localhost:3080", "")
-			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITLAB_PERSONAL_ACCESS_TOKEN="+gitlabPersonalAccessToken)
-			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITLAB_BASEURL="+gitlabBaseUrl)
-		}
+			gogsConfigure := promptLine("Configure Gogs", "[y,n]", "n")
+			gogsPersonalAccessToken := ""
+			gogsBaseUrl := ""
+			if gogsConfigure == "y" {
+				gogsPersonalAccessToken = promptLine("Gogs personal access token", "", "")
+				gogsBaseUrl = promptLine("Gogs URL", "http://localhost:3000", "")
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GOGS_PERSONAL_ACCESS_TOKEN="+gogsPersonalAccessToken)
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GOGS_BASEURL="+gogsBaseUrl)
+			}
 
-		bitbucketConfigure := promptLine("Configure Bitbucket", "[y,n]", "n")
-		bitbucketUsername := ""
-		bitbucketAppPassword := ""
-		if bitbucketConfigure == "y" {
-			bitbucketUsername = promptLine("Bitbucket Username", "", "")
-			bitbucketAppPassword = promptLine("Bitbucket App Password", "", "")
-			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=BITBUCKET_USERNAME="+bitbucketUsername)
-			createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=BITBUCKET_APP_PASSWORD="+bitbucketAppPassword)
-		}
+			gitlabConfigure := promptLine("Configure Gitlab", "[y,n]", "n")
+			gitlabPersonalAccessToken := ""
+			gitlabBaseUrl := ""
+			if gitlabConfigure == "y" {
+				gitlabPersonalAccessToken = promptLine("Gitlab personal access token", "", "")
+				gitlabBaseUrl = promptLine("Gitlab URL", "http://localhost:3080", "")
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITLAB_PERSONAL_ACCESS_TOKEN="+gitlabPersonalAccessToken)
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=GITLAB_BASEURL="+gitlabBaseUrl)
+			}
 
+			bitbucketConfigure := promptLine("Configure Bitbucket", "[y,n]", "n")
+			bitbucketUsername := ""
+			bitbucketAppPassword := ""
+			if bitbucketConfigure == "y" {
+				bitbucketUsername = promptLine("Bitbucket Username", "", "")
+				bitbucketAppPassword = promptLine("Bitbucket App Password", "", "")
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=BITBUCKET_USERNAME="+bitbucketUsername)
+				createSecretCommand.Args = append(createSecretCommand.Args, "--from-literal=BITBUCKET_APP_PASSWORD="+bitbucketAppPassword)
+			}
+
+		}
 		createSecretCommand.Args = append(createSecretCommand.Args, "-n", "kubero")
 
 		_, kuberoErr := createSecretCommand.Output()
@@ -630,39 +635,42 @@ func installKuberoUi() {
 			}
 		}
 
-		kuberoUIRegistry := promptLine("Enable BuildPipeline for Kubero", "[y/n]", "n")
-		if kuberoUIRegistry == "y" {
-			kuberoUIConfig.Spec.Registry.Enabled = true
+		if gitops == "y" {
 
-			kuberoUICreateRegistry := promptLine("Create a local Registry for Kubero", "[y/n]", "n")
-			if kuberoUICreateRegistry == "y" {
-				kuberoUIConfig.Spec.Registry.Create = true
+			kuberoUIRegistry := promptLine("Enable Buildpipeline for Kubero (BETA)", "[y/n]", "n")
+			if kuberoUIRegistry == "y" {
+				kuberoUIConfig.Spec.Registry.Enabled = true
 
-				kuberoUIRegistryStorage := promptLine("Registry storage size", "", "10Gi")
-				kuberoUIConfig.Spec.Registry.Storage = kuberoUIRegistryStorage
+				kuberoUICreateRegistry := promptLine("Create a local Registry for Kubero", "[y/n]", "n")
+				if kuberoUICreateRegistry == "y" {
+					kuberoUIConfig.Spec.Registry.Create = true
 
-				storageClassList := getAvailableStorageClasses()
+					kuberoUIRegistryStorage := promptLine("Registry storage size", "", "10Gi")
+					kuberoUIConfig.Spec.Registry.Storage = kuberoUIRegistryStorage
 
-				kuberoUIRegistryStorageClassName := selectFromList("Registry storage class", storageClassList, "")
-				kuberoUIConfig.Spec.Registry.StorageClassName = kuberoUIRegistryStorageClassName
+					storageClassList := getAvailableStorageClasses()
+
+					kuberoUIRegistryStorageClassName := selectFromList("Registry storage class", storageClassList, "")
+					kuberoUIConfig.Spec.Registry.StorageClassName = kuberoUIRegistryStorageClassName
+				}
+
+				kuberoUIRegistryHost := promptLine("Registry", "[registry.kubero.mydomain.com]", "")
+				kuberoUIConfig.Spec.Registry.Host = kuberoUIRegistryHost
+
+				kuberoUIRegistrySubPath := promptLine("Subpath (optional) ", "[example/foo/bar]", "")
+				kuberoUIConfig.Spec.Registry.SubPath = kuberoUIRegistrySubPath
+
+				kuberoUIConfig.Spec.Registry.Port = 443
+
+				kuberoUIRegistryUsername := promptLine("Registry username", "", "admin")
+				kuberoUIConfig.Spec.Registry.Account.Username = kuberoUIRegistryUsername
+
+				kuberoUIRegistryPassword := promptLine("Registry password", "", generateRandomString(12, ""))
+				kuberoUIConfig.Spec.Registry.Account.Password = kuberoUIRegistryPassword
+
+				kuberoUIRegistryPasswordBytes, _ := bcrypt.GenerateFromPassword([]byte(kuberoUIRegistryPassword), 14)
+				kuberoUIConfig.Spec.Registry.Account.Hash = string(kuberoUIRegistryPasswordBytes)
 			}
-
-			kuberoUIRegistryHost := promptLine("Registry", "[registry.kubero.mydomain.com]", "")
-			kuberoUIConfig.Spec.Registry.Host = kuberoUIRegistryHost
-
-			kuberoUIRegistrySubPath := promptLine("SubPath (optional) ", "[example/foo/bar]", "")
-			kuberoUIConfig.Spec.Registry.SubPath = kuberoUIRegistrySubPath
-
-			kuberoUIConfig.Spec.Registry.Port = 443
-
-			kuberoUIRegistryUsername := promptLine("Registry username", "", "admin")
-			kuberoUIConfig.Spec.Registry.Account.Username = kuberoUIRegistryUsername
-
-			kuberoUIRegistryPassword := promptLine("Registry password", "", generateRandomString(12, ""))
-			kuberoUIConfig.Spec.Registry.Account.Password = kuberoUIRegistryPassword
-
-			kuberoUIRegistryPasswordBytes, _ := bcrypt.GenerateFromPassword([]byte(kuberoUIRegistryPassword), 14)
-			kuberoUIConfig.Spec.Registry.Account.Hash = string(kuberoUIRegistryPasswordBytes)
 		}
 
 		/* DEPRECATED in v3.0.0
@@ -882,7 +890,7 @@ func installMonitoring() {
 
 func installCertManager() {
 
-	install := promptLine("6) Install SSL CertManager", "[y,n]", "y")
+	install := promptLine("6) Install SSL Cert Manager", "[y,n]", "y")
 	if install != "y" {
 		return
 	}
