@@ -505,7 +505,6 @@ func installKuberoUi() {
 		//sessionKey := promptLine("Random string for your session key", "", generateRandomString(20, ""))
 		sessionKey := generateRandomString(20, "") //DEPRECATED in v3.0.0
 
-		/* DEPRECATED in v3.0.0
 		if argAdminUser == "" {
 			argAdminUser = promptLine("Admin User", "", "admin")
 		}
@@ -514,6 +513,7 @@ func installKuberoUi() {
 			argAdminPassword = promptLine("Admin Password", "", generateRandomString(12, ""))
 		}
 
+		/* DEPRECATED in v3.0.0
 		if argApiToken == "" {
 			argApiToken = promptLine("Random string for admin API token", "", generateRandomString(20, ""))
 		}
@@ -527,6 +527,8 @@ func installKuberoUi() {
 		createSecretCommand := exec.Command("kubectl", "create", "secret", "generic", "kubero-secrets",
 			"--from-literal=KUBERO_WEBHOOK_SECRET="+webhookSecret,
 			"--from-literal=KUBERO_SESSION_KEY="+sessionKey,
+			"--from-literal=KUBERO_ADMIN_USERNAME="+argAdminUser,
+			"--from-literal=KUBERO_ADMIN_PASSWORD="+argAdminPassword,
 			//"--from-literal=KUBERO_USERS="+userDBencoded, // DEPRECATED in v3.0.0
 		)
 
@@ -673,19 +675,6 @@ func installKuberoUi() {
 			}
 		}
 
-		/* DEPRECATED in v3.0.0
-		kuberoUIAudit := promptLine("Enable Audit Logging", "[y/n]", "n")
-		if kuberoUIAudit == "y" {
-			kuberoUIConfig.Spec.Kubero.AuditLogs.Enabled = true
-
-			storageClassList := getAvailableStorageClasses()
-
-			kuberoUIRegistryStorageClassName := selectFromList("AuditLogs storage class", storageClassList, "")
-			kuberoUIConfig.Spec.Kubero.AuditLogs.StorageClassName = kuberoUIRegistryStorageClassName
-
-		}
-		*/
-
 		storageClassList := getAvailableStorageClasses()
 		kuberoUIDatabaseStorageClassName := selectFromList("Database storage class", storageClassList, "")
 		kuberoUIConfig.Spec.Kubero.DataBase.StorageClassName = kuberoUIDatabaseStorageClassName
@@ -706,7 +695,8 @@ func installKuberoUi() {
 			kuberoUIConfig.Spec.Kubero.Config.Kubero.Console.Enabled = true
 		}
 
-		//kuberoUIConfig.Spec.Image.Tag = "v2.0.0-rc.8"
+		// DEBUG
+		//kuberoUIConfig.Spec.Image.Tag = "v3.1.1-rc.1"
 
 		if clusterType == "" {
 			clusterType = selectFromList("Which cluster type have you installed?", clusterTypeList, "")
