@@ -11,7 +11,7 @@ require (
 	github.com/i582/cfmt v1.4.0
 	github.com/jonasfj/go-localtunnel v0.0.0-20170326223115-8a804488f275
 	github.com/leaanthony/spinner v0.5.4
-	github.com/olekukonko/tablewriter v0.0.5
+	github.com/olekukonko/tablewriter v1.1.0
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/viper v1.20.1
@@ -21,6 +21,8 @@ require (
 
 require (
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+	github.com/olekukonko/errors v1.1.0 // indirect
+	github.com/olekukonko/ll v0.0.9 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
 )
 
